@@ -1834,3 +1834,42 @@ Next action:
 - run hygiene checks,
 - commit and push blocker fix,
 - rerun P7-G Doctrine Steward review.
+
+### Checkpoint: Phase 7 Closed And Phase 8 Ticketed
+
+Phase: 8
+
+Tickets: parent `#9`, child tickets `#70` through `#76`
+
+Status: ticketed, implementation not started
+
+Phase 7 closure evidence:
+
+- commit `e8da4bd` pushed to `origin/main`,
+- GitHub CI run `26177030195` passed,
+- final P7-G Doctrine Steward re-review returned `ACCEPTED`,
+- `#68`, `#69`, and parent `#8` were closed with evidence comments.
+
+Phase 8 child tickets:
+
+- `#70` Environment And Supabase Readiness Gate,
+- `#71` New Supabase Schema Law Gate,
+- `#72` Read-only Source Snapshot Import,
+- `#73` Old vs New vs Source Dual-run Comparator,
+- `#74` Named Sian Yunni Jade Scenario Report,
+- `#75` Real-data UI Screenshot And Click Proof,
+- `#76` Phase 8 Verification And Doctrine Gate.
+
+Boundary for Phase 8:
+
+- old database output is comparison evidence only,
+- new display contract remains the only new UI authority,
+- real sources enter through source archive/snapshot evidence,
+- no source mutation,
+- no migrations against old production,
+- no deploy,
+- no committed secrets.
+
+Next action:
+
+- implement `#70` before any schema, import, or dual-run code.

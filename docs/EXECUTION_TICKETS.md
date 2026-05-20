@@ -67,6 +67,13 @@ This file is the local mirror of the GitHub issue board. GitHub issues are the o
 | `#67` | P7-E: Chat API Route, Progress Events, And UI Evidence Trace |
 | `#68` | P7-F: Phase 7 Verification Gate And Trap Prompt Suite |
 | `#69` | P7-G: Doctrine Review Gate For Chat Evidence Agent |
+| `#70` | P8-A: Environment And Supabase Readiness Gate |
+| `#71` | P8-B: New Supabase Schema Law Gate |
+| `#72` | P8-C: Read-only Source Snapshot Import |
+| `#73` | P8-D: Old vs New vs Source Dual-run Comparator |
+| `#74` | P8-E: Named Sian Yunni Jade Scenario Report |
+| `#75` | P8-F: Real-data UI Screenshot And Click Proof |
+| `#76` | P8-G: Phase 8 Verification And Doctrine Gate |
 
 ## Implementation Ticket Rule
 
@@ -94,6 +101,8 @@ Phase 4 has bounded implementation tickets `#41` through `#47`. It may expose sc
 Phase 5 currently has bounded implementation tickets `#48` through `#54`. It may build the pure display contract, visible rows, rollups, CSV rows, traces, approval outputs, unsupported flags, and reconciliation checks. It must not create product UI pages, live source pulls, database calls, applied migrations, deploys, sync, source-system mutation, or old dashboard selector truth.
 
 Phase 7 currently has bounded implementation tickets `#63` through `#69`. It may build the read-only chat evidence agent, progress events, API route, UI evidence trace, claim guard, and trap prompt tests. It must not introduce mutation tools, live source pulls, database calls, applied migrations, deploys, sync, source-system writes, old dashboard selector truth, or model-only claims.
+
+Phase 8 currently has bounded implementation tickets `#70` through `#76`. It may connect the rebuild to real-data snapshots and old-dashboard comparison evidence only after env/Supabase readiness is proven. It must not let old database tables, old selectors, live source APIs, or imported cache rows become display truth. It must not mutate sources, apply migrations to old production, deploy, or commit secrets.
 
 ## Phase Tickets
 
