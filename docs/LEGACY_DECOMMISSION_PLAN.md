@@ -6,6 +6,8 @@ The rebuild fails if old authority paths sneak back in.
 
 This plan defines how the old app is used for reference, then retired as an authority.
 
+Related policy: `docs/BAD_CODE_UNRAVELLING_POLICY.md`.
+
 ## Allowed Uses Of Old App
 
 Allowed:
@@ -40,6 +42,12 @@ Decision:
 ```
 
 If the answer to "Does it create a second authority?" is yes, do not copy it.
+
+## Bad Path Rule
+
+If old code is proven to create bad data, do not keep excavating it indefinitely.
+
+Trace far enough to identify the bad authority path, then quarantine or delete it and rebuild through the lawful contract.
 
 ## Dual Run
 

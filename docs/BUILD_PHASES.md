@@ -18,6 +18,7 @@ Deliverables:
 - security and mutation boundary,
 - fixture strategy,
 - legacy decommission plan,
+- bad code unravelling policy,
 - environment and Supabase strategy,
 - Railway deployment strategy,
 - chat investigation agent spec,
