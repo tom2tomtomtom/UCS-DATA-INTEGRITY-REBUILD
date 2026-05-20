@@ -83,3 +83,23 @@ export type {
   RollupRow
 } from "./display/contract";
 export { buildDashboardDisplayContract } from "./display/contract";
+
+export {
+  createParserFactEvidence,
+  createParserResult,
+  createParserWarning,
+  PARSER_ADDITIVE_STATUSES,
+  toIsAdditive
+} from "./parsers";
+
+export type {
+  ParserAdditiveStatus,
+  ParserCapabilitySummary,
+  ParserFactEvidence,
+  ParserFactEvidenceInput,
+  ParserResult,
+  ParserResultInput,
+  ParserWarning,
+  ParserWarningInput,
+  ParserWarningSeverity
+} from "./parsers";

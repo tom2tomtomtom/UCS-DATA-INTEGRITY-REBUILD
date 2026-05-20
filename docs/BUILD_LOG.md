@@ -635,3 +635,43 @@ Next action:
 
 - commit and push Phase 3 ticketing,
 - start P3-A before source-specific parsers.
+
+### Checkpoint: P3-A Parser Fact Contracts
+
+Phase: 3
+
+Ticket: `#33`
+
+Status: implemented, awaiting commit
+
+TDD evidence:
+
+- red: `npm test tests/parsers/parser-contracts.test.ts` failed because `../../src/lib/parsers` did not exist,
+- green: added parser contract types and shared helpers,
+- focused parser contract test passed with 4 active tests,
+- full `npm test` passed with 6 active files and 17 skipped law scaffold files,
+- `npm run typecheck` passed,
+- `git diff --check` passed.
+
+What changed:
+
+- added explicit parser additive status model,
+- added parser fact evidence helper requiring batch ID, raw row IDs, source refs, and additive status,
+- added parser warning helper requiring source refs and raw row IDs,
+- added parser result shape that has facts, warnings, capabilities, and source row counts only,
+- exported parser contracts from the root library.
+
+Boundary kept:
+
+- no source-specific parser logic,
+- no display rows,
+- no dashboard totals,
+- no product UI,
+- no live source calls,
+- no source-system mutation.
+
+Next action:
+
+- commit and push P3-A,
+- close GitHub `#33`,
+- spawn source-specific parser workers for P3-B through P3-E.
