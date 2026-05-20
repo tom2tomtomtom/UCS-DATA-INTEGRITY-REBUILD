@@ -180,3 +180,18 @@ export type {
   ParserWarningInput,
   ParserWarningSeverity
 } from "./parsers";
+
+export {
+  compareDualRunSnapshots
+} from "./dual-run";
+
+export type {
+  DualRunComparisonInput,
+  DualRunComparisonResult,
+  DualRunDifference,
+  DualRunDifferenceClassification,
+  DualRunEvidenceRow,
+  DualRunLane,
+  DualRunMetric,
+  OldDashboardComparisonLane
+} from "./dual-run";

@@ -88,6 +88,45 @@ Next action:
 - close ticket `#72`,
 - start `#73` old vs new vs source dual-run comparator.
 
+### Checkpoint: Dual-run Comparator Added
+
+Phase: 8
+
+Ticket: `#73`
+
+Status: implemented, local verification passed
+
+What changed:
+
+- added a dual-run comparator for source snapshot, new display contract, and old dashboard comparison evidence,
+- kept the old dashboard lane explicitly `comparisonOnly`,
+- classified differences as `old_bug`, `new_bug`, `source_issue`, `intentional_change`, or `unresolved`,
+- added row-level `comparisonKey` checks so hidden source rows cannot be masked by matching totals,
+- added lane scope validation to block full-year or full-project evidence being compared against a scoped dashboard view,
+- kept source warnings surfaced even when the numeric values match or when the old dashboard also differs,
+- added a CLI comparator report that omits raw source refs and raw payloads.
+
+Verification:
+
+- `npm test -- tests/dual-run/dual-run-compare.test.ts` passed,
+- `npm run typecheck` passed,
+- `npm test -- tests/dual-run/phase8-dual-run-verifier.test.ts` passed,
+- `node scripts/dual-run-compare.mjs fixtures/dual-run/p8d-basic.json` produced classified `old_bug` and `source_issue` rows without raw refs,
+- `node scripts/verify-phase8.mjs` passed,
+- `npm run verify:phase8` passed with 53 files passed, 15 skipped, 176 tests passed, 79 todo, typecheck, Next build, and Phase 8 verifier.
+
+Process notes:
+
+- a read-only sidecar review found missing hidden-row, source-warning, lane-scope, output-redaction, and TS/CLI parity concerns before commit,
+- those concerns were converted into tests and implementation changes before this checkpoint,
+- old dashboard output remains comparison evidence only and cannot be accepted as product truth by this comparator.
+
+Next action:
+
+- commit and push P8-D,
+- close ticket `#73`,
+- start `#74` named Sian/Yunni/Jade scenario report.
+
 ### Checkpoint: Overnight Control Started
 
 Phase: 0

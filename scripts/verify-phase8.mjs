@@ -51,6 +51,12 @@ function checkRequiredFiles() {
     "scripts/dry-run-source-import.mjs",
     "scripts/lib/source-import-report.mjs",
     "fixtures/source-import/p8c-redacted-snapshot.json",
+    "src/lib/dual-run/dual-run-compare.ts",
+    "tests/dual-run/dual-run-compare.test.ts",
+    "tests/dual-run/phase8-dual-run-verifier.test.ts",
+    "scripts/dual-run-compare.mjs",
+    "scripts/lib/dual-run-compare.mjs",
+    "fixtures/dual-run/p8d-basic.json",
     "supabase/config.toml"
   ];
 
@@ -122,6 +128,65 @@ function checkSourceImportMarkers() {
   for (const marker of requiredMarkers) {
     if (!combined.includes(marker)) {
       fail(`Missing Phase 8 source import marker: ${marker}`);
+    }
+  }
+}
+
+function checkDualRunDoesNotCheat() {
+  const files = [
+    "src/lib/dual-run/dual-run-compare.ts",
+    "scripts/dual-run-compare.mjs",
+    "scripts/lib/dual-run-compare.mjs"
+  ];
+
+  if (!files.every(exists)) return;
+
+  const combined = files.map(read).join("\n");
+  const forbiddenNeedles = [
+    "@supabase",
+    "createClient",
+    "googleapis",
+    "selectDashboardView",
+    "getProjectsList",
+    "fetch(",
+    "INSERT ",
+    "UPDATE ",
+    "DELETE "
+  ];
+
+  for (const needle of forbiddenNeedles) {
+    if (combined.includes(needle)) {
+      fail(`Phase 8 dual-run comparator contains forbidden product-truth or mutation path: ${needle}`);
+    }
+  }
+}
+
+function checkDualRunMarkers() {
+  const files = [
+    "src/lib/dual-run/dual-run-compare.ts",
+    "tests/dual-run/dual-run-compare.test.ts",
+    "scripts/dual-run-compare.mjs",
+    "fixtures/dual-run/p8d-basic.json"
+  ];
+
+  if (!files.every(exists)) return;
+
+  const combined = files.map(read).join("\n");
+  const requiredMarkers = [
+    "Old dashboard lane must be comparison evidence only",
+    "old_bug",
+    "new_bug",
+    "source_issue",
+    "intentional_change",
+    "unresolved",
+    "all lanes disagree",
+    "comparisonOnly",
+    "fixtures/dual-run/p8d-basic.json"
+  ];
+
+  for (const marker of requiredMarkers) {
+    if (!combined.includes(marker)) {
+      fail(`Missing Phase 8 dual-run marker: ${marker}`);
     }
   }
 }
@@ -205,6 +270,8 @@ function run() {
   checkRequiredFiles();
   checkSourceImportDoesNotCheat();
   checkSourceImportMarkers();
+  checkDualRunDoesNotCheat();
+  checkDualRunMarkers();
   checkSchemaLawMarkers();
   checkMigrationMarkers();
 

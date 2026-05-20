@@ -1,0 +1,81 @@
+{
+  "scope": {
+    "office": "LDN",
+    "from": "2026-01-01",
+    "to": "2026-03-31",
+    "department": "Design"
+  },
+  "sourceSnapshot": {
+    "label": "Redacted source snapshot",
+    "rows": [
+      {
+        "id": "source:UCS04787",
+        "comparisonKey": "UCS04787",
+        "metric": "soldFee",
+        "value": 100,
+        "sourceRefs": [
+          { "source": "fee_sheet", "sourceLayer": "sold", "rawRowId": "raw-source-1" }
+        ]
+      },
+      {
+        "id": "source:PCS00250",
+        "comparisonKey": "PCS00250",
+        "metric": "floatHours",
+        "value": 20,
+        "sourceRefs": [
+          { "source": "float", "sourceLayer": "float_cache", "rawRowId": "raw-cache-1" }
+        ],
+        "warnings": ["cache_without_raw"]
+      }
+    ]
+  },
+  "newDisplay": {
+    "label": "New display contract",
+    "rows": [
+      {
+        "id": "new:UCS04787",
+        "comparisonKey": "UCS04787",
+        "metric": "soldFee",
+        "value": 100,
+        "sourceRefs": [
+          { "source": "fee_sheet", "sourceLayer": "sold", "rawRowId": "raw-source-1" }
+        ]
+      },
+      {
+        "id": "new:PCS00250",
+        "comparisonKey": "PCS00250",
+        "metric": "floatHours",
+        "value": 20,
+        "sourceRefs": [
+          { "source": "float", "sourceLayer": "float_cache", "rawRowId": "raw-cache-1" }
+        ],
+        "warnings": ["cache_without_raw"]
+      }
+    ]
+  },
+  "oldDashboard": {
+    "label": "Old dashboard comparison export",
+    "comparisonOnly": true,
+    "rows": [
+      {
+        "id": "old:UCS04787",
+        "comparisonKey": "UCS04787",
+        "metric": "soldFee",
+        "value": 95,
+        "sourceRefs": [
+          { "source": "read_only_sql", "sourceLayer": "read_only_sql", "rawRowId": "old-row-1" }
+        ]
+      },
+      {
+        "id": "old:PCS00250",
+        "comparisonKey": "PCS00250",
+        "metric": "floatHours",
+        "value": 20,
+        "sourceRefs": [
+          { "source": "read_only_sql", "sourceLayer": "read_only_sql", "rawRowId": "old-cache-1" }
+        ],
+        "warnings": ["cache_without_raw"]
+      }
+    ]
+  }
+}
