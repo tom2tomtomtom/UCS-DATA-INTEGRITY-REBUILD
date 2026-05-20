@@ -1676,3 +1676,43 @@ Next action:
 - run full `npm run test`,
 - commit and push P7-C,
 - close `#65` after CI.
+
+### Checkpoint: P7-D Claim Guard And Reporter
+
+Phase: 7
+
+Ticket: `#66`
+
+Status: implemented locally, push-blocking verification pending
+
+What changed:
+
+- added claim guard with blocked-claim codes,
+- added evidence-only reporter,
+- blocked false zero-hours claims when the evidence pack contains nonzero hours,
+- blocked dashboard-bug claims unless there is a failed evidence check,
+- blocked confirmed Float mismatch language when required Float layers are missing or unresolved,
+- activated Law 9 chat evidence-boundary tests for false-zero, tool-error, serial Float evidence, and Needs Codex handoff.
+
+TDD evidence:
+
+- red: `npm run test -- tests/chat/claim-guard.test.ts` failed because `validateEvidenceClaims` and `generateEvidenceReport` did not exist,
+- green: focused claim-guard tests passed after implementation,
+- focused Law 9 tests and typecheck passed.
+
+Boundary kept:
+
+- reporter receives only the `EvidencePack`,
+- reporter does not run tools,
+- reporter does not upgrade confidence,
+- unresolved checks stay visible,
+- warnings stay visible,
+- no live source pull,
+- no database call,
+- no mutation path.
+
+Next action:
+
+- run full `npm run test`,
+- commit and push P7-D,
+- close `#66` after CI.
