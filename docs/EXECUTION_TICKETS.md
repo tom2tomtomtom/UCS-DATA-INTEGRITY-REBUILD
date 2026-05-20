@@ -38,6 +38,14 @@ This file is the local mirror of the GitHub issue board. GitHub issues are the o
 | `#30` | P2-E: Development Source Row Browser Query Helpers |
 | `#31` | P2-F: Phase 2 Verification Gate and Ticket Closure |
 | `#32` | P2-G: Doctrine Review Gate for Source Archive |
+| `#33` | P3-A: Parser Fact Contracts and Warning Model |
+| `#34` | P3-B: Fee Sheet Parser Fixtures and Parser |
+| `#35` | P3-C: Pipeline Parser Fixtures and Parser |
+| `#36` | P3-D: Production Revenue Parser Fixtures and Parser |
+| `#37` | P3-E: Float Parser Fixtures and Parser |
+| `#38` | P3-F: Parser Fixture Manifest and Golden Parsed Fact Checks |
+| `#39` | P3-G: Phase 3 Verification Gate |
+| `#40` | P3-H: Doctrine Review Gate for Parsers |
 
 ## Implementation Ticket Rule
 
@@ -57,6 +65,8 @@ Phase 0 and Phase 1 currently have bounded implementation tickets. Later phase i
 Phase 1 screenshot recapture tickets `#23`, `#24`, and `#25` are follow-up evidence tickets. They do not block Phase 2 if their blockers are documented, because deterministic fixture screenshots depend on later display-contract and UI harness work.
 
 Phase 2 currently has bounded implementation tickets `#26` through `#32`. It must preserve raw source evidence only. It must not introduce parsers, display rows, product UI, live source pulls, applied migrations, deploys, sync, or source-system mutation.
+
+Phase 3 currently has bounded implementation tickets `#33` through `#40`. It may parse archived raw rows into parser facts, but it must not create canon queries, display rows, product UI, live source pulls, applied migrations, deploys, sync, or source-system mutation.
 
 ## Phase Tickets
 
@@ -545,3 +555,160 @@ Must prove:
 - no old dashboard selectors are used as truth,
 - no source-system mutation, sync, deploy, migration application, or live source pull happened,
 - tests cover zero-fee/nonzero-hour, TBC, archived, inactive, provisional, unmatched, duplicate, and literally empty rows.
+
+## Phase 3 Work Tickets
+
+Phase 3 turns archived raw source rows into parser facts. It must not create canon queries, display rows, product UI, live source pulls, applied migrations, deploys, sync, or source-system mutation.
+
+### P3-A: Parser Fact Contracts And Warning Model
+
+Issue: `#33`
+
+Owns:
+
+- `src/lib/parsers/types.ts`,
+- `src/lib/parsers/index.ts`,
+- `tests/parsers/parser-contracts.test.ts`,
+- `src/lib/index.ts` only for exports.
+
+Must prove:
+
+- every parsed fact requires raw row IDs and batch ID,
+- additive status is explicit and cannot default to true,
+- parser warnings preserve source refs,
+- parser contracts cannot contain display rows, totals, UI fields, or old selector output.
+
+### P3-B: Fee Sheet Parser Fixtures And Parser
+
+Issue: `#34`
+
+Owns:
+
+- `src/lib/parsers/fee-sheet.ts`,
+- `tests/parsers/fee-sheet-parser.test.ts`,
+- `fixtures/source-rows/fee-sheets/*`,
+- `fixtures/parsed-facts/fee-sheets/*`.
+
+Must prove:
+
+- first-tab Float ID is preserved,
+- CLIENT SUMMARY and V-tab rows survive separately,
+- zero-fee/nonzero-hour rows parse,
+- totals rows are not additive by default,
+- row-level office wins where available,
+- parser never creates display totals.
+
+### P3-C: Pipeline Parser Fixtures And Parser
+
+Issue: `#35`
+
+Owns:
+
+- `src/lib/parsers/pipeline.ts`,
+- `tests/parsers/pipeline-parser.test.ts`,
+- `fixtures/source-rows/pipeline/*`,
+- `fixtures/parsed-facts/pipeline/*`.
+
+Must prove:
+
+- TBC rows keep per-row identity,
+- non-empty no-job rows become facts with warning,
+- source project and client text are preserved,
+- department, role, and person are unsupported,
+- pipeline never becomes sold fee.
+
+### P3-D: Production Revenue Parser Fixtures And Parser
+
+Issue: `#36`
+
+Owns:
+
+- `src/lib/parsers/production-revenue.ts`,
+- `tests/parsers/production-revenue-parser.test.ts`,
+- `fixtures/source-rows/production-revenue/*`,
+- `fixtures/parsed-facts/production-revenue/*`.
+
+Must prove:
+
+- archived production revenue survives,
+- blank status becomes `UNKNOWN`,
+- status collisions warn without choosing a winner,
+- no-job revenue survives with attribution warning,
+- department and role attribution remains unsupported.
+
+### P3-E: Float Parser Fixtures And Parser
+
+Issue: `#37`
+
+Owns:
+
+- `src/lib/parsers/float.ts`,
+- `tests/parsers/float-parser.test.ts`,
+- `fixtures/source-rows/float/*`,
+- `fixtures/parsed-facts/float/*`.
+
+Must prove:
+
+- Float project, task, person, dates, and hours facts survive,
+- active/archive state and tentative flags survive,
+- allocated, unallocated, orphan, placeholder, and pencil classifications are represented,
+- duplicate/manual candidates survive,
+- multi-person split ambiguity is labelled,
+- parser does not correct Float joins or create dashboard hours.
+
+### P3-F: Parser Fixture Manifest And Golden Parsed Fact Checks
+
+Issue: `#38`
+
+Owns:
+
+- `fixtures/parsed-facts/manifest.json`,
+- `fixtures/parsed-facts/README.md`,
+- `tests/parsers/parser-fixture-manifest.test.ts`.
+
+Must prove:
+
+- every parser fixture has source rows, expected parsed facts, laws protected, and redaction status,
+- named regressions are covered or have an explicit `PROCESS_WARN`,
+- fixtures do not commit secrets or full private source sheets,
+- screenshots are not correctness proof.
+
+### P3-G: Phase 3 Verification Gate
+
+Issue: `#39`
+
+Owns:
+
+- `scripts/verify-phase3.mjs`,
+- `package.json`,
+- `docs/BUILD_LOG.md`,
+- `docs/EXECUTION_TICKETS.md`.
+
+Must prove:
+
+- `npm run verify:phase3` exists,
+- parser code does not build display rows,
+- parser code does not run live source pulls,
+- parser facts require raw row IDs,
+- `npm test`, `npm run typecheck`, `npm run verify:phase3`, `npm run build`, and `npm audit --omit=dev` pass.
+
+### P3-H: Doctrine Review Gate For Parsers
+
+Issue: `#40`
+
+Owns:
+
+- read-only review only.
+
+Must prove:
+
+- parsers consume archived raw rows,
+- every parsed fact carries raw row IDs and batch ID,
+- additive status is explicit,
+- CLIENT SUMMARY and V-tab disagreements survive,
+- zero-fee/nonzero-hour rows survive,
+- TBC pipeline rows preserve per-row identity,
+- archived production revenue survives,
+- Float active/archive/manual/duplicate/placeholder/pencil evidence survives,
+- parsers do not create display rows or dashboard totals,
+- no source-system mutation, sync, deploy, migration application, live source pull, or old selector truth happened.

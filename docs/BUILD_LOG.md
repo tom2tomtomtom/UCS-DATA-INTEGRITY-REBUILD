@@ -587,3 +587,51 @@ Verification to run:
 - `npm audit --omit=dev`,
 - `git diff --check`,
 - em dash/en dash scan.
+
+### Checkpoint: Phase 3 Ticketing Started
+
+Phase: 3
+
+Ticket: `#4`
+
+Status: ticketed, implementation not started
+
+What changed:
+
+- created bounded Phase 3 implementation tickets `#33` through `#40`,
+- mirrored Phase 3 implementation tickets into `docs/EXECUTION_TICKETS.md`.
+
+Worker split:
+
+- `#33` P3-A owns parser fact contracts and warning model,
+- `#34` P3-B owns fee-sheet parser and fixtures,
+- `#35` P3-C owns Pipeline parser and fixtures,
+- `#36` P3-D owns Production Revenue parser and fixtures,
+- `#37` P3-E owns Float parser and fixtures,
+- `#38` P3-F owns parser fixture manifest and golden parsed fact checks,
+- `#39` P3-G owns Phase 3 verification gate,
+- `#40` P3-H is read-only Doctrine Steward review.
+
+Phase boundary:
+
+- Phase 3 may parse archived raw rows into parser facts,
+- no canon queries,
+- no display aggregation,
+- no product UI,
+- no chat investigation tools,
+- no live source pulls,
+- no migrations applied,
+- no source-system mutation.
+
+Implementation discipline:
+
+- use test-driven development,
+- write failing parser tests before parser code,
+- every parsed fact must carry raw row IDs and batch ID,
+- additive status must be explicit,
+- stop if parser code starts building dashboard totals or display rows.
+
+Next action:
+
+- commit and push Phase 3 ticketing,
+- start P3-A before source-specific parsers.
