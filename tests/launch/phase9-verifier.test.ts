@@ -23,6 +23,8 @@ describe("P9-A phase 9 verifier wiring", () => {
     expect(script).toContain("tests/launch/health-readiness-routes.test.ts");
     expect(script).toContain("tests/launch/railway-target.test.ts");
     expect(script).toContain("tests/launch/railway-build-config.test.ts");
+    expect(script).toContain("tests/launch/final-acceptance-report.test.ts");
+    expect(script).toContain("docs/FINAL_ACCEPTANCE_REPORT.md");
     expect(script).toContain("railway.json");
     expect(script).toContain("HEALTH_ROUTE_MISSING");
     expect(script).toContain("READINESS_ROUTE_MISSING");

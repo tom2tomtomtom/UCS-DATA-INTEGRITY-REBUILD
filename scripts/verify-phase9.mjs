@@ -48,7 +48,9 @@ function checkRequiredFiles() {
     "tests/launch/health-readiness-routes.test.ts",
     "tests/launch/railway-target.test.ts",
     "tests/launch/railway-build-config.test.ts",
+    "tests/launch/final-acceptance-report.test.ts",
     "tests/launch/phase9-verifier.test.ts",
+    "docs/FINAL_ACCEPTANCE_REPORT.md",
     "railway.json",
     "scripts/launch-readiness-report.mjs",
     "scripts/lib/launch-readiness-report.mjs",
@@ -70,6 +72,8 @@ function checkLaunchReadinessMarkers() {
     "tests/launch/health-readiness-routes.test.ts",
     "tests/launch/railway-target.test.ts",
     "tests/launch/railway-build-config.test.ts",
+    "tests/launch/final-acceptance-report.test.ts",
+    "docs/FINAL_ACCEPTANCE_REPORT.md",
     "railway.json",
     "scripts/launch-readiness-report.mjs",
     "scripts/lib/launch-readiness-report.mjs",
@@ -98,6 +102,9 @@ function checkLaunchReadinessMarkers() {
     "FORBIDDEN_SCRIPT_SYNC",
     "RAILWAY_MUTATION_ALREADY_RUN",
     "NO_RAILWAY_MUTATION",
+    "Launch status: NOT READY",
+    "Railway staging: BLOCKED",
+    "RAILWAY_PROJECT_NOT_LINKED",
     "railway up",
     "supabase db push"
   ];

@@ -2514,3 +2514,27 @@ Boundary kept:
 - fixture screenshots are visual proof only,
 - no live source data or secrets are committed,
 - no source system mutation, sync, deployment, or migration was run.
+
+### Checkpoint: P9-F Acceptance Report Guard
+
+Phase: 9
+
+Ticket: `#82`
+
+Status: drafted as not-ready report, deploy evidence still blocked by `#81`
+
+What changed:
+
+- added `docs/FINAL_ACCEPTANCE_REPORT.md`,
+- recorded current launch status as `NOT READY`,
+- separated code/CI, Railway staging, live health, live readiness, source approval, and stakeholder approval,
+- listed current Railway blocker `RAILWAY_PROJECT_NOT_LINKED`,
+- guarded the report with `tests/launch/final-acceptance-report.test.ts`,
+- wired the report and its test into `scripts/verify-phase9.mjs`.
+
+Boundary kept:
+
+- no Railway project, service, variable, deployment, or domain mutation,
+- no source system mutation,
+- no secrets in the report,
+- `#82` remains open until staging deploy and live health/readiness evidence exist.
