@@ -187,3 +187,41 @@ Exit criteria:
 
 - all blocking gates pass,
 - remaining warnings are real source limitations or conflicts.
+
+## Phase 9.5: Legacy UI UX Parity Intake
+
+Deliverables:
+
+- old-site UI UX design spec intake,
+- preserve, improve, and forbid classifications,
+- screenshot parity requirements,
+- Playwright workflow parity requirements,
+- do-not-change list for signed-off UX,
+- explicit separation between source approval and UI approval.
+
+Exit criteria:
+
+- UI spec is converted into repo acceptance rules,
+- approved UX is preserved where lawful,
+- legacy behaviour that violates data laws is documented as do-not-preserve,
+- stakeholder UI approval remains blocked until parity proof exists.
+
+## Phase 10: Source Approval And Named Evidence
+
+Deliverables:
+
+- staging env readiness for all four source streams,
+- read-only source snapshot readiness report,
+- named Sian, Jade, and Yunni scenario evidence,
+- source to display contract to UI to CSV comparisons,
+- stakeholder approval pack,
+- no-cutover gate.
+
+Exit criteria:
+
+- source stream env blockers are resolved or explicitly accepted as blockers,
+- source snapshots are read-only and traceable,
+- all named scenario differences are classified,
+- source warnings are not flattened into success language,
+- Sian, Jade, and Yunni approval is explicit,
+- production cutover remains blocked until Phase 10 and Phase 9.5 both pass.

@@ -107,13 +107,35 @@ npm run build
 
 ## Gate 8: Launch
 
-Before telling anyone it is fixed:
+Before calling staging deployed:
 
 - GitHub main is current,
 - Railway deployment is success,
 - live app commit matches local commit,
 - Railway service is the rebuild service, not the old dashboard service,
 - production environment points at the new Supabase production database,
+- production domain is not cut over without approval.
+
+## Gate 9: Legacy UI UX Parity
+
+Before stakeholder UI approval:
+
+- old-site UI UX spec is ingested,
+- approved UX is separated from confusing legacy behaviour,
+- screenshots cover approved routes and named states,
+- Playwright workflows cover stakeholder click paths,
+- every UI deviation has owner approval,
+- no old UI behaviour is preserved if it violates immutable data laws.
+
+## Gate 10: Source Approval
+
+Before telling anyone the dashboard is accurate:
+
+- all four source streams are configured or explicitly blocked,
+- source snapshots are read-only and traceable,
 - Sian/Yunni/Jade named checks pass,
+- source to display contract to UI to CSV comparisons are complete,
 - remaining warnings are documented,
-- old app differences are classified.
+- old app differences are classified,
+- Sian, Jade, and Yunni approval is explicit,
+- production cutover remains blocked until Gate 9 and Gate 10 both pass.

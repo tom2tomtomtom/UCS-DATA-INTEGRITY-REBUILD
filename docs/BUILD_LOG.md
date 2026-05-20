@@ -2576,3 +2576,31 @@ Boundary kept:
 - no Supabase migrations,
 - no source-system mutation,
 - old dashboard remains rollback/reference until source and stakeholder approval.
+
+### Checkpoint: Phase 9.5 And Phase 10 Ticket Lane
+
+Phase: 9.5 and 10
+
+Tickets: `#83`, `#84`, `#85`, `#86`, `#87`, `#88`, `#89`
+
+Status: ticketed and scaffolded
+
+What changed:
+
+- added Phase 9.5 as the UI UX parity intake gate,
+- added Phase 10 as the source approval and named evidence gate,
+- created a safe source approval readiness report command,
+- documented that UI spec intake can wait while source readiness work continues,
+- kept production cutover blocked until both UI parity and source approval pass.
+
+Verification:
+
+- `npm test -- tests/launch/source-approval-readiness-report.test.ts`
+
+Boundary kept:
+
+- no UI redesign,
+- no source sync,
+- no source-system mutation,
+- no production environment or custom domain cutover,
+- no claim that source approval is complete.

@@ -80,6 +80,13 @@ This file is the local mirror of the GitHub issue board. GitHub issues are the o
 | `#80` | P9-D: Railway Build Configuration |
 | `#81` | P9-E: Staging Deploy And Post-Deploy Health |
 | `#82` | P9-F: Final Acceptance Report And Stakeholder Caveats |
+| `#83` | Phase 9.5: Legacy UI UX Parity Intake |
+| `#84` | P9.5-A: UI UX Spec Ingestion And Parity Freeze |
+| `#85` | Phase 10: Source Approval And Named Evidence |
+| `#86` | P10-A: Complete Staging Env For Four Source Streams |
+| `#87` | P10-B: Source Approval Readiness Report |
+| `#88` | P10-C: Named Sian Jade Yunni Evidence Pack |
+| `#89` | P10-D: Stakeholder Approval Pack And No-Cutover Gate |
 
 ## Implementation Ticket Rule
 
@@ -327,6 +334,69 @@ Phase 9 boundary:
 - production domain cutover is a separate approval after staging health is proven,
 - old DB remains legacy comparison only,
 - no scheduled source sync exists at first deploy.
+
+### Phase 9.5: Legacy UI UX Parity Intake
+
+Goal: turn Tom's old-site UI UX design spec into an acceptance contract without weakening the data laws.
+
+Deliverables:
+
+- UI spec intake document,
+- preserve, improve, and forbid classifications,
+- screenshot parity requirements,
+- Playwright workflow parity requirements,
+- do-not-change list.
+
+Exit criteria:
+
+- UI parity rules are repo-visible,
+- old confusing behaviour is not blindly preserved,
+- stakeholder UI approval stays blocked until parity proof exists.
+
+Phase 9.5 child ticket:
+
+- `#84` P9.5-A UI UX Spec Ingestion And Parity Freeze.
+
+Phase 9.5 boundary:
+
+- no redesign before the spec arrives,
+- no source approval claim from UI screenshots,
+- no data-law exception just to match old UI behaviour.
+
+### Phase 10: Source Approval And Named Evidence
+
+Goal: prove staging against source evidence before production cutover or stakeholder accuracy claims.
+
+Deliverables:
+
+- four-stream staging env readiness,
+- safe source approval readiness report,
+- named Sian, Jade, and Yunni evidence pack,
+- stakeholder approval pack,
+- no-cutover gate.
+
+Exit criteria:
+
+- source stream env blockers are resolved or documented,
+- read-only source snapshots exist,
+- named scenario differences are classified,
+- source warnings stay visible,
+- Sian, Jade, and Yunni approval status is explicit.
+
+Phase 10 child tickets:
+
+- `#86` P10-A Complete Staging Env For Four Source Streams,
+- `#87` P10-B Source Approval Readiness Report,
+- `#88` P10-C Named Sian Jade Yunni Evidence Pack,
+- `#89` P10-D Stakeholder Approval Pack And No-Cutover Gate.
+
+Phase 10 boundary:
+
+- no source mutations,
+- no old DB as rebuild truth,
+- no production Railway environment or custom domain cutover,
+- no scheduled sync,
+- no stakeholder-ready accuracy language while blockers remain.
 
 ## Phase 0 Work Tickets
 
