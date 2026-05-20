@@ -1197,3 +1197,47 @@ Next action:
 
 - commit and push Phase 6 ticketing,
 - start P6-A shell and verification gate before filling individual pages.
+
+### Checkpoint: P6-A Shell And Initial Phase 6 Gate
+
+Phase: 6
+
+Tickets: `#55`, partial `#60`
+
+Status: implemented locally, push-blocking verification passed, awaiting commit
+
+What changed:
+
+- added Next App Router root layout, dashboard route, and redirect from `/` to `/dashboard`,
+- added dashboard shell chrome with top bar, primary tabs, explicit scope strip, warning banner, and chat entry slot,
+- added deterministic fixture contract provider backed by `buildDashboardDisplayContract`,
+- added the first UI shell render test,
+- added `next.config.ts` to pin the workspace root for Next/Turbopack,
+- added initial `scripts/verify-phase6.mjs`,
+- rewired `npm run build` to `verify:phase6`,
+- updated GitHub CI to run the current build gate instead of the Phase 0 gate.
+
+TDD evidence:
+
+- red: UI shell test failed because `dashboard-chrome` and `fixture-contract` did not exist,
+- green: UI shell test passed after adding the chrome and fixture provider,
+- TypeScript caught the required `children` prop mismatch in the React render test, then passed after the prop was made optional,
+- `npm run verify:phase6` passed with 29 passed test files, 99 active tests, 85 todo tests, typecheck, Next production build, and Phase 6 shell verification.
+
+Boundary kept:
+
+- the UI shell reads a deterministic display contract fixture,
+- shell chrome does not calculate business totals,
+- no live source pulls,
+- no database calls,
+- no old dashboard selectors,
+- no migrations applied,
+- no deploys,
+- no sync,
+- no source-system mutation.
+
+Next action:
+
+- commit and push P6-A plus the initial Phase 6 gate,
+- close GitHub `#55`,
+- keep `#60` open until deterministic UI tests cover all required Phase 6 surfaces.

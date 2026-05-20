@@ -27,5 +27,5 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Run Phase 0 verification
-        run: npm run verify:phase0
+      - name: Run build gate
+        run: npm run build
