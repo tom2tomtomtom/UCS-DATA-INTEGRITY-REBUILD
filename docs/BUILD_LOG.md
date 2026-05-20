@@ -47,6 +47,47 @@ Next action:
 - close ticket `#71`,
 - start `#72` read-only source snapshot import using the new schema law as the boundary.
 
+### Checkpoint: Read-only Source Snapshot Import Added
+
+Phase: 8
+
+Ticket: `#72`
+
+Status: implemented, local verification passed
+
+What changed:
+
+- added a read-only snapshot import planner that turns snapshot files into source batches, raw source rows, skipped rows, and a dry-run report,
+- added deterministic raw row IDs and content hashes for imported snapshot evidence,
+- kept skipped rows constrained to literally empty rows through the existing source row classifier,
+- labelled legacy cache imports as `legacy_cache_imported_as_evidence_only`,
+- added a redacted snapshot fixture covering fee sheet, pipeline, Float, and old cache evidence rows,
+- added a dry-run source import script that emits classified counts without printing raw source payloads,
+- extended the Phase 8 verifier to protect source import files from live source calls, Supabase clients, SQL writes, and migration execution.
+
+Verification:
+
+- `npm test -- tests/source-import/snapshot-import.test.ts tests/source-import/phase8-source-import-verifier.test.ts` passed,
+- `npm run typecheck` passed,
+- `node scripts/verify-phase8.mjs` passed,
+- `npm test` passed with 51 files passed, 15 skipped, 165 tests passed, and 79 todo,
+- `npm run typecheck` passed again after the full suite,
+- `node scripts/verify-phase8.mjs` passed again after the full suite,
+- prior P8-B GitHub CI run `26178292449` completed successfully.
+
+Process notes:
+
+- the importer does not call Google, Float, Supabase, or the old dashboard DB,
+- the importer does not apply migrations or write database rows,
+- the dry-run report is a classification report only. It is not display truth.
+
+Next action:
+
+- run `npm run verify:phase8`,
+- commit and push P8-C,
+- close ticket `#72`,
+- start `#73` old vs new vs source dual-run comparator.
+
 ### Checkpoint: Overnight Control Started
 
 Phase: 0

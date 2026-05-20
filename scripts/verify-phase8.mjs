@@ -45,6 +45,12 @@ function checkRequiredFiles() {
     "tests/env/readiness.test.ts",
     "src/lib/schema/schema-law.ts",
     "tests/schema/schema-law-gate.test.ts",
+    "src/lib/source-import/snapshot-import.ts",
+    "tests/source-import/snapshot-import.test.ts",
+    "tests/source-import/phase8-source-import-verifier.test.ts",
+    "scripts/dry-run-source-import.mjs",
+    "scripts/lib/source-import-report.mjs",
+    "fixtures/source-import/p8c-redacted-snapshot.json",
     "supabase/config.toml"
   ];
 
@@ -54,6 +60,70 @@ function checkRequiredFiles() {
 
   const migrationPath = findInitialMigration();
   if (migrationPath === undefined) fail("Missing initial integrity schema migration.");
+}
+
+function checkSourceImportDoesNotCheat() {
+  const files = [
+    "src/lib/source-import/snapshot-import.ts",
+    "scripts/dry-run-source-import.mjs",
+    "scripts/lib/source-import-report.mjs"
+  ];
+
+  if (!files.every(exists)) return;
+
+  const combined = files.map(read).join("\n");
+  const forbiddenNeedles = [
+    "@supabase",
+    "createClient",
+    "googleapis",
+    "FLOAT_API_KEY",
+    "SUPABASE_SERVICE_ROLE_KEY",
+    "GOOGLE_SERVICE_ACCOUNT_KEY",
+    "fetch(",
+    "INSERT ",
+    "UPDATE ",
+    "DELETE ",
+    "db push",
+    "migration up"
+  ];
+
+  for (const needle of forbiddenNeedles) {
+    if (combined.includes(needle)) {
+      fail(`Phase 8 source import contains forbidden source or database mutation path: ${needle}`);
+    }
+  }
+}
+
+function checkSourceImportMarkers() {
+  const files = [
+    "src/lib/source-import/snapshot-import.ts",
+    "tests/source-import/snapshot-import.test.ts",
+    "scripts/dry-run-source-import.mjs",
+    "fixtures/source-import/p8c-redacted-snapshot.json"
+  ];
+
+  if (!files.every(exists)) return;
+
+  const combined = files.map(read).join("\n");
+  const requiredMarkers = [
+    "buildSourceSnapshotImportPlan",
+    "readOnly",
+    "Source row is missing stableSourceRowKey",
+    "legacy_cache_imported_as_evidence_only",
+    "legacy_cache_evidence_only",
+    "read_only_sql",
+    "manual_snapshot",
+    "legacy_import",
+    "dry-run-source-import",
+    "./lib/source-import-report.mjs",
+    "fixtures/source-import/p8c-redacted-snapshot.json"
+  ];
+
+  for (const marker of requiredMarkers) {
+    if (!combined.includes(marker)) {
+      fail(`Missing Phase 8 source import marker: ${marker}`);
+    }
+  }
 }
 
 function checkSchemaLawMarkers() {
@@ -133,6 +203,8 @@ function checkMigrationMarkers() {
 function run() {
   checkPackageScripts();
   checkRequiredFiles();
+  checkSourceImportDoesNotCheat();
+  checkSourceImportMarkers();
   checkSchemaLawMarkers();
   checkMigrationMarkers();
 

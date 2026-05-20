@@ -1,0 +1,89 @@
+{
+  "snapshotId": "p8c-redacted-snapshot",
+  "capturedAt": "2026-05-20T17:35:00.000Z",
+  "readOnly": true,
+  "sources": [
+    {
+      "source": "fee_sheet",
+      "mode": "manual_snapshot",
+      "sourceLabel": "Redacted fee sheet snapshot",
+      "rows": [
+        {
+          "identity": {
+            "stableSourceRowKey": "fee-sheet:UCS04787:client-summary:12",
+            "sourceDocumentId": "redacted-fee-sheet",
+            "sourceTab": "CLIENT SUMMARY",
+            "sourceRowNumber": 12
+          },
+          "raw": {
+            "jobNumber": "UCS04787",
+            "client": "British Airways",
+            "month": "2026-01",
+            "soldFee": 32472,
+            "soldHours": 0
+          }
+        }
+      ]
+    },
+    {
+      "source": "pipeline",
+      "mode": "manual_snapshot",
+      "sourceLabel": "Redacted pipeline snapshot",
+      "rows": [
+        {
+          "identity": {
+            "stableSourceRowKey": "pipeline:blank:88",
+            "sourceDocumentId": "redacted-pipeline",
+            "sourceTab": "Pipeline",
+            "sourceRowNumber": 88
+          },
+          "raw": {
+            "jobNumber": "",
+            "projectName": "",
+            "client": "",
+            "month": "",
+            "amount": ""
+          }
+        }
+      ]
+    },
+    {
+      "source": "float",
+      "mode": "manual_snapshot",
+      "sourceLabel": "Redacted Float task snapshot",
+      "rows": [
+        {
+          "identity": {
+            "stableSourceRowKey": "float-task:10480262:task-1",
+            "sourceObjectId": "10480262:task-1"
+          },
+          "raw": {
+            "floatProjectId": "10480262",
+            "taskId": "task-1",
+            "personId": "person-1",
+            "hours": 7.5,
+            "date": "2026-01-15"
+          }
+        }
+      ]
+    },
+    {
+      "source": "read_only_sql",
+      "mode": "legacy_import",
+      "sourceLabel": "Old dashboard diagnostic cache export",
+      "rows": [
+        {
+          "identity": {
+            "stableSourceRowKey": "legacy:float_allocations:PCS00250",
+            "sourceObjectId": "float_allocations:PCS00250"
+          },
+          "raw": {
+            "table": "float_allocations",
+            "jobNumber": "PCS00250",
+            "hours": 20
+          }
+        }
+      ]
+    }
+  ]
+}

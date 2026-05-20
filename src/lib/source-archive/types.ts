@@ -18,7 +18,7 @@ export type SourceArchiveMode =
   | "manual_snapshot"
   | "backfill";
 
-export type SourceArchiveBatchStatus = "running" | "success" | "partial" | "failed";
+export type SourceArchiveBatchStatus = "running" | "success" | "partial" | "failed" | "cancelled";
 
 export type SourceArchiveBatch = {
   readonly id: string;
@@ -31,6 +31,7 @@ export type SourceArchiveBatch = {
   readonly sourceVersion?: string;
   readonly readOnly: true;
   readonly warnings: readonly string[];
+  readonly metadata?: Readonly<Record<string, unknown>>;
 };
 
 export type SourceRowIdentity = {
