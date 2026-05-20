@@ -39,7 +39,53 @@ Output folder: `/Users/tommyhyde/UCS-DATA-INTEGRITY-REBUILD/reference/ui/current
 | `2026-05-20_projects_ldn_q1_design.png` | `/dashboard/projects?office=LDN&from=2026-01-01&to=2026-03-31&department=design` | LDN Q1 Design | Projects drilldown filtered by department | live | Horizontal overflow, active filter chip visible | Covers Sian LDN Q1 Design Projects drilldown |
 | `2026-05-20_projects_search_ucs04787.png` | `/dashboard/projects?office=LDN&from=2026-01-01&to=2026-12-31&search=UCS04787` | LDN FY2026 search | search filtering | live | Audit warning banner visible | Covers named UCS04787 Projects table/search access |
 
-## Blockers
+## Long-Timeout Recapture Addendum
+
+Capture date: 2026-05-20 UTC
+
+Method: isolated Playwright browser context per route, 1440 x 1000 viewport, full-page screenshots, server-side `E2E_AUTH_BYPASS=1`, old app served from `http://localhost:3001`.
+
+Reports:
+
+- `2026-05-20_p1g_project_detail_capture_report.json`
+- `2026-05-20_p1h_float_diagnostics_capture_report.json`
+
+### P1-G Project Detail And Named Scenario Captures
+
+| File | Route | HTTP | State | Image size | Notes |
+|---|---|---:|---|---|---|
+| `2026-05-20_p1g_project_ucs04889_ldn_q1_design.png` | `/dashboard/projects/UCS04889?office=LDN&from=2026-01-01&to=2026-03-31&department=design` | 200 | scoped project detail | 1440 x 4176 | Captures Sian LDN Q1 Design project-detail click target. |
+| `2026-05-20_p1g_project_ucs04787_ldn_fy.png` | `/dashboard/projects/UCS04787?office=LDN&from=2026-01-01&to=2026-12-31` | 200 | named project detail | 1440 x 11092 | Captures UCS04787 detail page for Float mismatch visual reference. |
+| `2026-05-20_p1g_project_ucs05186_ldn_fy.png` | `/dashboard/projects/UCS05186?office=LDN&from=2026-01-01&to=2026-12-31` | 200 | named project detail | 1440 x 4697 | Captures UCS05186 duplicate/manual Float scenario page. |
+| `2026-05-20_p1g_project_ucs04154_ldn_fy.png` | `/dashboard/projects/UCS04154?office=LDN&from=2026-01-01&to=2026-12-31` | 200 | named project detail | 1440 x 5855 | Captures UCS04154 fee-sheet Float ID join scenario page. |
+| `2026-05-20_p1g_project_pcs00250_ldn_fy.png` | `/dashboard/projects/PCS00250?office=LDN&from=2026-01-01&to=2026-12-31` | 404 | unavailable project detail | 1440 x 1000 | Evidence that old app did not expose this project detail route in this scope, despite the Float warning existing elsewhere. |
+| `2026-05-20_p1g_project_usa00262_usa_fy.png` | `/dashboard/projects/USA00262?office=USA&from=2026-01-01&to=2026-12-31` | 200 | named USA project detail | 1440 x 13595 | Captures USA00262 false-zero sold-hours guard visual reference. |
+| `2026-05-20_p1g_project_usa00323_usa_fy.png` | `/dashboard/projects/USA00323?office=USA&from=2026-01-01&to=2026-12-31` | 200 | named USA project detail | 1440 x 12578 | Captures USA00323 false-zero sold-hours guard visual reference. |
+
+### P1-H Float And Diagnostic Route Captures
+
+| File | Route | HTTP | State | Image size | Notes |
+|---|---|---:|---|---|---|
+| `2026-05-20_p1h_float_overview_ldn_q1.png` | `/dashboard/float?office=LDN&from=2026-01-01&to=2026-03-31` | 200 | Float overview | 1440 x 17034 | Captures raw/cache/visible Float diagnostics overview shape. |
+| `2026-05-20_p1h_float_10979146.png` | `/dashboard/float/10979146` | 200 | Float trace | 1440 x 9516 | Captures named Float trace detail. |
+| `2026-05-20_p1h_float_11413292.png` | `/dashboard/float/11413292` | 200 | Float trace | 1440 x 2851 | Captures named Float trace detail. |
+| `2026-05-20_p1h_float_10480262.png` | `/dashboard/float/10480262` | 200 | Float trace | 1440 x 4325 | Captures UCS04154 fee-sheet-linked Float trace. |
+| `2026-05-20_p1h_float_11330982.png` | `/dashboard/float/11330982` | 404 | unavailable Float trace | 1440 x 1000 | Evidence that old app did not expose this Float trace route even though PCS00250 warning existed in the Float overview. |
+| `2026-05-20_p1h_data_quality.png` | `/dashboard/data-quality` | 200 | Data Quality | 1440 x 44245 | Very tall source-problem hub reference. Do not preserve excessive height as a design target. |
+| `2026-05-20_p1h_approval.png` | `/dashboard/approval` | 200 | Approval Audit | 1440 x 11572 | Captures approval gate language and layout. |
+| `2026-05-20_p1h_audit.png` | `/dashboard/audit` | 200 | Sync Audit | 1440 x 1421 | Captures admin sync audit route. |
+| `2026-05-20_p1h_diagnostics.png` | `/dashboard/diagnostics` | 200 | Parser Diagnostics | 1440 x 1000 | Captures diagnostics route. |
+| `2026-05-20_p1h_integrity.png` | `/dashboard/integrity` | 200 | Data Integrity | 1440 x 15883 | Captures integrity report route. |
+| `2026-05-20_p1h_chase.png` | `/dashboard/chase` | 200 | Chase List | 1440 x 3644 | Captures standalone chase route. |
+| `2026-05-20_p1h_readiness.png` | `/dashboard/readiness` | 200 | Data Readiness | 1440 x 1531 | Captures readiness route. |
+| `2026-05-20_p1h_glossary.png` | `/dashboard/glossary` | 200 | Glossary | 1440 x 2064 | Captures glossary route. |
+| `2026-05-20_p1h_admin_sync_warnings.png` | `/dashboard/admin/sync-warnings` | 200 | Admin Sync Warnings | 1440 x 1253 | Captures admin sync warnings route under auth bypass. |
+| `2026-05-20_p1h_admin_timeoffs.png` | `/dashboard/admin/timeoffs` | 200 | Admin Timeoffs | 1440 x 2368 | Captures capacity-reduced route under auth bypass. |
+| `2026-05-20_p1h_users.png` | `/dashboard/users` | 200 | Users | 1440 x 1000 | Captures users route under auth bypass. |
+
+## Original First-Batch Blockers
+
+These blockers are preserved as history from the first capture batch. Items covered in the long-timeout recapture addendum above are no longer open screenshot blockers, except where the recapture intentionally recorded an unavailable state such as HTTP 404.
 
 | Route / Scenario | Scope | State Requested | Blocker |
 |---|---|---|---|

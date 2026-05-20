@@ -515,6 +515,61 @@ Next action:
 - stage, secret-scan, commit, push,
 - close `#80` after CI.
 
+### Checkpoint: P1-G And P1-H Screenshot Recaptures
+
+Phase: 1 follow-up evidence
+
+Tickets: `#23`, `#24`
+
+Status: captured, local verification pending
+
+What changed:
+
+- recaptured long-timeout project-detail routes from the old dashboard,
+- recaptured Float and diagnostic/admin routes from the old dashboard,
+- added two capture reports under `reference/ui/current-app`,
+- updated the current-app screenshot manifest,
+- updated the Phase 1 screenshot coverage plan with the new evidence.
+
+Capture environment:
+
+- old app repo: `/Users/tommyhyde/ucs-commercial-dashboard`,
+- old app URL: `http://localhost:3001`,
+- auth mode: server-side `E2E_AUTH_BYPASS=1`,
+- viewport: 1440 x 1000,
+- method: isolated Playwright browser context per route,
+- data mode: live old dashboard read-only rendering.
+
+Captured project-detail evidence:
+
+- `UCS04889` LDN Q1 Design detail, HTTP 200,
+- `UCS04787` LDN FY detail, HTTP 200,
+- `UCS05186` LDN FY detail, HTTP 200,
+- `UCS04154` LDN FY detail, HTTP 200,
+- `PCS00250` LDN FY unavailable state, HTTP 404,
+- `USA00262` USA FY detail, HTTP 200,
+- `USA00323` USA FY detail, HTTP 200.
+
+Captured Float and diagnostic evidence:
+
+- Float overview LDN Q1, HTTP 200,
+- Float traces `10979146`, `11413292`, and `10480262`, HTTP 200,
+- Float trace `11330982` unavailable state, HTTP 404,
+- Data Quality, Approval Audit, Sync Audit, Parser Diagnostics, Data Integrity, Chase, Readiness, Glossary, admin sync warnings, admin timeoffs, and Users routes, HTTP 200.
+
+Boundary kept:
+
+- no old app source edits,
+- no source-system mutation,
+- no DB migration,
+- no Railway deploy,
+- no source sync,
+- screenshots are visual reference only and not correctness proof.
+
+Remaining screenshot work:
+
+- `#25` deterministic fixture states remain open for unsupported-not-zero, row variants, exact client drilldown, Float export compare, chat states, TBC identity, archived production revenue, and false-zero guard fixtures.
+
 ### Checkpoint: Overnight Control Started
 
 Phase: 0

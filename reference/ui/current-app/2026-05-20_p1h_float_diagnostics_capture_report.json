@@ -1,0 +1,168 @@
+{
+  "capturedAt": "2026-05-20T19:41:06.035Z",
+  "base": "http://localhost:3001",
+  "viewport": "1440x1000",
+  "timeoutMs": 210000,
+  "results": [
+    {
+      "file": "2026-05-20_p1h_float_overview_ldn_q1.png",
+      "route": "/dashboard/float?office=LDN&from=2026-01-01&to=2026-03-31",
+      "status": "captured",
+      "httpStatus": 200,
+      "started": "2026-05-20T19:35:08.174Z",
+      "completed": "2026-05-20T19:35:26.750Z",
+      "title": "Float | UCS Dashboard",
+      "bodySample": "OFFICE\nAll\nLDN\nUCX\nUSA\nClear all filters\ne2e@example.com\nSync Now\nAsk AI\nDepartment Rollup\nProjects\nFloat\nApproval Audit\nData Quality187\nGlossary\nSync Audit\nSync Warnings\nCapacity Reduced\nUsers\n⚠\n3 issues found in last sync\n(56m ago)\nView details\nThe dashboard has several data quality issues that need attention this week. The most significant problem is that £1.4 million in production revenue across 184 rows isn't linking to actual projects, which is why you're seeing phantom 'Production' entrie"
+    },
+    {
+      "file": "2026-05-20_p1h_float_10979146.png",
+      "route": "/dashboard/float/10979146",
+      "status": "captured",
+      "httpStatus": 200,
+      "started": "2026-05-20T19:35:26.891Z",
+      "completed": "2026-05-20T19:35:50.143Z",
+      "title": "Float 10979146 | UCS Dashboard",
+      "bodySample": "OFFICE\nAll\nLDN\nUCX\nUSA\nClear all filters\ne2e@example.com\nSync Now\nAsk AI\nDepartment Rollup\nProjects\nFloat\nApproval Audit\nData Quality234\nGlossary\nSync Audit\nSync Warnings\nCapacity Reduced\nUsers\n⚠\n3 issues found in last sync\n(56m ago)\nView details\nThe dashboard has several data quality issues that need attention this week. The most significant problem is that £1.4 million in production revenue across 184 rows isn't linking to actual projects, which is why you're seeing phantom 'Production' entrie"
+    },
+    {
+      "file": "2026-05-20_p1h_float_11413292.png",
+      "route": "/dashboard/float/11413292",
+      "status": "captured",
+      "httpStatus": 200,
+      "started": "2026-05-20T19:35:50.286Z",
+      "completed": "2026-05-20T19:35:59.083Z",
+      "title": "Float 11413292 | UCS Dashboard",
+      "bodySample": "OFFICE\nAll\nLDN\nUCX\nUSA\nClear all filters\ne2e@example.com\nSync Now\nAsk AI\nDepartment Rollup\nProjects\nFloat\nApproval Audit\nData Quality234\nGlossary\nSync Audit\nSync Warnings\nCapacity Reduced\nUsers\n⚠\n3 issues found in last sync\n(56m ago)\nView details\nThe dashboard has several data quality issues that need attention this week. The most significant problem is that £1.4 million in production revenue across 184 rows isn't linking to actual projects, which is why you're seeing phantom 'Production' entrie"
+    },
+    {
+      "file": "2026-05-20_p1h_float_10480262.png",
+      "route": "/dashboard/float/10480262",
+      "status": "captured",
+      "httpStatus": 200,
+      "started": "2026-05-20T19:35:59.818Z",
+      "completed": "2026-05-20T19:36:09.871Z",
+      "title": "Float 10480262 | UCS Dashboard",
+      "bodySample": "OFFICE\nAll\nLDN\nUCX\nUSA\nClear all filters\ne2e@example.com\nSync Now\nAsk AI\nDepartment Rollup\nProjects\nFloat\nApproval Audit\nData Quality234\nGlossary\nSync Audit\nSync Warnings\nCapacity Reduced\nUsers\n⚠\n3 issues found in last sync\n(56m ago)\nView details\nThe dashboard has several data quality issues that need attention this week. The most significant problem is that £1.4 million in production revenue across 184 rows isn't linking to actual projects, which is why you're seeing phantom 'Production' entrie"
+    },
+    {
+      "file": "2026-05-20_p1h_float_11330982.png",
+      "route": "/dashboard/float/11330982",
+      "status": "captured",
+      "httpStatus": 404,
+      "started": "2026-05-20T19:36:10.992Z",
+      "completed": "2026-05-20T19:36:17.800Z",
+      "title": "404: This page could not be found.",
+      "bodySample": "404\nThis page could not be found."
+    },
+    {
+      "file": "2026-05-20_p1h_data_quality.png",
+      "route": "/dashboard/data-quality",
+      "status": "captured",
+      "httpStatus": 200,
+      "started": "2026-05-20T19:36:17.986Z",
+      "completed": "2026-05-20T19:36:47.949Z",
+      "title": "Data Quality | UCS Dashboard",
+      "bodySample": "OFFICE\nAll\nLDN\nUCX\nUSA\nClear all filters\ne2e@example.com\nSync Now\nAsk AI\nDepartment Rollup\nProjects\nFloat\nApproval Audit\nData Quality234\nGlossary\nSync Audit\nSync Warnings\nCapacity Reduced\nUsers\n⚠\n3 issues found in last sync\n(57m ago)\nView details\nThe dashboard has several data quality issues that need attention this week. The most significant problem is that £1.4 million in production revenue across 184 rows isn't linking to actual projects, which is why you're seeing phantom 'Production' entrie"
+    },
+    {
+      "file": "2026-05-20_p1h_approval.png",
+      "route": "/dashboard/approval",
+      "status": "captured",
+      "httpStatus": 200,
+      "started": "2026-05-20T19:36:48.420Z",
+      "completed": "2026-05-20T19:38:53.515Z",
+      "title": "Approval Audit | UCS Dashboard",
+      "bodySample": "OFFICE\nAll\nLDN\nUCX\nUSA\nClear all filters\ne2e@example.com\nSync Now\nAsk AI\nDepartment Rollup\nProjects\nFloat\nApproval Audit\nData Quality234\nGlossary\nSync Audit\nSync Warnings\nCapacity Reduced\nUsers\n⚠\n3 issues found in last sync\n(59m ago)\nView details\nThe dashboard has several data quality issues that need attention this week. The most significant problem is that £1.4 million in production revenue across 184 rows isn't linking to actual projects, which is why you're seeing phantom 'Production' entrie"
+    },
+    {
+      "file": "2026-05-20_p1h_audit.png",
+      "route": "/dashboard/audit",
+      "status": "captured",
+      "httpStatus": 200,
+      "started": "2026-05-20T19:38:54.056Z",
+      "completed": "2026-05-20T19:38:59.237Z",
+      "title": "Sync Audit | UCS Dashboard",
+      "bodySample": "OFFICE\nAll\nLDN\nUCX\nUSA\nClear all filters\ne2e@example.com\nSync Now\nAsk AI\nDepartment Rollup\nProjects\nFloat\nApproval Audit\nData Quality234\nGlossary\nSync Audit\nSync Warnings\nCapacity Reduced\nUsers\n⚠\n3 issues found in last sync\n(59m ago)\nView details\nThe dashboard has several data quality issues that need attention this week. The most significant problem is that £1.4 million in production revenue across 184 rows isn't linking to actual projects, which is why you're seeing phantom 'Production' entrie"
+    },
+    {
+      "file": "2026-05-20_p1h_diagnostics.png",
+      "route": "/dashboard/diagnostics",
+      "status": "captured",
+      "httpStatus": 200,
+      "started": "2026-05-20T19:38:59.350Z",
+      "completed": "2026-05-20T19:39:05.139Z",
+      "title": "Parser Diagnostics | UCS Dashboard",
+      "bodySample": "OFFICE\nAll\nLDN\nUCX\nUSA\nClear all filters\ne2e@example.com\nSync Now\nAsk AI\nDepartment Rollup\nProjects\nFloat\nApproval Audit\nData Quality234\nGlossary\nSync Audit\nSync Warnings\nCapacity Reduced\nUsers\n⚠\n3 issues found in last sync\n(59m ago)\nView details\nThe dashboard has several data quality issues that need attention this week. The most significant problem is that £1.4 million in production revenue across 184 rows isn't linking to actual projects, which is why you're seeing phantom 'Production' entrie"
+    },
+    {
+      "file": "2026-05-20_p1h_integrity.png",
+      "route": "/dashboard/integrity",
+      "status": "captured",
+      "httpStatus": 200,
+      "started": "2026-05-20T19:39:05.251Z",
+      "completed": "2026-05-20T19:39:26.218Z",
+      "title": "Data Integrity | UCS Dashboard",
+      "bodySample": "OFFICE\nAll\nLDN\nUCX\nUSA\nClear all filters\ne2e@example.com\nSync Now\nAsk AI\nDepartment Rollup\nProjects\nFloat\nApproval Audit\nData Quality234\nGlossary\nSync Audit\nSync Warnings\nCapacity Reduced\nUsers\n⚠\n3 issues found in last sync\n(1h ago)\nView details\nThe dashboard has several data quality issues that need attention this week. The most significant problem is that £1.4 million in production revenue across 184 rows isn't linking to actual projects, which is why you're seeing phantom 'Production' entries"
+    },
+    {
+      "file": "2026-05-20_p1h_chase.png",
+      "route": "/dashboard/chase",
+      "status": "captured",
+      "httpStatus": 200,
+      "started": "2026-05-20T19:39:26.587Z",
+      "completed": "2026-05-20T19:39:41.272Z",
+      "title": "Chase List | UCS Dashboard",
+      "bodySample": "OFFICE\nAll\nLDN\nUCX\nUSA\nClear all filters\ne2e@example.com\nSync Now\nAsk AI\nDepartment Rollup\nProjects\nFloat\nApproval Audit\nData Quality234\nGlossary\nSync Audit\nSync Warnings\nCapacity Reduced\nUsers\n⚠\n3 issues found in last sync\n(1h ago)\nView details\nThe dashboard has several data quality issues that need attention this week. The most significant problem is that £1.4 million in production revenue across 184 rows isn't linking to actual projects, which is why you're seeing phantom 'Production' entries"
+    },
+    {
+      "file": "2026-05-20_p1h_readiness.png",
+      "route": "/dashboard/readiness",
+      "status": "captured",
+      "httpStatus": 200,
+      "started": "2026-05-20T19:39:41.955Z",
+      "completed": "2026-05-20T19:40:05.944Z",
+      "title": "Data Readiness | UCS Dashboard",
+      "bodySample": "OFFICE\nAll\nLDN\nUCX\nUSA\nClear all filters\ne2e@example.com\nSync Now\nAsk AI\nDepartment Rollup\nProjects\nFloat\nApproval Audit\nData Quality234\nGlossary\nSync Audit\nSync Warnings\nCapacity Reduced\nUsers\n⚠\n3 issues found in last sync\n(1h ago)\nView details\nThe dashboard has several data quality issues that need attention this week. The most significant problem is that £1.4 million in production revenue across 184 rows isn't linking to actual projects, which is why you're seeing phantom 'Production' entries"
+    },
+    {
+      "file": "2026-05-20_p1h_glossary.png",
+      "route": "/dashboard/glossary",
+      "status": "captured",
+      "httpStatus": 200,
+      "started": "2026-05-20T19:40:06.081Z",
+      "completed": "2026-05-20T19:40:18.522Z",
+      "title": "Glossary | UCS Dashboard",
+      "bodySample": "OFFICE\nAll\nLDN\nUCX\nUSA\nClear all filters\ne2e@example.com\nSync Now\nAsk AI\nDepartment Rollup\nProjects\nFloat\nApproval Audit\nData Quality234\nGlossary\nSync Audit\nSync Warnings\nCapacity Reduced\nUsers\n⚠\n3 issues found in last sync\n(1h ago)\nView details\nThe dashboard has several data quality issues that need attention this week. The most significant problem is that £1.4 million in production revenue across 184 rows isn't linking to actual projects, which is why you're seeing phantom 'Production' entries"
+    },
+    {
+      "file": "2026-05-20_p1h_admin_sync_warnings.png",
+      "route": "/dashboard/admin/sync-warnings",
+      "status": "captured",
+      "httpStatus": 200,
+      "started": "2026-05-20T19:40:18.821Z",
+      "completed": "2026-05-20T19:40:37.594Z",
+      "title": "Sync Warnings | UCS Dashboard",
+      "bodySample": "OFFICE\nAll\nLDN\nUCX\nUSA\nClear all filters\ne2e@example.com\nSync Now\nAsk AI\nDepartment Rollup\nProjects\nFloat\nApproval Audit\nData Quality234\nGlossary\nSync Audit\nSync Warnings\nCapacity Reduced\nUsers\n⚠\n3 issues found in last sync\n(1h ago)\nView details\nThe dashboard has several data quality issues that need attention this week. The most significant problem is that £1.4 million in production revenue across 184 rows isn't linking to actual projects, which is why you're seeing phantom 'Production' entries"
+    },
+    {
+      "file": "2026-05-20_p1h_admin_timeoffs.png",
+      "route": "/dashboard/admin/timeoffs",
+      "status": "captured",
+      "httpStatus": 200,
+      "started": "2026-05-20T19:40:37.737Z",
+      "completed": "2026-05-20T19:40:52.519Z",
+      "title": "Capacity Reduced (Timeoffs) | UCS Dashboard",
+      "bodySample": "OFFICE\nAll\nLDN\nUCX\nUSA\nClear all filters\ne2e@example.com\nSync Now\nAsk AI\nDepartment Rollup\nProjects\nFloat\nApproval Audit\nData Quality234\nGlossary\nSync Audit\nSync Warnings\nCapacity Reduced\nUsers\n⚠\n3 issues found in last sync\n(1h ago)\nView details\nThe dashboard has several data quality issues that need attention this week. The most significant problem is that £1.4 million in production revenue across 184 rows isn't linking to actual projects, which is why you're seeing phantom 'Production' entries"
+    },
+    {
+      "file": "2026-05-20_p1h_users.png",
+      "route": "/dashboard/users",
+      "status": "captured",
+      "httpStatus": 200,
+      "started": "2026-05-20T19:40:52.818Z",
+      "completed": "2026-05-20T19:41:05.288Z",
+      "title": "Users | UCS Dashboard",
+      "bodySample": "OFFICE\nAll\nLDN\nUCX\nUSA\nClear all filters\ne2e@example.com\nSync Now\nAsk AI\nDepartment Rollup\nProjects\nFloat\nApproval Audit\nData Quality234\nGlossary\nSync Audit\nSync Warnings\nCapacity Reduced\nUsers\n⚠\n3 issues found in last sync\n(1h ago)\nView details\nThe dashboard has several data quality issues that need attention this week. The most significant problem is that £1.4 million in production revenue across 184 rows isn't linking to actual projects, which is why you're seeing phantom 'Production' entries"
+    }
+  ]
+}

@@ -1,0 +1,78 @@
+{
+  "capturedAt": "2026-05-20T19:34:33.376Z",
+  "base": "http://localhost:3001",
+  "viewport": "1440x1000",
+  "timeoutMs": 240000,
+  "results": [
+    {
+      "file": "2026-05-20_p1g_project_ucs04889_ldn_q1_design.png",
+      "route": "/dashboard/projects/UCS04889?office=LDN&from=2026-01-01&to=2026-03-31&department=design",
+      "status": "captured",
+      "httpStatus": 200,
+      "started": "2026-05-20T19:32:45.172Z",
+      "completed": "2026-05-20T19:33:05.357Z",
+      "title": "Project UCS04889 | UCS Dashboard",
+      "bodySample": "OFFICE\nAll\nLDN\nUCX\nUSA\nClear all filters\ne2e@example.com\nSync Now\nAsk AI\nDepartment Rollup\nProjects\nFloat\nApproval Audit\nData Quality187\nGlossary\nSync Audit\nSync Warnings\nCapacity Reduced\nUsers\n⚠\n3 issues found in last sync\n(53m ago)\nView details\nThe dashboard has several data quality issues that need attention this week. The most significant problem is that £1.4 million in production revenue across 184 rows isn't linking to actual projects, which is why you're seeing phantom 'Production' entrie"
+    },
+    {
+      "file": "2026-05-20_p1g_project_ucs04787_ldn_fy.png",
+      "route": "/dashboard/projects/UCS04787?office=LDN&from=2026-01-01&to=2026-12-31",
+      "status": "captured",
+      "httpStatus": 200,
+      "started": "2026-05-20T19:33:05.507Z",
+      "completed": "2026-05-20T19:33:24.457Z",
+      "title": "Project UCS04787 | UCS Dashboard",
+      "bodySample": "OFFICE\nAll\nLDN\nUCX\nUSA\nClear all filters\ne2e@example.com\nSync Now\nAsk AI\nDepartment Rollup\nProjects\nFloat\nApproval Audit\nData Quality187\nGlossary\nSync Audit\nSync Warnings\nCapacity Reduced\nUsers\n⚠\n3 issues found in last sync\n(54m ago)\nView details\nThe dashboard has several data quality issues that need attention this week. The most significant problem is that £1.4 million in production revenue across 184 rows isn't linking to actual projects, which is why you're seeing phantom 'Production' entrie"
+    },
+    {
+      "file": "2026-05-20_p1g_project_ucs05186_ldn_fy.png",
+      "route": "/dashboard/projects/UCS05186?office=LDN&from=2026-01-01&to=2026-12-31",
+      "status": "captured",
+      "httpStatus": 200,
+      "started": "2026-05-20T19:33:24.563Z",
+      "completed": "2026-05-20T19:33:37.412Z",
+      "title": "Project UCS05186 | UCS Dashboard",
+      "bodySample": "OFFICE\nAll\nLDN\nUCX\nUSA\nClear all filters\ne2e@example.com\nSync Now\nAsk AI\nDepartment Rollup\nProjects\nFloat\nApproval Audit\nData Quality187\nGlossary\nSync Audit\nSync Warnings\nCapacity Reduced\nUsers\n⚠\n3 issues found in last sync\n(54m ago)\nView details\nThe dashboard has several data quality issues that need attention this week. The most significant problem is that £1.4 million in production revenue across 184 rows isn't linking to actual projects, which is why you're seeing phantom 'Production' entrie"
+    },
+    {
+      "file": "2026-05-20_p1g_project_ucs04154_ldn_fy.png",
+      "route": "/dashboard/projects/UCS04154?office=LDN&from=2026-01-01&to=2026-12-31",
+      "status": "captured",
+      "httpStatus": 200,
+      "started": "2026-05-20T19:33:37.526Z",
+      "completed": "2026-05-20T19:33:51.423Z",
+      "title": "Project UCS04154 | UCS Dashboard",
+      "bodySample": "OFFICE\nAll\nLDN\nUCX\nUSA\nClear all filters\ne2e@example.com\nSync Now\nAsk AI\nDepartment Rollup\nProjects\nFloat\nApproval Audit\nData Quality187\nGlossary\nSync Audit\nSync Warnings\nCapacity Reduced\nUsers\n⚠\n3 issues found in last sync\n(54m ago)\nView details\nThe dashboard has several data quality issues that need attention this week. The most significant problem is that £1.4 million in production revenue across 184 rows isn't linking to actual projects, which is why you're seeing phantom 'Production' entrie"
+    },
+    {
+      "file": "2026-05-20_p1g_project_pcs00250_ldn_fy.png",
+      "route": "/dashboard/projects/PCS00250?office=LDN&from=2026-01-01&to=2026-12-31",
+      "status": "captured",
+      "httpStatus": 404,
+      "started": "2026-05-20T19:33:51.546Z",
+      "completed": "2026-05-20T19:34:01.461Z",
+      "title": "404: This page could not be found.",
+      "bodySample": "404\nThis page could not be found."
+    },
+    {
+      "file": "2026-05-20_p1g_project_usa00262_usa_fy.png",
+      "route": "/dashboard/projects/USA00262?office=USA&from=2026-01-01&to=2026-12-31",
+      "status": "captured",
+      "httpStatus": 200,
+      "started": "2026-05-20T19:34:01.593Z",
+      "completed": "2026-05-20T19:34:16.540Z",
+      "title": "Project USA00262 | UCS Dashboard",
+      "bodySample": "OFFICE\nAll\nLDN\nUCX\nUSA\nClear all filters\ne2e@example.com\nSync Now\nAsk AI\nDepartment Rollup\nProjects\nFloat\nApproval Audit\nData Quality28\nGlossary\nSync Audit\nSync Warnings\nCapacity Reduced\nUsers\n⚠\n3 issues found in last sync\n(54m ago)\nView details\nThe dashboard has several data quality issues that need attention this week. The most significant problem is that £1.4 million in production revenue across 184 rows isn't linking to actual projects, which is why you're seeing phantom 'Production' entries"
+    },
+    {
+      "file": "2026-05-20_p1g_project_usa00323_usa_fy.png",
+      "route": "/dashboard/projects/USA00323?office=USA&from=2026-01-01&to=2026-12-31",
+      "status": "captured",
+      "httpStatus": 200,
+      "started": "2026-05-20T19:34:16.673Z",
+      "completed": "2026-05-20T19:34:33.285Z",
+      "title": "Project USA00323 | UCS Dashboard",
+      "bodySample": "OFFICE\nAll\nLDN\nUCX\nUSA\nClear all filters\ne2e@example.com\nSync Now\nAsk AI\nDepartment Rollup\nProjects\nFloat\nApproval Audit\nData Quality28\nGlossary\nSync Audit\nSync Warnings\nCapacity Reduced\nUsers\n⚠\n3 issues found in last sync\n(55m ago)\nView details\nThe dashboard has several data quality issues that need attention this week. The most significant problem is that £1.4 million in production revenue across 184 rows isn't linking to actual projects, which is why you're seeing phantom 'Production' entries"
+    }
+  ]
+}

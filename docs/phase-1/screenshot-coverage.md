@@ -33,7 +33,55 @@ Manifest metadata to preserve with the set:
 | Data mode | live Supabase data via transaction-pooler override |
 | Primary viewport | 1440 x 1000 full-page screenshots |
 
+## Follow-Up Capture Update
+
+Tickets updated: GitHub `#23` and `#24`.
+
+On 2026-05-20 UTC, the slow routes were recaptured one route family at a time with isolated Playwright browser contexts, 1440 x 1000 viewport, full-page screenshots, and long timeouts.
+
+New report files:
+
+- `reference/ui/current-app/2026-05-20_p1g_project_detail_capture_report.json`
+- `reference/ui/current-app/2026-05-20_p1h_float_diagnostics_capture_report.json`
+
+New project-detail evidence:
+
+| Scenario | Coverage status after recapture | Evidence |
+|---|---|---|
+| LDN Q1 Design project detail after click | Captured | `2026-05-20_p1g_project_ucs04889_ldn_q1_design.png` |
+| UCS04787 project detail | Captured | `2026-05-20_p1g_project_ucs04787_ldn_fy.png` |
+| UCS05186 duplicate/manual project detail | Captured | `2026-05-20_p1g_project_ucs05186_ldn_fy.png` |
+| UCS04154 fee-sheet Float ID join project detail | Captured | `2026-05-20_p1g_project_ucs04154_ldn_fy.png` |
+| PCS00250 project detail | Captured unavailable state | `2026-05-20_p1g_project_pcs00250_ldn_fy.png`, HTTP 404 |
+| USA00262 sold-hours guard detail | Captured | `2026-05-20_p1g_project_usa00262_usa_fy.png` |
+| USA00323 sold-hours guard detail | Captured | `2026-05-20_p1g_project_usa00323_usa_fy.png` |
+
+New Float and diagnostic route evidence:
+
+| Route family | Coverage status after recapture | Evidence |
+|---|---|---|
+| Float overview | Captured | `2026-05-20_p1h_float_overview_ldn_q1.png` |
+| Float trace 10979146 | Captured | `2026-05-20_p1h_float_10979146.png` |
+| Float trace 11413292 | Captured | `2026-05-20_p1h_float_11413292.png` |
+| Float trace 10480262 | Captured | `2026-05-20_p1h_float_10480262.png` |
+| Float trace 11330982 | Captured unavailable state | `2026-05-20_p1h_float_11330982.png`, HTTP 404 |
+| Data Quality | Captured | `2026-05-20_p1h_data_quality.png` |
+| Approval Audit | Captured | `2026-05-20_p1h_approval.png` |
+| Sync Audit | Captured | `2026-05-20_p1h_audit.png` |
+| Parser Diagnostics | Captured | `2026-05-20_p1h_diagnostics.png` |
+| Data Integrity | Captured | `2026-05-20_p1h_integrity.png` |
+| Chase List | Captured | `2026-05-20_p1h_chase.png` |
+| Readiness | Captured | `2026-05-20_p1h_readiness.png` |
+| Glossary | Captured | `2026-05-20_p1h_glossary.png` |
+| Admin sync warnings | Captured | `2026-05-20_p1h_admin_sync_warnings.png` |
+| Admin timeoffs | Captured | `2026-05-20_p1h_admin_timeoffs.png` |
+| Users | Captured | `2026-05-20_p1h_users.png` |
+
+Remaining screenshot gap after this update: deterministic fixture screenshots in GitHub `#25`, especially unsupported-not-zero states, exact client drilldown, source-only row variants, Float export compare variants, chat states, TBC identity, archived production revenue, and false-zero guard fixtures. Live screenshot evidence still must not be treated as source correctness.
+
 ## Coverage Matrix
+
+The matrix below records the original P1-D coverage status. The follow-up update above supersedes the original blocked/missing status for P1-G and P1-H routes where new screenshots or unavailable-state screenshots now exist. GitHub `#25` remains the open deterministic fixture screenshot gap.
 
 ### Required Routes
 
