@@ -14,6 +14,7 @@ export type {
   ReconciliationCheck,
   SoldFact,
   SourceBatch,
+  SourceCapabilitiesForSource,
   SourceCapability,
   SourceFactSet,
   SourceLayer,
@@ -28,18 +29,39 @@ export type { DashboardScope as CanonDashboardScope } from "./canon/scope";
 
 export {
   capabilityFor,
+  buildSourceCapabilityIndex,
+  buildSourceCapabilityIndexFromParserResults,
+  buildSourceFactSetFromParserResults,
+  capabilitiesForSource,
   createCanonQueryResult,
   createUnsupportedScopeMetrics,
   factMatchesScope,
   filterFactsByScope,
+  FLOAT_SOURCE_CAPABILITIES,
   queryResultSource,
-  sourceSupportsScopedField
+  selectFloatFacts,
+  selectPipelineFacts,
+  selectProductionRevenueFacts,
+  selectSoldFacts,
+  SOLD_SOURCE_CAPABILITIES,
+  sourceCapabilityProfiles,
+  sourceCapabilityProfilesFromParserResults,
+  sourceSupportsCapability,
+  sourceSupportsScopedField,
+  unsupportedMetricsForSourceScope
 } from "./canon-queries";
 
 export type {
+  BuildSourceFactSetOptions,
   CanonQueryInput,
   CanonQueryResult,
+  SelectFloatFactsInput,
+  SelectPipelineFactsInput,
+  SelectProductionRevenueFactsInput,
+  SelectSoldFactsInput,
   ScopedCapabilityKey,
+  SourceCapabilityIndex,
+  UnsupportedMetricsForSourceScopeInput,
   UnsupportedScopeMetricInput
 } from "./canon-queries";
 

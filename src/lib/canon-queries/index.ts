@@ -20,6 +20,39 @@ export function createCanonQueryResult<TFact extends CanonFact>(
 }
 
 export {
+  buildSourceCapabilityIndex,
+  buildSourceCapabilityIndexFromParserResults,
+  capabilitiesForSource,
+  capabilityForSource,
+  sourceCapabilityProfiles,
+  sourceCapabilityProfilesFromParserResults,
+  sourceSupportsCapability,
+  unsupportedMetricsForSourceScope
+} from "./capabilities";
+
+export {
+  FLOAT_SOURCE_CAPABILITIES,
+  selectFloatFacts
+} from "./float";
+
+export {
+  selectPipelineFacts
+} from "./pipeline";
+
+export {
+  selectProductionRevenueFacts
+} from "./production-revenue";
+
+export {
+  SOLD_SOURCE_CAPABILITIES,
+  selectSoldFacts
+} from "./sold";
+
+export {
+  buildSourceFactSetFromParserResults
+} from "./source-fact-set";
+
+export {
   capabilityFor,
   createUnsupportedScopeMetrics,
   factMatchesScope,
@@ -34,3 +67,28 @@ export type {
   ScopedCapabilityKey,
   UnsupportedScopeMetricInput
 } from "./types";
+
+export type {
+  SelectFloatFactsInput
+} from "./float";
+
+export type {
+  SelectPipelineFactsInput
+} from "./pipeline";
+
+export type {
+  SelectProductionRevenueFactsInput
+} from "./production-revenue";
+
+export type {
+  SelectSoldFactsInput
+} from "./sold";
+
+export type {
+  BuildSourceFactSetOptions
+} from "./source-fact-set";
+
+export type {
+  SourceCapabilityIndex,
+  UnsupportedMetricsForSourceScopeInput
+} from "./capabilities";

@@ -56,9 +56,21 @@ function checkRequiredFiles() {
   const requiredFiles = [
     "src/lib/canon-queries/types.ts",
     "src/lib/canon-queries/scope.ts",
+    "src/lib/canon-queries/sold.ts",
+    "src/lib/canon-queries/pipeline.ts",
+    "src/lib/canon-queries/production-revenue.ts",
+    "src/lib/canon-queries/float.ts",
+    "src/lib/canon-queries/source-fact-set.ts",
+    "src/lib/canon-queries/capabilities.ts",
     "src/lib/canon-queries/index.ts",
     "tests/canon-queries/query-contracts.test.ts",
-    "tests/canon-queries/scope-predicate.test.ts"
+    "tests/canon-queries/scope-predicate.test.ts",
+    "tests/canon-queries/sold-facts.test.ts",
+    "tests/canon-queries/pipeline-facts.test.ts",
+    "tests/canon-queries/production-revenue-facts.test.ts",
+    "tests/canon-queries/float-facts.test.ts",
+    "tests/canon-queries/source-fact-set.test.ts",
+    "tests/canon-queries/capabilities.test.ts"
   ];
 
   for (const file of requiredFiles) {
@@ -138,14 +150,14 @@ function checkCanonQueriesDoNotCheat() {
 
 function checkActiveCanonQueryTests() {
   const testFiles = listFiles("tests/canon-queries").filter((file) => file.endsWith(".test.ts"));
-  if (testFiles.length < 2) {
-    fail(`Expected at least 2 active canon query test files, found ${testFiles.length}`);
+  if (testFiles.length < 8) {
+    fail(`Expected at least 8 active canon query test files, found ${testFiles.length}`);
   }
 
   const combined = testFiles.map((file) => read(file)).join("\n");
   const activeTests = combined.match(/\btest\(/g) ?? [];
-  if (activeTests.length < 5) {
-    fail(`Expected at least 5 active canon query tests, found ${activeTests.length}`);
+  if (activeTests.length < 22) {
+    fail(`Expected at least 22 active canon query tests, found ${activeTests.length}`);
   }
 
   const requiredMarkers = [
@@ -156,7 +168,17 @@ function checkActiveCanonQueryTests() {
     "visibleRows",
     "csvRows",
     "dashboardRows",
-    "unsupported source capability"
+    "unsupported source capability",
+    "zero-fee",
+    "CLIENT SUMMARY",
+    "V-tab",
+    "TBC",
+    "archived, unknown-status",
+    "inactive",
+    "manual_duplicate",
+    "raw-cache",
+    "sourceIssues",
+    "capabilities attached"
   ];
 
   for (const marker of requiredMarkers) {
@@ -173,7 +195,13 @@ function checkExports() {
     "createCanonQueryResult",
     "createUnsupportedScopeMetrics",
     "factMatchesScope",
-    "filterFactsByScope"
+    "filterFactsByScope",
+    "selectSoldFacts",
+    "selectPipelineFacts",
+    "selectProductionRevenueFacts",
+    "selectFloatFacts",
+    "buildSourceFactSetFromParserResults",
+    "buildSourceCapabilityIndex"
   ];
 
   for (const exportedName of requiredExports) {

@@ -49,6 +49,11 @@ export type SourceCapability = {
   reason?: string;
 };
 
+export type SourceCapabilitiesForSource = {
+  source: SourceName;
+  capabilities: SourceCapability[];
+};
+
 export type CheckStatus = "PASS" | "DATA_WARN" | "PROCESS_WARN" | "FAIL";
 
 export type WarningLifecycleState =
@@ -265,5 +270,5 @@ export type SourceFactSet = {
   readOnlySqlFacts: ReadOnlySqlFact[];
   syncLogFacts: SyncLogFact[];
   sourceIssues: SourceWarning[];
-  capabilities: SourceCapability[];
+  capabilities: SourceCapabilitiesForSource[];
 };

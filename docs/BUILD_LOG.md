@@ -885,3 +885,58 @@ Next action:
 - commit and push P4-A plus the initial Phase 4 gate,
 - close GitHub `#41`,
 - keep `#46` open until source-specific selectors are added to the final Phase 4 verifier.
+
+### Checkpoint: P4-B Through P4-F Source Fact Selectors
+
+Phase: 4
+
+Tickets: `#42`, `#43`, `#44`, `#45`, `#46`
+
+Status: implemented locally, push-blocking verification passed, awaiting commit
+
+What changed:
+
+- added sold fee-sheet source fact selector,
+- added Pipeline source fact selector,
+- added Production Revenue source fact selector,
+- added Float source fact selector and raw/cache warning shell,
+- added source fact set assembly from parser results,
+- added source capability profile and capability index helpers,
+- expanded `scripts/verify-phase4.mjs` to require all Phase 4 selector files, tests, and exports.
+
+TDD evidence:
+
+- P4-B red: sold selector tests failed on missing `canon-queries/sold`,
+- P4-C red: Pipeline and Production Revenue selector tests failed on missing selector modules,
+- P4-D red: Float selector tests failed on missing `canon-queries/float`,
+- P4-E red: source fact set and capability tests failed on missing modules,
+- P4-F red: expanded verifier failed first on over-strict coverage markers,
+- green: `npm run verify:phase4` passed with 19 passed test files, 71 active tests, typecheck, and Phase 4 verification,
+- `npm run build` passed with 19 passed test files, 71 active tests, typecheck, and Phase 4 verification,
+- `npm audit --omit=dev` found 0 vulnerabilities,
+- `git diff --check` passed,
+- em dash/en dash scan returned no matches,
+- forbidden canon-query scan returned no live source, display, selector, database, SQL mutation, or aggregation matches.
+
+Boundary kept:
+
+- selectors expose scoped source facts only,
+- source-only rows remain facts,
+- unsupported source capability becomes unsupported metadata, not zero,
+- archive and active states remain overlays, not hide rules,
+- exact client filtering remains distinct from search,
+- Float raw/cache named issues are left unresolved unless cache facts exist,
+- no display rows,
+- no CSV rows,
+- no visible rows,
+- no dashboard rows,
+- no dashboard totals,
+- no live source pulls,
+- no database calls,
+- no source-system mutation.
+
+Next action:
+
+- commit and push P4-B through P4-F,
+- close GitHub `#42`, `#43`, `#44`, `#45`, and `#46`,
+- run P4-G Doctrine Steward review.
