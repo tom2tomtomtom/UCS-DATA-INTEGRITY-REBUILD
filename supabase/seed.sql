@@ -1,0 +1,2 @@
+-- Local deterministic seed data will live here once Phase 0 fixtures are defined.
+-- Do not put production source rows or secrets in this file.
