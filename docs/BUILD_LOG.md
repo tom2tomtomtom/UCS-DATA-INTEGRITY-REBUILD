@@ -423,3 +423,43 @@ Next action:
 
 - commit and push Phase 2 ticketing,
 - spawn bounded Phase 2 implementation agents with disjoint write sets.
+
+### Checkpoint: P2-A Source Archive Domain Types
+
+Phase: 2
+
+Ticket: `#26`
+
+Status: implemented, awaiting commit
+
+TDD evidence:
+
+- red: `npm test tests/source-archive/source-archive-types.test.ts` failed because `../../src/lib/source-archive` did not exist,
+- green: added source archive domain types and public exports,
+- focused test passed with 5 active tests,
+- `npm run typecheck` passed,
+- full `npm test` passed with 1 active file and 17 skipped law scaffold files.
+
+What changed:
+
+- added source archive version and source list,
+- added source archive batch type,
+- added raw archived source row type,
+- added skipped source row type and allowed-drop evidence,
+- added read-only source pull metadata type,
+- exported source archive domain contracts from `src/lib/index.ts`.
+
+Boundary kept:
+
+- no parser facts,
+- no display rows,
+- no product UI,
+- no live source calls,
+- no migration,
+- no source-system mutation.
+
+Next action:
+
+- commit and push P2-A,
+- close GitHub `#26`,
+- start P2-B/P2-C/P2-D/P2-E on top of the shared types.

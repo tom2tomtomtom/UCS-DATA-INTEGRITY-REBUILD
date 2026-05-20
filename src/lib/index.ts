@@ -26,6 +26,25 @@ export type {
 } from "./canon/types";
 export type { DashboardScope as CanonDashboardScope } from "./canon/scope";
 
+export {
+  SOURCE_ARCHIVE_SOURCES,
+  SOURCE_ARCHIVE_VERSION
+} from "./source-archive";
+
+export type {
+  AllowedSkipClassification,
+  AllowedSkipEvidence,
+  ArchivedRawSourceRow,
+  SkippedSourceRow,
+  SourceArchiveBatch,
+  SourceArchiveBatchStatus,
+  SourceArchiveMode,
+  SourceArchivePayload,
+  SourceArchiveRecord,
+  SourcePullMetadata,
+  SourceRowIdentity
+} from "./source-archive";
+
 export type {
   BuildDashboardDisplayContractInput,
   DashboardCsvRow,
