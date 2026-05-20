@@ -3,12 +3,13 @@
   "version": "0.0.0",
   "private": true,
   "engines": {
-    "node": ">=20.0.0"
+    "node": "20.x"
   },
   "scripts": {
     "test": "vitest run",
     "typecheck": "tsc --noEmit",
     "build": "npm run verify:phase8",
+    "start": "next start",
     "verify:phase0": "npm run test && npm run typecheck && node scripts/verify-phase0.mjs",
     "verify:phase2": "npm run test && npm run typecheck && node scripts/verify-phase2.mjs",
     "verify:phase3": "npm run test && npm run typecheck && node scripts/verify-phase3.mjs",

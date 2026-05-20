@@ -28,6 +28,14 @@ function checkPackageScripts() {
   if (pkg.scripts?.["verify:phase9"] !== "npm run build && node scripts/verify-phase9.mjs") {
     fail("package.json must define verify:phase9 as build plus scripts/verify-phase9.mjs.");
   }
+
+  if (pkg.scripts?.start !== "next start") {
+    fail("package.json must define start as next start for Railway runtime.");
+  }
+
+  if (pkg.engines?.node !== "20.x") {
+    fail("package.json must pin the Railway Node runtime to 20.x.");
+  }
 }
 
 function checkRequiredFiles() {
@@ -39,7 +47,9 @@ function checkRequiredFiles() {
     "tests/launch/launch-readiness.test.ts",
     "tests/launch/health-readiness-routes.test.ts",
     "tests/launch/railway-target.test.ts",
+    "tests/launch/railway-build-config.test.ts",
     "tests/launch/phase9-verifier.test.ts",
+    "railway.json",
     "scripts/launch-readiness-report.mjs",
     "scripts/lib/launch-readiness-report.mjs",
     "scripts/railway-readiness-report.mjs",
@@ -59,6 +69,8 @@ function checkLaunchReadinessMarkers() {
     "tests/launch/launch-readiness.test.ts",
     "tests/launch/health-readiness-routes.test.ts",
     "tests/launch/railway-target.test.ts",
+    "tests/launch/railway-build-config.test.ts",
+    "railway.json",
     "scripts/launch-readiness-report.mjs",
     "scripts/lib/launch-readiness-report.mjs",
     "src/lib/launch/railway-target.ts",
@@ -79,6 +91,9 @@ function checkLaunchReadinessMarkers() {
     "RAILWAY_TARGET_FORBIDDEN",
     "DATABASE_URL_REBUILD_SUPABASE",
     "PRODUCTION_DOMAIN_CUTOVER_UNAPPROVED",
+    "RAILPACK",
+    "next start",
+    "/api/health",
     "FORBIDDEN_SCRIPT_DEPLOY",
     "FORBIDDEN_SCRIPT_SYNC",
     "RAILWAY_MUTATION_ALREADY_RUN",
@@ -94,10 +109,41 @@ function checkLaunchReadinessMarkers() {
   }
 }
 
+function checkRailwayBuildConfig() {
+  if (!exists("railway.json")) return;
+
+  const config = JSON.parse(read("railway.json"));
+
+  if (config.build?.builder !== "RAILPACK") {
+    fail("railway.json must use Railpack rather than copied old Dockerfile config.");
+  }
+
+  if (config.build?.buildCommand !== "npm run build") {
+    fail("railway.json buildCommand must keep using npm run build.");
+  }
+
+  if (config.deploy?.startCommand !== "npm run start") {
+    fail("railway.json startCommand must use npm run start.");
+  }
+
+  if (config.deploy?.healthcheckPath !== "/api/health") {
+    fail("railway.json must use /api/health as the deployment healthcheck.");
+  }
+
+  if (config.deploy?.preDeployCommand !== null) {
+    fail("railway.json must not run pre-deploy commands in the launch gate.");
+  }
+
+  if (Object.prototype.hasOwnProperty.call(config.deploy ?? {}, "cronSchedule")) {
+    fail("railway.json must not define cronSchedule before scheduled sync exists.");
+  }
+}
+
 function run() {
   checkPackageScripts();
   checkRequiredFiles();
   checkLaunchReadinessMarkers();
+  checkRailwayBuildConfig();
 
   if (failures.length > 0) {
     console.error("Phase 9 verification failed:");

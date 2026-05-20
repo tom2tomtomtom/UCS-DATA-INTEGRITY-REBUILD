@@ -463,6 +463,58 @@ Next action:
 - start `#80` Railway build configuration,
 - do not start staging deploy until a separate rebuild Railway target is explicitly linked and rechecked.
 
+### Checkpoint: P9-D Railway Build Configuration
+
+Phase: 9
+
+Ticket: `#80`
+
+Status: implemented, local verification passed
+
+What changed:
+
+- pinned the Node runtime with `engines.node=20.x`,
+- added the production `start` script as `next start`,
+- added `railway.json` using Railpack,
+- set Railway build command to `npm run build`,
+- set Railway start command to `npm run start`,
+- set Railway healthcheck path to `/api/health`,
+- left pre-deploy command and scheduled jobs unset,
+- extended the Phase 9 verifier to protect the Railway build/start/runtime markers.
+
+Build config decision:
+
+- use Railpack first,
+- do not copy the old dashboard Dockerfile,
+- keep `npm run build` as the gate that runs tests, typecheck, Next build, and Phase 8 verifier,
+- no migration, source sync, or scheduled job runs during Railway startup.
+
+Verification:
+
+- red: build config tests failed because Node was ranged, `start` was missing, and `railway.json` did not exist,
+- green: `npm test -- tests/launch/railway-build-config.test.ts` passed with 1 file passed and 3 tests passed,
+- green: `npm test -- tests/launch/phase9-verifier.test.ts tests/launch/railway-build-config.test.ts` passed with 2 files passed and 5 tests passed,
+- `node scripts/verify-phase9.mjs` passed,
+- `npm run verify:phase9` passed with 62 files passed, 15 skipped, 205 tests passed, 79 todo, typecheck, Next build, Phase 8 verifier, and Phase 9 verifier,
+- production `npm run start` smoke on `http://localhost:3032` passed,
+- `GET /api/health` returned `200`,
+- `GET /api/readiness` returned `200`.
+
+Boundary kept:
+
+- no Railway deploy,
+- no Railway variable mutation,
+- no Railway project/service creation,
+- no Railway link mutation,
+- no DB migration,
+- no source sync,
+- no source mutation.
+
+Next action:
+
+- stage, secret-scan, commit, push,
+- close `#80` after CI.
+
 ### Checkpoint: Overnight Control Started
 
 Phase: 0

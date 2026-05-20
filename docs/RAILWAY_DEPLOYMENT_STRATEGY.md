@@ -62,15 +62,19 @@ Do not create or deploy a Railway service before:
 
 ## Build Strategy
 
-Preferred initial deployment:
+Chosen initial deployment:
 
-- Next.js standalone build,
-- Dockerfile or Railway Railpack, chosen explicitly before deployment,
-- Node version pinned,
-- build uses only public env vars at build time,
+- Railway Railpack via `railway.json`,
+- `build.buildCommand` is `npm run build`,
+- `deploy.startCommand` is `npm run start`,
+- `deploy.healthcheckPath` is `/api/health`,
+- Node runtime is pinned in `package.json` with `engines.node=20.x`,
+- build remains the local verification gate, not raw unchecked `next build`,
 - server secrets are runtime only.
 
 The old app used a Dockerfile with Node alpine and Next standalone. That can be referenced, but not copied blindly.
+
+No Dockerfile is committed for the first rebuild deploy. Do not add one unless Railpack fails for a documented reason.
 
 ## Required App Routes Before Railway Deploy
 
