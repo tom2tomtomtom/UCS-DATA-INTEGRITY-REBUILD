@@ -21,12 +21,12 @@ describe("P9-F final acceptance report", () => {
     expect(report).toContain("stakeholder-approved");
   });
 
-  test("records current evidence without leaking secrets", () => {
+  test("records verified evidence snapshot without leaking secrets", () => {
     const report = fs.readFileSync(reportPath, "utf8");
 
-    expect(report).toContain("ee9738eb8cd471e5616c42e0c4dd9f4a2f57529c");
-    expect(report).toContain("26193100449");
-    expect(report).toContain("c823163d-4f4b-4571-8347-e63ed88032e4");
+    expect(report).toContain("d15cbb2ef655830a4319e73fd5e763e7e4525e01");
+    expect(report).toContain("26194024286");
+    expect(report).toContain("96d3cc9a-bba7-4519-a2cd-e88d7b969f28");
     expect(report).toContain("https://ucs-data-integrity-rebuild-staging.up.railway.app");
     expect(report).toContain("reference/ui/fixture-app/manifest.json");
     expect(report).not.toContain("DATABASE_URL=");

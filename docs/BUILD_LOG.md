@@ -2555,13 +2555,14 @@ What changed:
 - `APP_ENV` was set to `staging`,
 - `NODE_ENV` and `DATABASE_URL_TEST` stayed local-only,
 - empty optional `PIPELINE_SHEET_ID` and `PRODUCTION_REVENUE_SHEET_ID` were not pushed as blank variables,
-- deployment `c823163d-4f4b-4571-8347-e63ed88032e4` succeeded,
+- initial CLI deployment `c823163d-4f4b-4571-8347-e63ed88032e4` succeeded,
+- GitHub auto-deploy deployment `96d3cc9a-bba7-4519-a2cd-e88d7b969f28` then succeeded from `main`,
 - Railway-generated staging URL is `https://ucs-data-integrity-rebuild-staging.up.railway.app`,
 - `docs/FINAL_ACCEPTANCE_REPORT.md` was updated from blocked to staging deployed.
 
 Live verification:
 
-- `/api/health` returned `status: ok`, `environment: staging`, and commit `ee9738eb8cd471e5616c42e0c4dd9f4a2f57529c`,
+- `/api/health` returned `status: ok`, `environment: staging`, and commit `d15cbb2ef655830a4319e73fd5e763e7e4525e01`,
 - `/api/readiness` returned `status: pass`, no blockers, and no warnings,
 - `/dashboard` returned HTTP 200 HTML,
 - deployment logs showed the Next.js server ready,

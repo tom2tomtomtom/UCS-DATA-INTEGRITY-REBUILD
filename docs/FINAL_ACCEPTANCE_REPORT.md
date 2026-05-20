@@ -12,16 +12,16 @@ Live readiness: PASS
 Source approval: NOT APPROVED
 Stakeholder approval: NOT APPROVED
 
-This is a staging acceptance report, not a production cutover sign-off. The rebuild is deployed to a separate Railway staging service and the live health/readiness checks pass. Source-owner approval and stakeholder approval are still outstanding.
+This is a staging acceptance report, not a production cutover sign-off. The rebuild is deployed to a separate Railway staging service and the live health/readiness checks pass. Source-owner approval and stakeholder approval are still outstanding. Deployment evidence below is a verified snapshot taken when this report was generated, because GitHub auto-deploys from `main` can create a newer deployment after a documentation-only commit.
 
 ## Approval Split
 
 | Gate | Status | Evidence |
 |---|---|---|
-| Code and CI | PASS | Commit `ee9738eb8cd471e5616c42e0c4dd9f4a2f57529c`, CI run `26193100449` |
+| Code and CI | PASS | Commit `d15cbb2ef655830a4319e73fd5e763e7e4525e01`, CI run `26194024286` |
 | Railway staging | PASS | Project `UCS Data Integrity Rebuild`, service `ucs-data-integrity-rebuild`, environment `staging` |
-| Live deployment | PASS | Deployment `c823163d-4f4b-4571-8347-e63ed88032e4` |
-| Live health | PASS | `/api/health` returns `status: ok`, `environment: staging`, commit `ee9738eb8cd471e5616c42e0c4dd9f4a2f57529c` |
+| Live deployment | PASS | Deployment `96d3cc9a-bba7-4519-a2cd-e88d7b969f28` |
+| Live health | PASS | `/api/health` returns `status: ok`, `environment: staging`, commit `d15cbb2ef655830a4319e73fd5e763e7e4525e01` |
 | Live readiness | PASS | `/api/readiness` returns `status: pass`, no blockers, no warnings |
 | Dashboard shell | PASS | `/dashboard` returns HTTP 200 HTML |
 | Source approval | NOT APPROVED | Source-owner review is after source snapshots and named scenario evidence |
@@ -37,28 +37,29 @@ The launch status must always separate deployed, healthy, source-approved, and s
 
 No production domain has been cut over.
 
-## Current Evidence
+## Verified Evidence Snapshot
 
-Current main commit:
+Verified app commit:
 
-- `ee9738eb8cd471e5616c42e0c4dd9f4a2f57529c` Fix Railway readiness status parsing
+- `d15cbb2ef655830a4319e73fd5e763e7e4525e01` Record staging deployment acceptance
 
-Latest green CI:
+Green CI evidence:
 
-- `26193100449`
+- `26194024286`
 
 Local gates run before deploy:
 
 - `node scripts/railway-readiness-report.mjs`
 - `npm run verify:phase9`
 
-Railway target:
+Railway target at verification time:
 
 - project: `UCS Data Integrity Rebuild`
 - service: `ucs-data-integrity-rebuild`
 - environment: `staging`
-- latest deployment: `c823163d-4f4b-4571-8347-e63ed88032e4`
-- deploy message: `Staging deploy ee9738e with health commit`
+- verified deployment: `96d3cc9a-bba7-4519-a2cd-e88d7b969f28`
+- deploy source: GitHub auto-deploy from `main`
+- deploy message: `Record staging deployment acceptance`
 
 Runtime variables:
 
