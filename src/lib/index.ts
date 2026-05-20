@@ -27,6 +27,23 @@ export type {
 export type { DashboardScope as CanonDashboardScope } from "./canon/scope";
 
 export {
+  capabilityFor,
+  createCanonQueryResult,
+  createUnsupportedScopeMetrics,
+  factMatchesScope,
+  filterFactsByScope,
+  queryResultSource,
+  sourceSupportsScopedField
+} from "./canon-queries";
+
+export type {
+  CanonQueryInput,
+  CanonQueryResult,
+  ScopedCapabilityKey,
+  UnsupportedScopeMetricInput
+} from "./canon-queries";
+
+export {
   ARCHIVABLE_ROW_REASON,
   browseSourceRows,
   classifyRawSourceRow,

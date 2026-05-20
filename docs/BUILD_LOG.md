@@ -839,3 +839,49 @@ Next action:
 
 - commit and push Phase 4 ticketing,
 - start P4-A before source-specific canon query selectors.
+
+### Checkpoint: P4-A Canon Query Contracts And Initial Phase 4 Gate
+
+Phase: 4
+
+Tickets: `#41`, partial `#46`
+
+Status: implemented locally, push-blocking verification passed, awaiting commit
+
+What changed:
+
+- added canon query result contracts,
+- added explicit scope predicate for office, date, department, role, exact client, search, job number, and Float ID,
+- added unsupported scope metric helpers,
+- exported canon query contracts from the root library,
+- added initial `scripts/verify-phase4.mjs`,
+- rewired `npm run build` to Phase 4 verification.
+
+TDD evidence:
+
+- red: focused P4-A tests failed because `src/lib/canon-queries` did not exist,
+- green: focused P4-A tests passed with 5 active tests,
+- red: `npm run verify:phase4` failed because the script did not exist,
+- green: `npm run verify:phase4` passed with 13 passed test files, 54 active tests, typecheck, and Phase 4 verification,
+- `npm run build` passed with 13 passed test files, 54 active tests, typecheck, and Phase 4 verification,
+- `npm audit --omit=dev` found 0 vulnerabilities,
+- `git diff --check` passed,
+- em dash/en dash scan returned no matches.
+
+Boundary kept:
+
+- canon query contracts return source facts, capabilities, unsupported metrics, warnings, and scope only,
+- no display rows,
+- no CSV rows,
+- no visible rows,
+- no dashboard rows,
+- no dashboard totals,
+- no live source pulls,
+- no database calls,
+- no source-system mutation.
+
+Next action:
+
+- commit and push P4-A plus the initial Phase 4 gate,
+- close GitHub `#41`,
+- keep `#46` open until source-specific selectors are added to the final Phase 4 verifier.
