@@ -22,6 +22,12 @@ This file is the local mirror of the GitHub issue board. GitHub issues are the o
 | `#14` | P0-D: Law Test Skeleton |
 | `#15` | P0-E: Build Log and Gate Runner |
 | `#16` | Doctrine Steward: Overnight Build Review Gate |
+| `#17` | P1-A: Route and Navigation Inventory |
+| `#18` | P1-B: Scope, Filter, URL State, and Workflow Inventory |
+| `#19` | P1-C: Table, Column, Control, and CSV Inventory |
+| `#20` | P1-D: Screenshot Coverage and Recapture Plan |
+| `#21` | P1-E: UX Parity Map Assembly and Phase 1 Gate |
+| `#22` | P1-F: Doctrine Review Gate for UX Parity Map |
 
 ## Implementation Ticket Rule
 
@@ -36,7 +42,7 @@ Before a phase starts implementation, it must have bounded implementation ticket
 - verification,
 - stop conditions.
 
-Only Phase 0 currently has bounded implementation tickets. Later phase implementation tickets must be created after the prior phase exits, when the real file boundaries are known.
+Phase 0 and Phase 1 currently have bounded implementation tickets. Later phase implementation tickets must be created after the prior phase exits, when the real file boundaries are known.
 
 ## Phase Tickets
 
@@ -303,3 +309,97 @@ Must prove:
 
 - controller can record commands and outcomes,
 - missing scripts fail honestly or are marked pending.
+
+## Phase 1 Work Tickets
+
+### P1-A: Route And Navigation Inventory
+
+Issue: `#17`
+
+Owns:
+
+- `docs/phase-1/route-inventory.md`
+
+Must prove:
+
+- old app route list is mapped,
+- navigation and admin surfaces are mapped,
+- unavailable or slow routes have blockers,
+- old app file references are cited.
+
+### P1-B: Scope, Filter, URL State, And Workflow Inventory
+
+Issue: `#18`
+
+Owns:
+
+- `docs/phase-1/scope-filter-workflows.md`
+
+Must prove:
+
+- office/date/filter params are mapped,
+- required Sian/Yunni/Jade click paths are mapped,
+- approved behaviour is separated from confusing legacy behaviour,
+- scope preservation risks are named.
+
+### P1-C: Table, Column, Control, And CSV Inventory
+
+Issue: `#19`
+
+Owns:
+
+- `docs/phase-1/table-export-inventory.md`
+
+Must prove:
+
+- rollup, Projects, project detail, Float, and diagnostic table shapes are mapped,
+- export controls and expected CSV parity are named,
+- do-not-preserve table issues are listed.
+
+### P1-D: Screenshot Coverage And Recapture Plan
+
+Issue: `#20`
+
+Owns:
+
+- `docs/phase-1/screenshot-coverage.md`,
+- `reference/ui/current-app/manifest.md` only for coverage-note additions.
+
+Must prove:
+
+- current screenshot coverage is mapped,
+- required missing screenshots have blockers or recapture plans,
+- named scenario coverage is explicit,
+- no screenshot evidence is fabricated.
+
+### P1-E: UX Parity Map Assembly And Phase 1 Gate
+
+Issue: `#21`
+
+Owns:
+
+- `docs/phase-1/ux-parity-map.md`,
+- `docs/phase-1/phase-1-exit-check.md`,
+- `docs/BUILD_LOG.md`.
+
+Must prove:
+
+- Phase 1 deliverables are assembled,
+- preserve and do-not-preserve lists are clear,
+- Phase 2 prerequisites are named,
+- open blockers are explicit.
+
+### P1-F: Doctrine Review Gate For UX Parity Map
+
+Issue: `#22`
+
+Owns:
+
+- read-only review only.
+
+Must prove:
+
+- Phase 1 did not copy old data logic,
+- no product UI or source-system code was added,
+- screenshot blockers are explicit,
+- Phase 1 can close with `PASS` or acceptable `PROCESS_WARN`.

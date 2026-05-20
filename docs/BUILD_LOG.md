@@ -244,3 +244,41 @@ Next action:
 - commit and push Phase 0 scaffold,
 - update GitHub issues with verification evidence,
 - then plan Phase 1 implementation tickets only after Phase 0 is closed.
+
+### Checkpoint: Phase 1 Ticketing Started
+
+Phase: 1
+
+Ticket: `#2`
+
+Status: in progress
+
+What changed:
+
+- created bounded Phase 1 implementation tickets `#17` through `#22`,
+- mirrored Phase 1 implementation tickets into `docs/EXECUTION_TICKETS.md`.
+
+Worker split:
+
+- `#17` P1-A owns `docs/phase-1/route-inventory.md`,
+- `#18` P1-B owns `docs/phase-1/scope-filter-workflows.md`,
+- `#19` P1-C owns `docs/phase-1/table-export-inventory.md`,
+- `#20` P1-D owns `docs/phase-1/screenshot-coverage.md`,
+- `#21` P1-E owns Phase 1 assembly and exit check,
+- `#22` P1-F is read-only Doctrine Steward review.
+
+Phase boundary:
+
+- Phase 1 is documentation and UX reference mapping only,
+- no product UI,
+- no source archive code,
+- no parsers,
+- no display aggregation,
+- no chat implementation,
+- no migrations,
+- no source-system mutation.
+
+Next action:
+
+- spawn read-only Phase 1 agents for `#17` through `#20`,
+- integrate into Phase 1 assembly after their reports return.
