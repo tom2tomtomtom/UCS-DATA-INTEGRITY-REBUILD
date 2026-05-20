@@ -40,4 +40,33 @@ describe("P6-F chat shell", () => {
     expect(html).toContain("deployment");
     expect(html).not.toContain("source fixed");
   });
+
+  test("renders closed and idle fixture states without evidence claims", () => {
+    const scope = {
+      office: "LDN",
+      from: "2026-01-01",
+      to: "2026-03-31",
+      department: "Design"
+    } as const;
+    const closedHtml = renderToStaticMarkup(
+      React.createElement(ChatShell, {
+        scope,
+        state: "closed",
+        needsCodexReasons: ["repo inspection"]
+      })
+    );
+    const idleHtml = renderToStaticMarkup(
+      React.createElement(ChatShell, {
+        scope,
+        state: "idle",
+        needsCodexReasons: ["repo inspection"]
+      })
+    );
+
+    expect(closedHtml).toContain("Closed");
+    expect(closedHtml).toContain("Ask a scoped question");
+    expect(idleHtml).toContain("Idle");
+    expect(idleHtml).toContain("Ask a scoped question");
+    expect(idleHtml).not.toContain("Evidence ready");
+  });
 });

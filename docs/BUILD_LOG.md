@@ -2487,3 +2487,30 @@ Next action:
 - commit and push P8-A,
 - close `#70` after CI with warnings,
 - do not begin `#72` source import until Pipeline and Production Revenue sheet IDs are resolved or intentionally mapped elsewhere.
+
+### Checkpoint: P1-I Deterministic Fixture Screenshot States
+
+Phase: 1
+
+Ticket: `#25`
+
+Status: implemented locally, verification pending
+
+What changed:
+
+- added deterministic fixture screenshot proof in `reference/ui/fixture-app`,
+- added a manifest test that requires every Sian/Yunni/Jade fixture state to have a screenshot and named fixture rows,
+- captured deterministic pages for rollups, unsupported department scope, Projects row variants, exact client vs fuzzy search, project detail, Float diagnostics, chat states, and Data Quality named checks,
+- added a project-detail missing-role-allocation state so missing role evidence is shown as unavailable, not silently zero,
+- added static Float Export Compare fixture states for empty export, pasted sample, ambiguous match, and dashboard-only rows.
+
+Local verification:
+
+- `npm test -- tests/ui/fixture-screenshot-reference.test.ts tests/ui/float-diagnostics.test.ts tests/ui/chat-shell.test.ts tests/ui/project-detail.test.ts`
+- `npm run typecheck`
+
+Boundary kept:
+
+- fixture screenshots are visual proof only,
+- no live source data or secrets are committed,
+- no source system mutation, sync, deployment, or migration was run.

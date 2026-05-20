@@ -22,6 +22,8 @@ describe("P6-D project detail", () => {
     expect(html).toContain("420h");
     expect(html).toContain("861h");
     expect(html).toContain("FLOAT_VISIBLE_CACHE_MISSING_CACHE");
+    expect(html).toContain("Role allocation");
+    expect(html).toContain("No role allocation data available for this project in the active scope.");
     expect(html).toContain("fixture-float-visible-ucs04787");
     expect(html).toContain("Back to Projects");
     expect(html).toContain("href=\"/dashboard/projects?office=LDN&amp;from=2026-01-01&amp;to=2026-03-31&amp;department=Design&amp;jobNumber=UCS04787\"");

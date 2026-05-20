@@ -1,0 +1,175 @@
+{
+  "proofType": "deterministic-fixture-screenshot-proof",
+  "dataMode": "deterministic-fixture",
+  "capturedAt": "2026-05-20T06:16:00+10:00",
+  "captureBaseUrl": "http://localhost:3033",
+  "surfaces": [
+    {
+      "id": "dashboard-home-rollups",
+      "route": "/dashboard?office=LDN&from=2026-01-01&to=2026-03-31",
+      "screenshotFile": "p1i-dashboard-home.png",
+      "fixtureRows": ["fixture:sold:ucs04787", "fixture:sold:ucs04154"],
+      "statesCovered": ["no-warning rollup row"],
+      "expectedText": ["Department Rollup", "Design", "Strategy", "Confidence", "HIGH"]
+    },
+    {
+      "id": "dashboard-design-scope",
+      "route": "/dashboard?office=LDN&from=2026-01-01&to=2026-03-31&department=Design",
+      "screenshotFile": "p1i-dashboard-design-scope.png",
+      "fixtureRows": ["fixture:sold:ucs04787", "fixture:float:ucs04787-visible"],
+      "statesCovered": ["pipeline and production revenue unsupported in department or role scope"],
+      "expectedText": ["Design", "PIPELINE", "Unsupported", "PRODUCTION REVENUE", "2 UNSUPPORTED METRICS"]
+    },
+    {
+      "id": "projects-row-variants",
+      "route": "/dashboard/projects?office=LDN&from=2026-01-01&to=2026-03-31",
+      "screenshotFile": "p1i-projects-row-variants.png",
+      "fixtureRows": [
+        "fixture:sold:ucs04787",
+        "fixture:sold:ucs04154",
+        "fixture:float:pcs00250-cache",
+        "fixture:float:bt-raw",
+        "fixture:float:ucs05186-canonical-visible",
+        "fixture:float:ucs05186-manual-visible",
+        "fixture:pipeline:tbc",
+        "fixture:prod:archived"
+      ],
+      "statesCovered": [
+        "Projects source-only pipeline-only production-only Float-only archived rows",
+        "TBC pipeline row identity"
+      ],
+      "expectedText": [
+        "matched",
+        "float_only",
+        "pipeline_only",
+        "production_revenue_only",
+        "TBC Retail Pitch",
+        "Archived Production Revenue"
+      ]
+    },
+    {
+      "id": "projects-exact-client",
+      "route": "/dashboard/projects?office=LDN&from=2026-01-01&to=2026-03-31&client=British%20Airways",
+      "screenshotFile": "p1i-projects-exact-client.png",
+      "fixtureRows": ["fixture:sold:ucs04787", "fixture:float:ucs04787-visible"],
+      "statesCovered": ["exact client drilldown distinct from fuzzy search"],
+      "expectedText": ["Client: British Airways", "British Airways", "BA March Madness", "Unsupported"]
+    },
+    {
+      "id": "projects-fuzzy-search",
+      "route": "/dashboard/projects?office=LDN&from=2026-01-01&to=2026-03-31&search=British",
+      "screenshotFile": "p1i-projects-fuzzy-search.png",
+      "fixtureRows": ["fixture:sold:ucs04787", "fixture:float:ucs04787-visible"],
+      "statesCovered": ["exact client drilldown distinct from fuzzy search"],
+      "expectedText": ["Search: British", "British Airways", "BA March Madness", "Unsupported"]
+    },
+    {
+      "id": "project-detail-ucs04787",
+      "route": "/dashboard/projects/UCS04787?office=LDN&from=2026-01-01&to=2026-03-31&department=Design",
+      "screenshotFile": "p1i-project-detail-ucs04787.png",
+      "fixtureRows": ["fixture:sold:ucs04787", "fixture:float:ucs04787-visible", "fixture:float:ucs04787-raw"],
+      "statesCovered": ["project detail missing role data and source trace links"],
+      "expectedText": [
+        "British Airways / UCS04787",
+        "Role allocation",
+        "No role allocation data available for this project in the active scope.",
+        "Source trace",
+        "fixture-float-visible-ucs04787"
+      ]
+    },
+    {
+      "id": "float-diagnostics",
+      "route": "/dashboard/float?office=LDN&from=2026-01-01&to=2026-03-31",
+      "screenshotFile": "p1i-float-diagnostics.png",
+      "fixtureRows": [
+        "fixture:float:ucs04787-visible",
+        "fixture:float:ucs04787-raw",
+        "fixture:float:pcs00250-cache",
+        "fixture:float:bt-raw",
+        "fixture:float:ucs05186-canonical-visible",
+        "fixture:float:ucs05186-manual-visible"
+      ],
+      "statesCovered": [
+        "Float raw/cache/visible comparison",
+        "Float duplicate/manual inactive/archived",
+        "Float export compare empty and pasted sample",
+        "ambiguous Float export matches and dashboard-only rows"
+      ],
+      "expectedText": [
+        "Float Diagnostics",
+        "Raw / cache / visible checks",
+        "FLOAT_INACTIVE_VISIBLE_HOURS",
+        "manual-ucs05186",
+        "Float Export Compare",
+        "Ambiguous match",
+        "Dashboard-only rows missing from pasted export"
+      ]
+    },
+    {
+      "id": "chat-closed",
+      "route": "/dashboard/chat-demo?office=LDN&from=2026-01-01&to=2026-03-31&state=closed",
+      "screenshotFile": "p1i-chat-closed.png",
+      "fixtureRows": ["fixture:sold:ucs04787"],
+      "statesCovered": ["chat closed open idle working evidence warning confidence Needs Codex"],
+      "expectedText": ["Dashboard Chat", "CLOSED", "Ask a scoped question", "Needs Codex"]
+    },
+    {
+      "id": "chat-idle",
+      "route": "/dashboard/chat-demo?office=LDN&from=2026-01-01&to=2026-03-31&state=idle",
+      "screenshotFile": "p1i-chat-idle.png",
+      "fixtureRows": ["fixture:sold:ucs04787"],
+      "statesCovered": ["chat closed open idle working evidence warning confidence Needs Codex"],
+      "expectedText": ["Dashboard Chat", "IDLE", "Ask a scoped question", "Needs Codex"]
+    },
+    {
+      "id": "chat-working",
+      "route": "/dashboard/chat-demo?office=LDN&from=2026-01-01&to=2026-03-31&state=working",
+      "screenshotFile": "p1i-chat-working.png",
+      "fixtureRows": ["fixture:sold:ucs04787"],
+      "statesCovered": ["chat closed open idle working evidence warning confidence Needs Codex"],
+      "expectedText": ["Dashboard Chat", "WORKING", "Confidence: medium", "Warnings", "Needs Codex"]
+    },
+    {
+      "id": "chat-evidence",
+      "route": "/dashboard/chat-demo?office=LDN&from=2026-01-01&to=2026-03-31&state=evidence",
+      "screenshotFile": "p1i-chat-evidence.png",
+      "fixtureRows": ["fixture:sold:ucs04787"],
+      "statesCovered": ["chat closed open idle working evidence warning confidence Needs Codex"],
+      "expectedText": [
+        "Dashboard Chat",
+        "EVIDENCE READY",
+        "Confidence: medium",
+        "Unresolved checks",
+        "LIVE_FLOAT_API_NOT_CHECKED",
+        "Needs Codex"
+      ]
+    },
+    {
+      "id": "chat-error",
+      "route": "/dashboard/chat-demo?office=LDN&from=2026-01-01&to=2026-03-31&state=error",
+      "screenshotFile": "p1i-chat-error.png",
+      "fixtureRows": ["fixture:sold:ucs04787"],
+      "statesCovered": ["chat closed open idle working evidence warning confidence Needs Codex"],
+      "expectedText": ["Dashboard Chat", "ERROR", "Confidence: medium", "Warnings", "Needs Codex"]
+    },
+    {
+      "id": "data-quality-named-checks",
+      "route": "/dashboard/data-quality?office=LDN&from=2026-01-01&to=2026-03-31",
+      "screenshotFile": "p1i-data-quality-named-checks.png",
+      "fixtureRows": [
+        "fixture:pipeline:tbc",
+        "fixture:prod:archived",
+        "scenario:usa00262",
+        "scenario:usa00323"
+      ],
+      "statesCovered": ["TBC pipeline row identity", "USA00262 and USA00323 false-zero sold-hours guard"],
+      "expectedText": [
+        "PASS: TBC pipeline",
+        "PASS: Archived production revenue",
+        "UNRESOLVED: USA00262",
+        "UNRESOLVED: USA00323",
+        "PASS: Exact client drilldown"
+      ]
+    }
+  ]
+}

@@ -77,11 +77,34 @@ New Float and diagnostic route evidence:
 | Admin timeoffs | Captured | `2026-05-20_p1h_admin_timeoffs.png` |
 | Users | Captured | `2026-05-20_p1h_users.png` |
 
-Remaining screenshot gap after this update: deterministic fixture screenshots in GitHub `#25`, especially unsupported-not-zero states, exact client drilldown, source-only row variants, Float export compare variants, chat states, TBC identity, archived production revenue, and false-zero guard fixtures. Live screenshot evidence still must not be treated as source correctness.
+Live screenshot evidence still must not be treated as source correctness.
+
+## Deterministic Fixture Update
+
+Ticket updated: GitHub `#25`.
+
+The rebuild now has deterministic fixture screenshot proof in `reference/ui/fixture-app/`. These screenshots are generated from fixture facts, not live source data, so they can prove awkward states without waiting for live data to be in the right shape.
+
+Fixture manifest:
+
+- `reference/ui/fixture-app/manifest.json`
+
+Fixture screenshot evidence:
+
+| Scenario family | Coverage status | Evidence |
+|---|---|---|
+| no-warning rollup row | Captured | `p1i-dashboard-home.png` |
+| pipeline/prod-rev unsupported in department scope | Captured | `p1i-dashboard-design-scope.png` |
+| Projects row variants | Captured | `p1i-projects-row-variants.png` |
+| exact client drilldown vs fuzzy search | Captured | `p1i-projects-exact-client.png`, `p1i-projects-fuzzy-search.png` |
+| project detail missing role data and source trace | Captured | `p1i-project-detail-ucs04787.png` |
+| Float raw/cache/visible, duplicate/manual, inactive/archived, export compare states | Captured | `p1i-float-diagnostics.png` |
+| chat closed, idle, working, evidence, error, warning, confidence, and Needs Codex states | Captured | `p1i-chat-closed.png`, `p1i-chat-idle.png`, `p1i-chat-working.png`, `p1i-chat-evidence.png`, `p1i-chat-error.png` |
+| TBC pipeline identity and USA false-zero guards | Captured | `p1i-data-quality-named-checks.png` |
 
 ## Coverage Matrix
 
-The matrix below records the original P1-D coverage status. The follow-up update above supersedes the original blocked/missing status for P1-G and P1-H routes where new screenshots or unavailable-state screenshots now exist. GitHub `#25` remains the open deterministic fixture screenshot gap.
+The matrix below records the original P1-D coverage status. The follow-up updates above supersede the original blocked/missing status for P1-G, P1-H, and deterministic fixture states where new screenshots or unavailable-state screenshots now exist.
 
 ### Required Routes
 
@@ -123,44 +146,44 @@ The matrix below records the original P1-D coverage status. The follow-up update
 | Rollups | month rollup | Covered | `2026-05-20_dashboard_ldn_q1_month_rollup.png` | Keep. |
 | Rollups | client rollup | Missing | No current file | Recapture deterministic preferred. |
 | Rollups | flagged row | Partial | Audit warning visible; month rollup intended as reconciliation reference | Recapture exact flagged row if visual detail matters. |
-| Rollups | no-warning row | Missing | No current file | Deterministic fixture preferred, because live source may currently warn. |
-| Rollups | pipeline/prod-rev unsupported state | Missing | No current file | Deterministic fixture required so unsupported is visible without inventing live data. |
+| Rollups | no-warning row | Captured deterministic | `reference/ui/fixture-app/p1i-dashboard-home.png` | Keep fixture proof. |
+| Rollups | pipeline/prod-rev unsupported state | Captured deterministic | `reference/ui/fixture-app/p1i-dashboard-design-scope.png` | Keep unsupported-not-zero proof. |
 | Projects | default table | Covered | `2026-05-20_projects_default.png` | Keep, but do not preserve horizontal overflow. |
 | Projects | filtered by department | Covered | `2026-05-20_projects_ldn_q1_design.png` | Keep. |
 | Projects | filtered by role | Missing | No current file | Recapture after role route is stable. |
-| Projects | exact client drilldown | Missing | Manifest marks exact client drilldown not specifically captured | Deterministic fixture preferred to avoid fuzzy search masquerading as exact client. |
+| Projects | exact client drilldown | Captured deterministic | `reference/ui/fixture-app/p1i-projects-exact-client.png`, `reference/ui/fixture-app/p1i-projects-fuzzy-search.png` | Keep exact client and fuzzy search as separate screenshots. |
 | Projects | search filtering | Covered | `2026-05-20_projects_search_ucs04787.png` | Keep. |
-| Projects | source-only rows visible | Missing | No current file | Deterministic fixture required. |
-| Projects | pipeline-only row | Missing | No current file | Deterministic fixture required. |
-| Projects | production-only row | Missing | No current file | Deterministic fixture required. |
-| Projects | Float-only row | Missing | No current file | Deterministic fixture required. |
-| Projects | archived row | Missing | Manifest marks archived production revenue visibility not captured | Deterministic fixture preferred; live recapture if known row exists. |
+| Projects | source-only rows visible | Captured deterministic | `reference/ui/fixture-app/p1i-projects-row-variants.png` | Keep fixture row variants visible. |
+| Projects | pipeline-only row | Captured deterministic | `reference/ui/fixture-app/p1i-projects-row-variants.png` | Keep TBC pipeline row identity visible. |
+| Projects | production-only row | Captured deterministic | `reference/ui/fixture-app/p1i-projects-row-variants.png` | Keep archived production revenue visible. |
+| Projects | Float-only row | Captured deterministic | `reference/ui/fixture-app/p1i-projects-row-variants.png` | Keep Float-only variants visible. |
+| Projects | archived row | Captured deterministic | `reference/ui/fixture-app/p1i-projects-row-variants.png`, `reference/ui/fixture-app/p1i-float-diagnostics.png` | Keep archived/manual evidence visible. |
 | Projects | selected row with archive controls | Missing | No current file | Deferred until mutable row controls are lawful in rebuild UI tests. |
 | Projects | CSV export control visible | Partial | Manifest says CSV/export controls visible on Projects default | Recapture tighter screenshot if control is not reviewable in tall full-page image. |
 | Projects | table footer visible | Partial | Projects captures are extremely tall | Recapture viewport-targeted footer or deterministic component capture. |
 | Project Detail | normal matched project | Blocked | Project-detail routes timed out or were aborted | Isolated long-timeout capture. |
 | Project Detail | scoped department detail | Blocked | UCS04889 LDN Q1 Design detail timed out past 150s | Isolated long-timeout capture. |
 | Project Detail | scoped role detail | Missing | No current file | Deterministic fixture preferred after role contract is ready. |
-| Project Detail | missing role data | Missing | No current file | Deterministic fixture required for unsupported-not-zero proof. |
+| Project Detail | missing role data | Captured deterministic | `reference/ui/fixture-app/p1i-project-detail-ucs04787.png` | Keep unsupported-not-zero proof. |
 | Project Detail | Float warning | Blocked | UCS04787 detail blocked by route latency | Isolated long-timeout capture, then deterministic warning fixture. |
-| Project Detail | source-only/prod-only evidence | Missing | No current file | Deterministic fixture required. |
-| Project Detail | source trace links | Missing | No current file | Deterministic fixture required when source trace UX exists. |
+| Project Detail | source-only/prod-only evidence | Captured deterministic | `reference/ui/fixture-app/p1i-project-detail-ucs04787.png` | Keep trace evidence visible. |
+| Project Detail | source trace links | Captured deterministic | `reference/ui/fixture-app/p1i-project-detail-ucs04787.png` | Keep source trace visible. |
 | Float Diagnostics | overview | Blocked | `/dashboard/float` returned slowly and screenshot was aborted | Isolated long-timeout capture. |
 | Float Diagnostics | project trace | Blocked | Float detail route screenshots not captured | Isolated long-timeout capture. |
-| Float Diagnostics | raw/cache/visible comparison | Missing | No current file | Deterministic fixture required. |
+| Float Diagnostics | raw/cache/visible comparison | Captured deterministic | `reference/ui/fixture-app/p1i-float-diagnostics.png` | Keep raw, cache, and visible layers separate. |
 | Float Diagnostics | duplicate/manual candidates | Blocked | UCS05186 candidate blocked by route latency | Isolated long-timeout plus deterministic fixture. |
-| Float Diagnostics | inactive/archived warning | Missing | No current file | Deterministic fixture required. |
-| Float Diagnostics | export compare empty | Missing | No current file | Deterministic fixture or local UI state capture. |
-| Float Diagnostics | export compare with pasted sample | Missing | No current file | Deterministic Playwright capture with fixture sample. |
-| Float Diagnostics | ambiguous match warning | Missing | No current file | Deterministic fixture required. |
-| Float Diagnostics | dashboard-only rows missing from export | Missing | No current file | Deterministic fixture required. |
-| Chat | closed state | Partial | Top bar Ask AI visible per manifest, but chat state not separately captured | Recapture closed and open states in one deterministic chat fixture. |
-| Chat | open idle | Blocked | Manifest says chat sequence not reached | Deterministic fixture preferred. |
-| Chat | working/progress | Blocked | Manifest says chat sequence not reached | Deterministic fixture required to avoid timing flake. |
-| Chat | evidence/source trace visible | Blocked | Manifest says chat sequence not reached | Deterministic fixture required. |
-| Chat | warning visible | Blocked | Manifest says chat sequence not reached | Deterministic fixture required. |
-| Chat | confidence visible | Blocked | Manifest says chat sequence not reached | Deterministic fixture required. |
-| Chat | `Needs Codex` visible | Blocked | Manifest says chat sequence not reached | Deterministic fixture required. |
+| Float Diagnostics | inactive/archived warning | Captured deterministic | `reference/ui/fixture-app/p1i-float-diagnostics.png` | Keep inactive visible hours as failure evidence. |
+| Float Diagnostics | export compare empty | Captured deterministic | `reference/ui/fixture-app/p1i-float-diagnostics.png` | Keep empty compare state visible. |
+| Float Diagnostics | export compare with pasted sample | Captured deterministic | `reference/ui/fixture-app/p1i-float-diagnostics.png` | Keep pasted sample parse state visible. |
+| Float Diagnostics | ambiguous match warning | Captured deterministic | `reference/ui/fixture-app/p1i-float-diagnostics.png` | Keep ambiguous match warning visible. |
+| Float Diagnostics | dashboard-only rows missing from export | Captured deterministic | `reference/ui/fixture-app/p1i-float-diagnostics.png` | Keep dashboard-only export warning visible. |
+| Chat | closed state | Captured deterministic | `reference/ui/fixture-app/p1i-chat-closed.png` | Keep. |
+| Chat | open idle | Captured deterministic | `reference/ui/fixture-app/p1i-chat-idle.png` | Keep. |
+| Chat | working/progress | Captured deterministic | `reference/ui/fixture-app/p1i-chat-working.png` | Keep. |
+| Chat | evidence/source trace visible | Captured deterministic | `reference/ui/fixture-app/p1i-chat-evidence.png` | Keep. |
+| Chat | warning visible | Captured deterministic | `reference/ui/fixture-app/p1i-chat-working.png`, `reference/ui/fixture-app/p1i-chat-error.png` | Keep. |
+| Chat | confidence visible | Captured deterministic | `reference/ui/fixture-app/p1i-chat-working.png`, `reference/ui/fixture-app/p1i-chat-evidence.png` | Keep. |
+| Chat | `Needs Codex` visible | Captured deterministic | `reference/ui/fixture-app/p1i-chat-closed.png`, `reference/ui/fixture-app/p1i-chat-evidence.png` | Keep. |
 
 ### Viewports
 
@@ -183,9 +206,9 @@ The matrix below records the original P1-D coverage status. The follow-up update
 | PCS00250 cache-without-raw warning | Blocked | Manifest says selector confirmed Float ID `11330982` but screenshot blocked | Isolated long-timeout capture, then deterministic cache-without-raw fixture. |
 | USA00262 sold-hours guard | Blocked | Manifest says selector confirmed Float ID `10748270` but screenshot blocked | Isolated long-timeout project-detail capture, then deterministic false-zero guard fixture. |
 | USA00323 sold-hours guard | Blocked | Manifest says selector confirmed Float ID `11030276` but screenshot blocked | Isolated long-timeout project-detail capture, then deterministic false-zero guard fixture. |
-| TBC pipeline row identity | Missing | Manifest says not specifically captured | Deterministic fixture required. |
-| archived production revenue visibility | Missing | Manifest says not specifically captured | Deterministic fixture preferred, live recapture if known archived row is stable. |
-| exact client drilldown | Missing | Manifest says not specifically captured | Deterministic fixture required to prove exact client is not fuzzy search. |
+| TBC pipeline row identity | Captured deterministic | `reference/ui/fixture-app/p1i-projects-row-variants.png`, `reference/ui/fixture-app/p1i-data-quality-named-checks.png` | Keep source-row identity proof. |
+| archived production revenue visibility | Captured deterministic | `reference/ui/fixture-app/p1i-projects-row-variants.png`, `reference/ui/fixture-app/p1i-data-quality-named-checks.png` | Keep archived revenue visible. |
+| exact client drilldown | Captured deterministic | `reference/ui/fixture-app/p1i-projects-exact-client.png`, `reference/ui/fixture-app/p1i-projects-fuzzy-search.png` | Keep exact client proof distinct from fuzzy search. |
 
 ## Exact Blockers From Current Manifest
 

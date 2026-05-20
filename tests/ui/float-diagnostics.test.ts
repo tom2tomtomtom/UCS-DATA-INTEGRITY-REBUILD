@@ -23,5 +23,10 @@ describe("P6-D Float diagnostics", () => {
     expect(html).toContain("manual-ucs05186");
     expect(html).toContain("archived");
     expect(html).toContain("FLOAT_INACTIVE_VISIBLE_HOURS");
+    expect(html).toContain("Float Export Compare");
+    expect(html).toContain("No pasted export yet");
+    expect(html).toContain("Pasted sample");
+    expect(html).toContain("Ambiguous match");
+    expect(html).toContain("Dashboard-only rows missing from pasted export");
   });
 });

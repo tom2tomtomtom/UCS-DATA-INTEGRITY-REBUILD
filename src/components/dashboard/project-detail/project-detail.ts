@@ -50,6 +50,8 @@ export function ProjectDetail({
     checks.length === 0
       ? React.createElement("p", null, "No Float reconciliation warnings for this project in the active scope.")
       : React.createElement("ul", { className: "evidence-list" }, checks.map((check) => checkItem(check))),
+    React.createElement("h3", null, "Role allocation"),
+    React.createElement("p", null, "No role allocation data available for this project in the active scope."),
     React.createElement("h3", null, "Source trace"),
     React.createElement(
       "ul",

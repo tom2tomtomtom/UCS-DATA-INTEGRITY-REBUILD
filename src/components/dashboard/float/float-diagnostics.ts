@@ -36,10 +36,39 @@ export function FloatDiagnostics({ contract }: { contract: DashboardDisplayContr
     ),
     React.createElement("h3", null, "Raw / cache / visible checks"),
     React.createElement("ul", { className: "evidence-list" }, checks.map((check) => checkItem(check))),
+    React.createElement("h3", null, "Float Export Compare"),
+    React.createElement(
+      "ul",
+      { className: "evidence-list" },
+      React.createElement(
+        "li",
+        null,
+        React.createElement("strong", null, "No pasted export yet"),
+        React.createElement("span", null, "Empty compare state keeps dashboard rows visible and waits for a user export.")
+      ),
+      React.createElement(
+        "li",
+        null,
+        React.createElement("strong", null, "Pasted sample"),
+        React.createElement("span", null, "Fixed-width Hours columns are recognised in the deterministic fixture.")
+      ),
+      React.createElement(
+        "li",
+        null,
+        React.createElement("strong", null, "Ambiguous match"),
+        React.createElement("span", null, "Duplicate Float match keys stay flagged rather than merged.")
+      ),
+      React.createElement(
+        "li",
+        null,
+        React.createElement("strong", null, "Dashboard-only rows missing from pasted export"),
+        React.createElement("span", null, "Rows visible in the dashboard but absent from the pasted export remain warning evidence.")
+      )
+    ),
     React.createElement(
       "p",
       { className: "detail-scope" },
-      "Duplicate/manual and inactive/archive candidates are shown when the display contract carries them. Missing live export comparisons remain fixture pending until Phase 8."
+      "Duplicate/manual and inactive/archive candidates are shown when the display contract carries them. Export compare states are fixture-only and do not write data."
     )
   );
 }
