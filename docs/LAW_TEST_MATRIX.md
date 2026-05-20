@@ -16,6 +16,12 @@ Every law must become executable. This matrix is the build checklist for tests.
 | Archive Is Warning Not Hide Rule | `tests/laws/archive-visibility.test.ts` | archived prod-rev, archived Float, manual duplicate | Contract and UI |
 | Chat Evidence Boundary | `tests/laws/chat-evidence-boundary.test.ts` | bad pasted transcript, tool error, incomplete evidence | API and UI |
 | Approval Requires Full Agreement | `tests/laws/approval-full-agreement.test.ts` | source, contract, UI, CSV, chat fixture | Verify and CI |
+| Identity Matching Policy | `tests/laws/identity-matching.test.ts` | Float ID, source client, canonical client, TBC row, no-job row | Parser and contract |
+| Staleness And Deletion Policy | `tests/laws/staleness-deletion.test.ts` | failed batch, partial batch, missing Float task, repaired sheet | Parser and verify |
+| Tolerance And Units Policy | `tests/laws/tolerance-units-time.test.ts` | USD fee sheet, FX snapshot, Q1 boundary, rounded hours | Parser and contract |
+| Warning Lifecycle Policy | `tests/laws/warning-lifecycle.test.ts` | acknowledged, source fixed pending refresh, resolved by source | Data Quality |
+| Mutation Boundary | `tests/laws/mutation-boundary.test.ts` | chat, integrity, archive overlay, export compare | API and UI |
+| Chat Investigation Agent | `tests/laws/chat-investigation-agent.test.ts` | trap prompts, tool errors, unsupported checks, Needs Codex | API and UI |
 
 ## Named Regression Matrix
 

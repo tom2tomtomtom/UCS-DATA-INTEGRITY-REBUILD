@@ -112,6 +112,8 @@ Before telling anyone it is fixed:
 - GitHub main is current,
 - Railway deployment is success,
 - live app commit matches local commit,
+- Railway service is the rebuild service, not the old dashboard service,
+- production environment points at the new Supabase production database,
 - Sian/Yunni/Jade named checks pass,
 - remaining warnings are documented,
 - old app differences are classified.
