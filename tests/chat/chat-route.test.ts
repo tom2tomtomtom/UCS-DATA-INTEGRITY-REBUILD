@@ -41,13 +41,13 @@ describe("P7-E chat API route", () => {
     expect(events).toEqual(expect.arrayContaining([expect.objectContaining({ type: "text" })]));
   });
 
-  test("does not stream reporter text when the claim guard blocks it", async () => {
+  test("ignores client-supplied draft text and reports only from evidence", async () => {
     const response = await POST(
       new Request("http://localhost/api/chat", {
         method: "POST",
         body: JSON.stringify({
           message: "does USA00262 have zero sold hours?",
-          debugDraft: "USA00262 has zero sold hours.",
+          debugDraft: "CLIENT SUPPLIED UNSUPPORTED CLAIM",
           scope: {
             office: "LDN",
             from: "2026-01-01",
@@ -58,15 +58,13 @@ describe("P7-E chat API route", () => {
     );
 
     const events = await readSse(response);
-
-    expect(events).toEqual(
-      expect.arrayContaining([
-        expect.objectContaining({
-          type: "error",
-          message: expect.stringContaining("claim guard blocked")
-        })
-      ])
+    const textEvents = events.filter(
+      (event): event is { type: "text"; delta: string } =>
+        typeof event === "object" && event !== null && "type" in event && event.type === "text"
     );
-    expect(events).not.toEqual(expect.arrayContaining([expect.objectContaining({ type: "text" })]));
+
+    expect(textEvents.length).toBe(1);
+    expect(textEvents[0]?.delta).toContain("Playbook: fee_sheet_sold_hours_mismatch");
+    expect(textEvents[0]?.delta).not.toContain("CLIENT SUPPLIED UNSUPPORTED CLAIM");
   });
 });

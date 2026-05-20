@@ -24,6 +24,7 @@ describe("P7-F phase 7 verifier wiring", () => {
     expect(script).toContain("sync");
     expect(script).toContain("deploy");
     expect(script).toContain("report.guard.status");
+    expect(script).toContain("debugDraft");
     expect(script).toContain("TOOL_NOT_FIXTURE_BACKED");
     expect(script).toContain("high_confidence_with_missing_required_evidence");
   });

@@ -10,7 +10,6 @@ import type { DashboardScope } from "../../../src/lib";
 type ChatRequestBody = {
   readonly message?: string;
   readonly question?: string;
-  readonly debugDraft?: string;
   readonly scope?: Partial<DashboardScope>;
   readonly jobNumber?: string;
   readonly floatProjectId?: string;
@@ -35,7 +34,7 @@ export async function POST(request: Request): Promise<Response> {
     ...(body.floatProjectId !== undefined ? { floatProjectId: body.floatProjectId } : {}),
     ...(body.pastedFloatExport !== undefined ? { pastedFloatExport: body.pastedFloatExport } : {})
   });
-  const report = generateEvidenceReport(pack, body.debugDraft);
+  const report = generateEvidenceReport(pack);
   const events: ChatStreamEvent[] = [
     { type: "status", message: "Planning read-only investigation" },
     { type: "investigation", playbook: playbook.id, tasks: playbook.tasks },

@@ -104,6 +104,7 @@ function checkChatCodeDoesNotCheat() {
     "anthropic",
     "chat.completions",
     "generateText",
+    "debugDraft",
     "INSERT ",
     "UPDATE ",
     "DELETE "
