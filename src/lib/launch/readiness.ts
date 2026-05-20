@@ -13,11 +13,26 @@ export type LaunchReadinessReport = {
   readonly warnings: readonly LaunchReadinessCheck[];
 };
 
+export type RuntimeReadinessSummary = {
+  readonly environment: string;
+  readonly supabaseRef: string;
+  readonly mutationGuard: string;
+  readonly databaseHost: string;
+};
+
+export type RuntimeReadinessReport = LaunchReadinessReport & {
+  readonly summary: RuntimeReadinessSummary;
+};
+
 export type BuildLaunchReadinessReportInput = {
   readonly packageScripts: Record<string, string | undefined>;
   readonly envExample: string;
   readonly routeFiles: readonly string[];
   readonly railwayMutatingCommandsRun: readonly string[];
+};
+
+export type BuildRuntimeReadinessReportInput = {
+  readonly env: Record<string, string | undefined>;
 };
 
 const requiredEnvNames = [
@@ -32,6 +47,15 @@ const requiredEnvNames = [
   "FLOAT_API_KEY",
   "ANTHROPIC_API_KEY",
   "CRON_SECRET"
+] as const;
+
+const runtimeRequiredEnvNames = [
+  "APP_ENV",
+  "MUTATION_GUARD",
+  "NEXT_PUBLIC_SUPABASE_URL",
+  "NEXT_PUBLIC_SUPABASE_ANON_KEY",
+  "SUPABASE_SERVICE_ROLE_KEY",
+  "DATABASE_URL"
 ] as const;
 
 const forbiddenScriptNeedles = [
@@ -82,6 +106,65 @@ export function buildLaunchReadinessReport(input: BuildLaunchReadinessReportInpu
   };
 }
 
+export function buildRuntimeReadinessReport(input: BuildRuntimeReadinessReportInput): RuntimeReadinessReport {
+  const env = input.env;
+  const checks: LaunchReadinessCheck[] = [];
+  const supabaseRef = supabaseRefFromUrl(env.NEXT_PUBLIC_SUPABASE_URL);
+  const databaseHost = hostFromDatabaseUrl(env.DATABASE_URL);
+
+  for (const envName of runtimeRequiredEnvNames) {
+    checks.push(
+      hasValue(env[envName])
+        ? pass(`ENV_PRESENT_${envName}`, `${envName} is present.`)
+        : fail(`ENV_MISSING_${envName}`, `${envName} is required for runtime readiness.`)
+    );
+  }
+
+  checks.push(
+    env.MUTATION_GUARD === "read_only"
+      ? pass("MUTATION_GUARD_READ_ONLY", "Mutation guard is read_only.")
+      : fail("MUTATION_GUARD_NOT_READ_ONLY", "Mutation guard must be read_only at launch.")
+  );
+
+  checks.push(
+    supabaseRef === "unknown"
+      ? fail("NEXT_PUBLIC_SUPABASE_URL_INVALID", "NEXT_PUBLIC_SUPABASE_URL must be a Supabase project URL.")
+      : pass("NEXT_PUBLIC_SUPABASE_URL_SUPABASE", "NEXT_PUBLIC_SUPABASE_URL identifies a Supabase project.")
+  );
+
+  checks.push(
+    databaseHost === "unknown"
+      ? fail("DATABASE_URL_INVALID", "DATABASE_URL must be a parseable database URL.")
+      : pass("DATABASE_URL_PARSEABLE", "DATABASE_URL is parseable.")
+  );
+
+  if (hasValue(env.DATABASE_URL) && hasValue(env.LEGACY_DATABASE_URL) && env.DATABASE_URL === env.LEGACY_DATABASE_URL) {
+    checks.push(fail("DATABASE_URL_MATCHES_LEGACY", "DATABASE_URL must not equal LEGACY_DATABASE_URL."));
+  }
+
+  checks.push(
+    supabaseRef !== "unknown" && databaseHost === `db.${supabaseRef}.supabase.co`
+      ? pass("DATABASE_URL_NEW_SUPABASE", "DATABASE_URL host matches the new Supabase project ref.")
+      : fail("DATABASE_URL_NOT_NEW_SUPABASE", "DATABASE_URL host must match the new Supabase project ref.")
+  );
+
+  const blockers = checks.filter((check) => check.status === "fail");
+  const warnings = checks.filter((check) => check.status === "warn");
+
+  return {
+    status: blockers.length > 0 ? "fail" : warnings.length > 0 ? "warn" : "pass",
+    checks,
+    blockers,
+    warnings,
+    summary: {
+      environment: env.APP_ENV ?? "unknown",
+      supabaseRef,
+      mutationGuard: env.MUTATION_GUARD ?? "unknown",
+      databaseHost
+    }
+  };
+}
+
 function routeCheck(
   routeFiles: readonly string[],
   routeFile: string,
@@ -98,6 +181,35 @@ function envDeclarationCheck(envExample: string, envName: string): LaunchReadine
   return pattern.test(envExample)
     ? pass(`ENV_DECLARED_${envName}`, `${envName} is declared in .env.example without exposing a value.`)
     : fail(`ENV_MISSING_${envName}`, `${envName} must be declared in .env.example before launch.`);
+}
+
+function hasValue(value: string | undefined): value is string {
+  return value !== undefined && value.trim() !== "";
+}
+
+function supabaseRefFromUrl(value: string | undefined): string {
+  if (!hasValue(value)) {
+    return "unknown";
+  }
+
+  try {
+    const host = new URL(value).host;
+    return host.endsWith(".supabase.co") ? host.replace(".supabase.co", "") : "unknown";
+  } catch {
+    return "unknown";
+  }
+}
+
+function hostFromDatabaseUrl(value: string | undefined): string {
+  if (!hasValue(value)) {
+    return "unknown";
+  }
+
+  try {
+    return new URL(value).host.split(":")[0] ?? "unknown";
+  } catch {
+    return "unknown";
+  }
 }
 
 function forbiddenScriptChecks(packageScripts: Record<string, string | undefined>): LaunchReadinessCheck[] {

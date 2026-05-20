@@ -1,10 +1,14 @@
 export {
-  buildLaunchReadinessReport
+  buildLaunchReadinessReport,
+  buildRuntimeReadinessReport
 } from "./readiness";
 
 export type {
   BuildLaunchReadinessReportInput,
+  BuildRuntimeReadinessReportInput,
   LaunchReadinessCheck,
   LaunchReadinessReport,
-  LaunchReadinessStatus
+  LaunchReadinessStatus,
+  RuntimeReadinessReport,
+  RuntimeReadinessSummary
 } from "./readiness";

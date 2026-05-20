@@ -18,8 +18,13 @@ describe("P9-A phase 9 verifier wiring", () => {
     expect(script).toContain("src/lib/launch/readiness.ts");
     expect(script).toContain("tests/launch/launch-readiness.test.ts");
     expect(script).toContain("scripts/launch-readiness-report.mjs");
+    expect(script).toContain("app/api/health/route.ts");
+    expect(script).toContain("app/api/readiness/route.ts");
+    expect(script).toContain("tests/launch/health-readiness-routes.test.ts");
     expect(script).toContain("HEALTH_ROUTE_MISSING");
     expect(script).toContain("READINESS_ROUTE_MISSING");
+    expect(script).toContain("DATABASE_URL_NEW_SUPABASE");
+    expect(script).toContain("MUTATION_GUARD_READ_ONLY");
     expect(script).toContain("FORBIDDEN_SCRIPT_DEPLOY");
     expect(script).toContain("railway up");
     expect(script).toContain("supabase db push");

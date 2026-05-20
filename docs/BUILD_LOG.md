@@ -350,6 +350,61 @@ Next action:
 - close `#77` after CI,
 - start `#78` health and readiness routes.
 
+### Checkpoint: P9-B Health And Readiness Routes
+
+Phase: 9
+
+Ticket: `#78`
+
+Status: implemented, local verification passed
+
+What changed:
+
+- added `/api/health`,
+- added `/api/readiness`,
+- added runtime readiness checks for required env, mutation guard, Supabase URL/ref, database host, and legacy DB separation,
+- extended the Phase 9 verifier to protect health/readiness route files and route tests.
+
+Runtime behaviour:
+
+- `/api/health` returns app name, environment, status, and commit metadata when available,
+- `/api/readiness` returns pass/warn/fail checks without exposing env values,
+- readiness identifies the Supabase project ref and database host,
+- readiness returns `503` if blockers exist,
+- readiness never connects to a database and never mutates sources, DB, Railway, sync, or deploy state.
+
+Verification:
+
+- red: route tests failed because `app/api/health/route.ts` and `app/api/readiness/route.ts` did not exist,
+- green: `npm test -- tests/launch/health-readiness-routes.test.ts` passed with 1 file passed and 3 tests passed,
+- green: `npm test -- tests/launch/health-readiness-routes.test.ts tests/launch/phase9-verifier.test.ts tests/launch/launch-readiness.test.ts` passed with 3 files passed and 9 tests passed,
+- `node scripts/launch-readiness-report.mjs` now returns `pass`,
+- `npm run verify:phase9` passed with 60 files passed, 15 skipped, 196 tests passed, 79 todo, typecheck, Next build, Phase 8 verifier, and Phase 9 verifier.
+
+Local smoke checks:
+
+- dev server started on `http://localhost:3031`,
+- `GET /api/health` returned `200`,
+- `GET /api/readiness` returned `200`,
+- readiness summary showed `mutationGuard: read_only`,
+- readiness summary showed the rebuild Supabase ref `nxrzhwqsswhjgeouxsyr`,
+- no secret values were printed.
+
+Boundary kept:
+
+- no Railway deploy,
+- no Railway variable mutation,
+- no DB migration,
+- no source sync,
+- no source mutation,
+- no committed secrets.
+
+Next action:
+
+- stage, secret-scan, commit, push,
+- close `#78` after CI,
+- start `#79` Railway target and env verification.
+
 ### Checkpoint: Overnight Control Started
 
 Phase: 0

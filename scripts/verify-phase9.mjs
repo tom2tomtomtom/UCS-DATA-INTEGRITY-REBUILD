@@ -32,8 +32,11 @@ function checkPackageScripts() {
 
 function checkRequiredFiles() {
   const requiredFiles = [
+    "app/api/health/route.ts",
+    "app/api/readiness/route.ts",
     "src/lib/launch/readiness.ts",
     "tests/launch/launch-readiness.test.ts",
+    "tests/launch/health-readiness-routes.test.ts",
     "tests/launch/phase9-verifier.test.ts",
     "scripts/launch-readiness-report.mjs",
     "scripts/lib/launch-readiness-report.mjs"
@@ -46,8 +49,11 @@ function checkRequiredFiles() {
 
 function checkLaunchReadinessMarkers() {
   const files = [
+    "app/api/health/route.ts",
+    "app/api/readiness/route.ts",
     "src/lib/launch/readiness.ts",
     "tests/launch/launch-readiness.test.ts",
+    "tests/launch/health-readiness-routes.test.ts",
     "scripts/launch-readiness-report.mjs",
     "scripts/lib/launch-readiness-report.mjs"
   ];
@@ -60,6 +66,8 @@ function checkLaunchReadinessMarkers() {
     "VERIFY_PHASE9_SCRIPT",
     "HEALTH_ROUTE_MISSING",
     "READINESS_ROUTE_MISSING",
+    "DATABASE_URL_NEW_SUPABASE",
+    "MUTATION_GUARD_READ_ONLY",
     "FORBIDDEN_SCRIPT_DEPLOY",
     "FORBIDDEN_SCRIPT_SYNC",
     "RAILWAY_MUTATION_ALREADY_RUN",
