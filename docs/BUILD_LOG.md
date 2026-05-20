@@ -1155,3 +1155,45 @@ Next action:
 
 - close GitHub `#54` and parent `#6`,
 - create bounded Phase 6 UI parity implementation tickets before starting any product UI work.
+
+### Checkpoint: Phase 6 Ticketing Started
+
+Phase: 6
+
+Ticket: `#7`
+
+Status: ticketed, implementation not started
+
+What changed:
+
+- created bounded Phase 6 implementation tickets `#55` through `#62`,
+- mirrored Phase 6 implementation tickets into `docs/EXECUTION_TICKETS.md`.
+
+Worker split:
+
+- `#55` P6-A owns Next app shell, dashboard chrome, and deterministic contract fixture boundary,
+- `#57` P6-B owns dashboard home rollups from display contract,
+- `#58` P6-C owns Projects table, scope filters, footer, and CSV export,
+- `#56` P6-D owns project detail and Float diagnostics surfaces,
+- `#59` P6-E owns Data Quality, in-dashboard integrity, Approval, and Glossary,
+- `#61` P6-F owns read-only chat shell and `Needs Codex` handoff states,
+- `#60` P6-G owns deterministic UI verification gate and Playwright setup,
+- `#62` P6-H is read-only Doctrine Steward review.
+
+Phase boundary:
+
+- Phase 6 may create product UI pages, deterministic fixture providers, UI components, CSV download surfaces, chat shell states, and deterministic UI tests,
+- UI must consume display contract output or explicit fixture contract output,
+- no live source pulls,
+- no database calls,
+- no old dashboard selectors,
+- no migrations applied,
+- no deploys,
+- no sync,
+- no source-system mutation,
+- no page-local business totals.
+
+Next action:
+
+- commit and push Phase 6 ticketing,
+- start P6-A shell and verification gate before filling individual pages.

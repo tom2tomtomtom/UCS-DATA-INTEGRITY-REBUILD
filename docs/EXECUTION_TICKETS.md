@@ -1017,3 +1017,177 @@ Must prove:
 - Float raw/cache/visible checks classify WARN/FAIL correctly,
 - all process warnings are either resolved or explicitly carried forward,
 - no source-system mutation, sync, deploy, migration application, live source pull, database call, product UI page, old selector truth, or alternate calculation path happened.
+
+## Phase 6 Work Tickets
+
+Phase 6 rebuilds the approved dashboard UX on top of the display contract. It may create product UI pages, deterministic fixture providers, UI components, CSV download surfaces, chat shell states, and deterministic UI tests. It must not pull live sources, call databases, import old dashboard selectors, apply migrations, deploy, sync, mutate source systems, or calculate business totals outside the display contract.
+
+### P6-A: Next App Shell, Dashboard Chrome, And Contract Fixture Boundary
+
+Issue: `#55`
+
+Owns:
+
+- `app/layout.tsx`,
+- `app/page.tsx`,
+- `app/dashboard/layout.tsx`,
+- `app/dashboard/page.tsx` only for shell plumbing if needed,
+- `app/globals.css`,
+- `src/components/dashboard/chrome/*`,
+- `src/lib/ui/fixture-contract.ts` or equivalent deterministic fixture provider,
+- `tests/ui/app-shell.test.tsx` or equivalent render/unit test.
+
+Must prove:
+
+- Next App Router shell exists and builds on Railway-compatible scripts,
+- global dashboard chrome preserves top bar, tab nav, scope controls, warning area, and chat entry slot,
+- UI fixture provider returns display contract output, not raw facts or old selector output,
+- visible shell can show office/from/to scope explicitly,
+- no page-local totals, no live source pulls, no DB calls, no old selectors, no product mutation.
+
+### P6-B: Dashboard Home Rollups From Display Contract
+
+Issue: `#57`
+
+Owns:
+
+- `app/dashboard/page.tsx`,
+- `src/components/dashboard/rollups/*`,
+- `src/components/dashboard/scope-controls/*` only if not owned by P6-A,
+- `tests/ui/dashboard-home.test.tsx`.
+
+Must prove:
+
+- hero metrics render from `contract.heroTotals` only,
+- department, role, month, and client rollups render from `contract.rollups` only,
+- LDN Q1 Design rollup link preserves `office=LDN`, `from=2026-01-01`, `to=2026-03-31`, and `department=Design`,
+- Pipeline and Production Revenue department/role unsupported states render as unsupported, not zero,
+- source warnings and confidence are visible,
+- no page-local business totals, no old selectors, no live source pulls, no DB calls.
+
+### P6-C: Projects Table, Scope Filters, Footer, And CSV Export
+
+Issue: `#58`
+
+Owns:
+
+- `app/dashboard/projects/page.tsx`,
+- `src/components/dashboard/projects/*`,
+- `src/components/dashboard/export/*`,
+- `tests/ui/projects-page.test.tsx`,
+- `tests/ui/csv-export.test.tsx`.
+
+Must prove:
+
+- Projects rows render from `contract.visibleRows` only,
+- footer totals reconcile to supported visible row metrics or contract footer totals, never page-local source sums,
+- source-only, Float-only, pipeline-only, production-only, archived, and duplicate/manual rows remain visible with row-type badges,
+- exact client uses `client` param, fuzzy search uses `search` param,
+- CSV rows are `contract.csvRows` only,
+- unsupported values export as unsupported or blank with reason, not zero,
+- all links preserve active scope.
+
+### P6-D: Project Detail And Float Diagnostics Surfaces
+
+Issue: `#56`
+
+Owns:
+
+- `app/dashboard/projects/[jobNumber]/page.tsx`,
+- `app/dashboard/float/page.tsx`,
+- `app/dashboard/float/[floatProjectId]/page.tsx`,
+- `src/components/dashboard/project-detail/*`,
+- `src/components/dashboard/float/*`,
+- `tests/ui/project-detail.test.tsx`,
+- `tests/ui/float-diagnostics.test.tsx`.
+
+Must prove:
+
+- project detail keeps office/from/to/department/role/client/jobNumber scope,
+- KPI cards, monthly rows, role/profitability rows, and trace panels use contract row/trace/reconciliation values,
+- unsupported Pipeline or Production Revenue in slices is labelled or hidden with reason, never zero,
+- Float diagnostics show fee-sheet Float ID, raw/cache/visible classification, duplicate/manual candidates, inactive/archive warnings, PCS00250, BT raw/cache, and UCS04787 states where fixture evidence exists,
+- no archive, sync, Float mutation, live source pull, DB call, or old selector path exists.
+
+### P6-E: Data Quality, In-Dashboard Integrity, Approval, And Glossary
+
+Issue: `#59`
+
+Owns:
+
+- `app/dashboard/data-quality/page.tsx`,
+- `app/dashboard/approval/page.tsx`,
+- `app/dashboard/glossary/page.tsx`,
+- `app/dashboard/audit/page.tsx` only as read-only placeholder if needed,
+- `src/components/dashboard/data-quality/*`,
+- `src/components/dashboard/approval/*`,
+- `tests/ui/data-quality.test.tsx`,
+- `tests/ui/approval.test.tsx`.
+
+Must prove:
+
+- integrity checks compare source archive/parser/contract/UI concepts without mutating source systems,
+- `FAIL`, `WARN`, `PASS`, and `UNRESOLVED` states are visible and sorted with failures first,
+- approval output uses display contract approval helper only,
+- warning lifecycle labels are visible and honest,
+- glossary explains unsupported vs zero, source-only rows, confidence, scope, and `Needs Codex`,
+- no separate approval/integrity total model exists.
+
+### P6-F: Read-Only Chat Shell And Needs Codex Handoff
+
+Issue: `#61`
+
+Owns:
+
+- `src/components/dashboard/chat/*`,
+- `app/dashboard/chat-demo/page.tsx` only if needed for deterministic UI tests,
+- `tests/ui/chat-shell.test.tsx`.
+
+Must prove:
+
+- chat panel has closed, idle, working, evidence, warning, confidence, and `Needs Codex` states,
+- active `DashboardScope` is visible to the chat shell,
+- shell can display evidence event shape without inventing findings,
+- `Needs Codex` appears for repo, browser testing, mutation, sync, deployment, and stakeholder communication,
+- no source mutation, sync, deploy, live source pull, API investigation loop, or unsupported claim generation exists in Phase 6.
+
+### P6-G: Deterministic UI Verification Gate And Playwright Setup
+
+Issue: `#60`
+
+Owns:
+
+- `scripts/verify-phase6.mjs`,
+- `package.json`,
+- Playwright config and tests if added,
+- `tests/e2e/*`,
+- `docs/BUILD_LOG.md`,
+- `docs/EXECUTION_TICKETS.md`.
+
+Must prove:
+
+- `npm run verify:phase6` exists,
+- build runs Phase 6 verification once UI surfaces exist,
+- deterministic UI tests cover named workflows or documented placeholders where the page is intentionally deferred,
+- UI code does not call live sources, old selectors, DB paths, mutation APIs, sync, deploy, or raw parser totals,
+- all business numbers on pages are sourced from display contract props/helpers,
+- required checks include Sian Q1 Design, Projects footer/CSV, project detail scoping, Float diagnostics, Data Quality, Approval, chat shell, unsupported-not-zero, and source-only visibility.
+
+### P6-H: Doctrine Review Gate For UI Parity
+
+Issue: `#62`
+
+Owns:
+
+- read-only review only.
+
+Must prove:
+
+- every UI surface consumes display contract output or explicit fixture contract output,
+- no UI page calculates business totals locally,
+- scope survives links, detail, CSV, and chat shell,
+- unsupported values render as unsupported, not zero,
+- source-only rows remain visible,
+- chat shell is read-only and labels `Needs Codex`,
+- deterministic UI verification covers required named workflows or carries explicit process warnings,
+- no source-system mutation, sync, deploy, migration application, live source pull, database call, old selector truth, or alternate calculation path happened.
