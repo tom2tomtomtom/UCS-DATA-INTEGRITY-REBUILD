@@ -405,6 +405,64 @@ Next action:
 - close `#78` after CI,
 - start `#79` Railway target and env verification.
 
+### Checkpoint: P9-C Railway Target And Env Verification
+
+Phase: 9
+
+Ticket: `#79`
+
+Status: implemented, local verification passed with one launch blocker
+
+What changed:
+
+- added a pure Railway target and env-plan analyser,
+- added a safe `scripts/railway-readiness-report.mjs` report,
+- extended the Phase 9 verifier to protect Railway target tests, report scripts, and launch-blocking markers,
+- exported Railway target types from the shared launch library.
+
+Read-only Railway status:
+
+- `railway whoami` succeeds locally,
+- `railway status --json` was run read-only and returned `No linked project found. Run railway link to connect to a project`,
+- the repo is currently not linked to any Railway project/service,
+- this prevents accidental deployment into the old dashboard, but blocks staging deploy until a separate rebuild Railway target is linked.
+
+Current Railway readiness report:
+
+- status: `fail`,
+- pass: Railway status was inspected,
+- fail: Railway project/service is not linked,
+- pass: `DATABASE_URL` points to the new rebuild Supabase host,
+- pass: `LEGACY_DATABASE_URL` is present only as comparison evidence and is distinct from `DATABASE_URL`,
+- pass: production domain is not being cut over in this phase,
+- pass: no Railway deploy or variable mutation command has been recorded.
+
+Verification:
+
+- red: Railway target tests failed because the target contract and report script did not exist,
+- green: `npm test -- tests/launch/railway-target.test.ts` passed with 1 file passed and 6 tests passed,
+- green: `npm test -- tests/launch/phase9-verifier.test.ts tests/launch/railway-target.test.ts` passed with 2 files passed and 8 tests passed,
+- `npm run typecheck` passed,
+- `node scripts/railway-readiness-report.mjs` emitted safe JSON and did not print database URLs or secret values.
+
+Boundary kept:
+
+- no Railway deploy,
+- no Railway variable mutation,
+- no Railway project creation,
+- no Railway link mutation,
+- no DB migration,
+- no source sync,
+- no source mutation,
+- no committed secrets.
+
+Next action:
+
+- stage, secret-scan, commit, push,
+- close `#79` after CI,
+- start `#80` Railway build configuration,
+- do not start staging deploy until a separate rebuild Railway target is explicitly linked and rechecked.
+
 ### Checkpoint: Overnight Control Started
 
 Phase: 0

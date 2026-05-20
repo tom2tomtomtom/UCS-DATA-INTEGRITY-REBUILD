@@ -10,6 +10,12 @@ Railway setup is part of the product safety system, not a last-mile detail.
 
 Railway CLI is installed and authenticated locally.
 
+Current Phase 9 read-only status:
+
+- `railway status --json` returns no linked project for this repo,
+- this repo must be linked to a separate rebuild Railway project/service before staging deploy,
+- no Railway deploy, variable mutation, project creation, service creation, or domain cutover has been run in the rebuild repo.
+
 Do not assume the CLI is linked to the correct project. Always verify before deploying or changing variables.
 
 ## Deployment Principle

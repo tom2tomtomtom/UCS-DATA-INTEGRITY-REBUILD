@@ -21,8 +21,14 @@ describe("P9-A phase 9 verifier wiring", () => {
     expect(script).toContain("app/api/health/route.ts");
     expect(script).toContain("app/api/readiness/route.ts");
     expect(script).toContain("tests/launch/health-readiness-routes.test.ts");
+    expect(script).toContain("tests/launch/railway-target.test.ts");
     expect(script).toContain("HEALTH_ROUTE_MISSING");
     expect(script).toContain("READINESS_ROUTE_MISSING");
+    expect(script).toContain("scripts/railway-readiness-report.mjs");
+    expect(script).toContain("src/lib/launch/railway-target.ts");
+    expect(script).toContain("RAILWAY_TARGET_FORBIDDEN");
+    expect(script).toContain("DATABASE_URL_REBUILD_SUPABASE");
+    expect(script).toContain("PRODUCTION_DOMAIN_CUTOVER_UNAPPROVED");
     expect(script).toContain("DATABASE_URL_NEW_SUPABASE");
     expect(script).toContain("MUTATION_GUARD_READ_ONLY");
     expect(script).toContain("FORBIDDEN_SCRIPT_DEPLOY");

@@ -35,11 +35,15 @@ function checkRequiredFiles() {
     "app/api/health/route.ts",
     "app/api/readiness/route.ts",
     "src/lib/launch/readiness.ts",
+    "src/lib/launch/railway-target.ts",
     "tests/launch/launch-readiness.test.ts",
     "tests/launch/health-readiness-routes.test.ts",
+    "tests/launch/railway-target.test.ts",
     "tests/launch/phase9-verifier.test.ts",
     "scripts/launch-readiness-report.mjs",
-    "scripts/lib/launch-readiness-report.mjs"
+    "scripts/lib/launch-readiness-report.mjs",
+    "scripts/railway-readiness-report.mjs",
+    "scripts/lib/railway-readiness-report.mjs"
   ];
 
   for (const file of requiredFiles) {
@@ -54,8 +58,12 @@ function checkLaunchReadinessMarkers() {
     "src/lib/launch/readiness.ts",
     "tests/launch/launch-readiness.test.ts",
     "tests/launch/health-readiness-routes.test.ts",
+    "tests/launch/railway-target.test.ts",
     "scripts/launch-readiness-report.mjs",
-    "scripts/lib/launch-readiness-report.mjs"
+    "scripts/lib/launch-readiness-report.mjs",
+    "src/lib/launch/railway-target.ts",
+    "scripts/railway-readiness-report.mjs",
+    "scripts/lib/railway-readiness-report.mjs"
   ];
 
   if (!files.every(exists)) return;
@@ -68,6 +76,9 @@ function checkLaunchReadinessMarkers() {
     "READINESS_ROUTE_MISSING",
     "DATABASE_URL_NEW_SUPABASE",
     "MUTATION_GUARD_READ_ONLY",
+    "RAILWAY_TARGET_FORBIDDEN",
+    "DATABASE_URL_REBUILD_SUPABASE",
+    "PRODUCTION_DOMAIN_CUTOVER_UNAPPROVED",
     "FORBIDDEN_SCRIPT_DEPLOY",
     "FORBIDDEN_SCRIPT_SYNC",
     "RAILWAY_MUTATION_ALREADY_RUN",
