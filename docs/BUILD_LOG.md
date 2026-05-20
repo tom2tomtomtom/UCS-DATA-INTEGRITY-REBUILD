@@ -1753,3 +1753,40 @@ Next action:
 - run `npm run build`,
 - commit and push P7-E,
 - close `#67` after CI.
+
+### Checkpoint: P7-F Verification Gate
+
+Phase: 7
+
+Ticket: `#68`
+
+Status: implemented locally, push-blocking verification passed
+
+What changed:
+
+- added `scripts/verify-phase7.mjs`,
+- added `verify:phase7`,
+- rewired `npm run build` to run the Phase 7 gate,
+- added verifier tests for package script wiring and chat evidence boundary markers,
+- verifier checks required chat files, required trap tests, forbidden live source/model/mutation paths, and required evidence-agent markers.
+
+TDD evidence:
+
+- red: `npm run test -- tests/chat/phase7-verifier.test.ts` failed because `verify:phase7` and `scripts/verify-phase7.mjs` did not exist,
+- green: focused verifier tests passed after adding the script and package wiring,
+- full gate: `npm run build` passed with 46 test files, 148 passing tests, 79 todo tests, typecheck, Next build, and Phase 7 verifier,
+- hygiene: `npm audit --omit=dev`, `git diff --check`, and punctuation scan passed.
+
+Boundary kept:
+
+- verifier blocks old dashboard selector references in chat,
+- verifier blocks Supabase and Google source clients in chat,
+- verifier blocks mutation-style tool execution,
+- verifier blocks sync and deploy tool execution,
+- verifier blocks model API references in chat.
+
+Next action:
+
+- commit and push P7-F,
+- close `#68` after CI,
+- run P7-G Doctrine Steward review.
