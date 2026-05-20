@@ -31,6 +31,13 @@ This file is the local mirror of the GitHub issue board. GitHub issues are the o
 | `#23` | P1-G: Long-timeout Project Detail and Named Scenario Captures |
 | `#24` | P1-H: Float and Diagnostic Route Captures |
 | `#25` | P1-I: Deterministic Fixture Screenshot States |
+| `#26` | P2-A: Source Archive Domain Types and Test Harness |
+| `#27` | P2-B: Raw Row Classifier and Skipped Row Ledger |
+| `#28` | P2-C: Immutable In-Memory Source Archive Store |
+| `#29` | P2-D: Read-only Source Pull Interface |
+| `#30` | P2-E: Development Source Row Browser Query Helpers |
+| `#31` | P2-F: Phase 2 Verification Gate and Ticket Closure |
+| `#32` | P2-G: Doctrine Review Gate for Source Archive |
 
 ## Implementation Ticket Rule
 
@@ -48,6 +55,8 @@ Before a phase starts implementation, it must have bounded implementation ticket
 Phase 0 and Phase 1 currently have bounded implementation tickets. Later phase implementation tickets must be created after the prior phase exits, when the real file boundaries are known.
 
 Phase 1 screenshot recapture tickets `#23`, `#24`, and `#25` are follow-up evidence tickets. They do not block Phase 2 if their blockers are documented, because deterministic fixture screenshots depend on later display-contract and UI harness work.
+
+Phase 2 currently has bounded implementation tickets `#26` through `#32`. It must preserve raw source evidence only. It must not introduce parsers, display rows, product UI, live source pulls, applied migrations, deploys, sync, or source-system mutation.
 
 ## Phase Tickets
 
@@ -414,3 +423,125 @@ Must prove:
 - no product UI or source-system code was added,
 - screenshot blockers are explicit,
 - Phase 1 can close with `PASS` or acceptable `PROCESS_WARN`.
+
+## Phase 2 Work Tickets
+
+Phase 2 builds the immutable source archive foundation. It must not parse source facts, create display rows, build product UI, run live source pulls, apply migrations, deploy, sync, or mutate source systems.
+
+### P2-A: Source Archive Domain Types And Test Harness
+
+Issue: `#26`
+
+Owns:
+
+- `src/lib/source-archive/types.ts`,
+- `src/lib/source-archive/index.ts`,
+- `tests/source-archive/source-archive-types.test.ts`,
+- `src/lib/index.ts` only for exports.
+
+Must prove:
+
+- source archive batches, raw rows, skipped ledger entries, and source pull metadata are typed,
+- raw row identity is immutable and separate from parsed facts,
+- no parser facts or display rows are introduced.
+
+### P2-B: Raw Row Classifier And Skipped Row Ledger
+
+Issue: `#27`
+
+Owns:
+
+- `src/lib/source-archive/row-classifier.ts`,
+- `tests/source-archive/row-classifier.test.ts`,
+- `fixtures/source-rows/laws/*` only if tiny synthetic row fixtures are needed.
+
+Must prove:
+
+- only literally empty rows are allowed skips,
+- zero-fee/nonzero-hour, TBC, archived, inactive, provisional, unmatched, and duplicate rows are archivable,
+- skipped rows carry explicit reason and source evidence.
+
+### P2-C: Immutable In-Memory Source Archive Store
+
+Issue: `#28`
+
+Owns:
+
+- `src/lib/source-archive/archive-store.ts`,
+- `tests/source-archive/archive-store.test.ts`.
+
+Must prove:
+
+- batches and raw rows are append-only,
+- duplicates are preserved as separate rows,
+- rows can be looked up by source identity,
+- skipped rows are queryable,
+- archived payloads cannot be mutated after storage.
+
+### P2-D: Read-only Source Pull Interface
+
+Issue: `#29`
+
+Owns:
+
+- `src/lib/source-archive/source-pull.ts`,
+- `tests/source-archive/source-pull.test.ts`.
+
+Must prove:
+
+- adapters expose read/list/fetch only,
+- pull results preserve source metadata,
+- no live source calls happen in Phase 2,
+- no write/delete/archive/sync methods exist.
+
+### P2-E: Development Source Row Browser Query Helpers
+
+Issue: `#30`
+
+Owns:
+
+- `src/lib/source-archive/source-row-browser.ts`,
+- `tests/source-archive/source-row-browser.test.ts`.
+
+Must prove:
+
+- archived and skipped rows are inspectable,
+- filters work by source, batch, document, tab, row number, object ID, hash, and source identity text,
+- duplicates are not suppressed,
+- no dashboard rows or totals are created.
+
+### P2-F: Phase 2 Verification Gate And Ticket Closure
+
+Issue: `#31`
+
+Owns:
+
+- `scripts/verify-phase2.mjs`,
+- `package.json`,
+- `docs/BUILD_LOG.md`,
+- `docs/EXECUTION_TICKETS.md`.
+
+Must prove:
+
+- `npm run verify:phase2` exists,
+- Phase 2 boundary checks run,
+- `npm test`, `npm run typecheck`, `npm run verify:phase2`, `npm run build`, and `npm audit --omit=dev` pass.
+
+### P2-G: Doctrine Review Gate For Source Archive
+
+Issue: `#32`
+
+Owns:
+
+- read-only review only.
+
+Must prove:
+
+- source archive exists before parsers,
+- every non-empty source row is archivable,
+- skipped rows are explicitly classified and queryable,
+- raw row IDs are immutable and available for future parsed facts,
+- no parser facts or dashboard display rows are created in Phase 2,
+- no old dashboard selectors are used as truth,
+- no source-system mutation, sync, deploy, migration application, or live source pull happened,
+- tests cover zero-fee/nonzero-hour, TBC, archived, inactive, provisional, unmatched, duplicate, and literally empty rows.

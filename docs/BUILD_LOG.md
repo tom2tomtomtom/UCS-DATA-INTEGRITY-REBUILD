@@ -376,3 +376,50 @@ Next action:
 - commit and push Phase 1 UX parity map,
 - update and close GitHub `#17` through `#22`,
 - keep screenshot follow-up issues `#23` through `#25` open.
+
+### Checkpoint: Phase 2 Ticketing Started
+
+Phase: 2
+
+Ticket: `#3`
+
+Status: ticketed, implementation not started
+
+What changed:
+
+- created bounded Phase 2 implementation tickets `#26` through `#32`,
+- mirrored Phase 2 implementation tickets into `docs/EXECUTION_TICKETS.md`.
+
+Worker split:
+
+- `#26` P2-A owns source archive domain types and type tests,
+- `#27` P2-B owns raw row classifier and skipped-row ledger,
+- `#28` P2-C owns immutable in-memory archive store,
+- `#29` P2-D owns read-only source pull interface,
+- `#30` P2-E owns development source row browser helpers,
+- `#31` P2-F owns Phase 2 verification gate and closure docs,
+- `#32` P2-G is read-only Doctrine Steward review.
+
+Phase boundary:
+
+- Phase 2 preserves raw source evidence,
+- no product UI,
+- no source parsers,
+- no canon queries,
+- no display aggregation,
+- no chat investigation tools,
+- no live source pulls,
+- no migrations applied,
+- no source-system mutation.
+
+Implementation discipline:
+
+- use test-driven development,
+- write failing tests before implementation code,
+- do not graduate any Phase 2 behaviour without active tests,
+- stop if implementation starts correcting or reconciling source data.
+
+Next action:
+
+- commit and push Phase 2 ticketing,
+- spawn bounded Phase 2 implementation agents with disjoint write sets.
