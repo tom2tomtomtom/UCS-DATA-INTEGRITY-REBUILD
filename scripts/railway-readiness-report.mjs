@@ -41,12 +41,23 @@ function inspectRailwayStatus() {
     });
     const parsed = JSON.parse(stdout);
 
+    let projectName = firstString(parsed.project?.name, parsed.projectName, parsed.project, parsed.name);
+    let serviceName = firstString(parsed.service?.name, parsed.serviceName, parsed.service);
+    let environmentName = firstString(parsed.environment?.name, parsed.environmentName, parsed.environment);
+
+    if (!projectName || !serviceName || !environmentName) {
+      const plain = readPlainRailwayStatus();
+      projectName = projectName ?? plain.projectName;
+      serviceName = serviceName ?? plain.serviceName;
+      environmentName = environmentName ?? plain.environmentName;
+    }
+
     return {
       statusInspected: true,
       linked: true,
-      projectName: firstString(parsed.project?.name, parsed.projectName, parsed.project),
-      serviceName: firstString(parsed.service?.name, parsed.serviceName, parsed.service),
-      environmentName: firstString(parsed.environment?.name, parsed.environmentName, parsed.environment)
+      projectName,
+      serviceName,
+      environmentName
     };
   } catch (error) {
     return {
@@ -55,6 +66,33 @@ function inspectRailwayStatus() {
       statusMessage: sanitizedError(error)
     };
   }
+}
+
+function readPlainRailwayStatus() {
+  try {
+    const text = execFileSync("railway", ["status"], {
+      encoding: "utf8",
+      stdio: ["ignore", "pipe", "pipe"],
+      timeout: 8000
+    });
+
+    return {
+      projectName: matchStatusLine(text, /^Project:\s*(.+)$/m),
+      environmentName: matchStatusLine(text, /^Environment:\s*(.+)$/m),
+      serviceName: matchStatusLine(text, /^Service:\s*(.+)$/m)
+    };
+  } catch {
+    return { projectName: undefined, environmentName: undefined, serviceName: undefined };
+  }
+}
+
+function matchStatusLine(text, pattern) {
+  const match = text.match(pattern);
+  if (!match) {
+    return undefined;
+  }
+  const value = match[1].trim();
+  return value === "" || value === "None" ? undefined : value;
 }
 
 function readEnvFile(filePath) {
