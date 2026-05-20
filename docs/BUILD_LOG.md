@@ -516,3 +516,47 @@ Next action:
 - commit and push P2-B through P2-E,
 - close GitHub `#27` through `#30`,
 - then build Phase 2 verification gate in `#31`.
+
+### Checkpoint: P2-F Phase 2 Verification Gate
+
+Phase: 2
+
+Ticket: `#31`
+
+Status: implemented, awaiting commit
+
+What changed:
+
+- added `scripts/verify-phase2.mjs`,
+- added `npm run verify:phase2`,
+- updated `npm run build` to run the Phase 2 gate.
+
+The gate checks:
+
+- Phase 2 source archive files and tests exist,
+- Phase 2 has active source archive tests,
+- source archive exports are wired,
+- out-of-phase UI/parser/query/db directories are absent,
+- migration SQL is absent,
+- source archive code does not import live source clients or environment variables,
+- source archive code does not reference parser facts or dashboard display contracts.
+
+Verification:
+
+- `npm run verify:phase2` passed,
+- `npm run build` passed through `verify:phase2`,
+- `npm audit --omit=dev` found 0 vulnerabilities,
+- `git diff --check` passed.
+
+Boundary kept:
+
+- gate does not start live source pulls,
+- gate does not need production credentials,
+- gate does not apply migrations,
+- gate does not permit Phase 2 behaviours to remain as todo tests.
+
+Next action:
+
+- commit and push P2-F,
+- close GitHub `#31`,
+- run Doctrine Steward review for `#32`.
