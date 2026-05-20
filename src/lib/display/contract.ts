@@ -1,6 +1,9 @@
 import type {
   DashboardScope,
+  FloatFact,
   MetricValue,
+  PipelineFact,
+  ProductionRevenueFact,
   ReconciliationCheck,
   SoldFact,
   SourceFactSet,
@@ -10,6 +13,13 @@ import type {
   SourceWarning,
   UnsupportedMetric
 } from "../canon/types";
+import { filterFactsByScope } from "../canon-queries/scope";
+import type { ApprovalContractOutput } from "./approval-output";
+import { buildCsvRowsFromDisplayContract } from "./csv";
+import { createFloatReconciliationChecks } from "./float-reconciliation";
+import { buildProjectRows } from "./project-rows";
+import { buildDisplayRollups } from "./rollups";
+import type { CompactSourceTraceRow } from "./traces";
 
 export type DashboardTotals = {
   soldFee: MetricValue;
@@ -74,11 +84,22 @@ export type DashboardDisplayContract = {
   confidence: "high" | "medium" | "low";
 };
 
+export type DashboardApprovalOutput = ApprovalContractOutput;
+export type CompactDashboardTraceRow = CompactSourceTraceRow;
+
 export type BuildDashboardDisplayContractInput = SourceFactSet & {
   scope: DashboardScope;
   generatedAt: string;
   unsupportedMetrics?: UnsupportedMetric[];
 };
+
+const dashboardMetricKeys = [
+  "soldFee",
+  "soldHours",
+  "pipelineFee",
+  "productionRevenue",
+  "floatHours"
+] as const satisfies readonly (keyof DashboardTotals)[];
 
 const unsupportedTotal = (
   metric: string,
@@ -119,44 +140,55 @@ export function buildDashboardDisplayContract(
   const unsupportedByMetric = new Map(
     (input.unsupportedMetrics ?? []).map((metric) => [metric.metric, metric])
   );
-  const soldTotals = additiveSoldTotals(input.soldFacts);
+  const soldFacts = filterFactsByScope(input.soldFacts, input.scope);
+  const pipelineFacts = filterFactsByScope(input.pipelineFacts, input.scope);
+  const productionRevenueFacts = filterFactsByScope(input.productionRevenueFacts, input.scope);
+  const floatFacts = filterFactsByScope(input.floatFacts, input.scope);
+  const soldTotals = additiveSoldTotals(soldFacts);
   const emptyReason = "No supported facts for this metric in the current display contract scope.";
   const totals: DashboardTotals = {
     soldFee: soldTotals.soldFee,
     soldHours: soldTotals.soldHours,
     pipelineFee:
       unsupportedByMetric.get("pipelineFee") ??
-      unsupportedTotal("pipelineFee", input.scope, "pipeline", emptyReason),
+      additivePipelineTotal(pipelineFacts, input.scope, emptyReason),
     productionRevenue:
       unsupportedByMetric.get("productionRevenue") ??
-      unsupportedTotal("productionRevenue", input.scope, "production_revenue", emptyReason),
+      additiveProductionRevenueTotal(productionRevenueFacts, input.scope, emptyReason),
     floatHours:
       unsupportedByMetric.get("floatHours") ??
-      unsupportedTotal("floatHours", input.scope, "float", emptyReason)
+      additiveVisibleFloatHours(floatFacts, input.scope, emptyReason)
   };
-  const unsupported = Object.values(totals).filter(
-    (metric): metric is UnsupportedMetric => metric.kind === "unsupported"
-  );
+  const visibleRows = buildProjectRows(input);
+  const rollups = buildDisplayRollups({
+    scope: input.scope,
+    soldFacts,
+    pipelineFacts,
+    productionRevenueFacts
+  });
+  const reconciliation = createFloatReconciliationChecks({
+    scope: input.scope,
+    facts: floatFacts
+  });
   const sourceTrace = sourceTraceForSoldTotals(input.scope, soldTotals);
-
-  return {
+  const contractWithoutCsv: DashboardDisplayContract = {
     scope: { ...input.scope },
     generatedAt: input.generatedAt,
-    visibleRows: [],
+    visibleRows,
     heroTotals: totals,
     footerTotals: totals,
-    rollups: {
-      byDepartment: [],
-      byRole: [],
-      byMonth: [],
-      byClient: []
-    },
+    rollups,
     csvRows: [],
-    unsupported,
-    reconciliation: [],
+    unsupported: unsupportedFromTotals(totals),
+    reconciliation,
     sourceTrace,
     warnings: input.sourceIssues,
     confidence: confidenceFor(totals)
+  };
+
+  return {
+    ...contractWithoutCsv,
+    csvRows: buildCsvRowsFromDisplayContract(contractWithoutCsv)
   };
 }
 
@@ -214,6 +246,90 @@ function additiveSoldTotals(soldFacts: readonly SoldFact[]): {
   };
 }
 
+function additivePipelineTotal(
+  pipelineFacts: readonly PipelineFact[],
+  scope: DashboardScope,
+  emptyReason: string
+): MetricValue {
+  return additiveMoneyTotal(
+    pipelineFacts,
+    () => unsupportedTotal("pipelineFee", scope, "pipeline", emptyReason),
+    "display_contract_pipeline_additive_facts"
+  );
+}
+
+function additiveProductionRevenueTotal(
+  productionRevenueFacts: readonly ProductionRevenueFact[],
+  scope: DashboardScope,
+  emptyReason: string
+): MetricValue {
+  return additiveMoneyTotal(
+    productionRevenueFacts,
+    () => unsupportedTotal("productionRevenue", scope, "production_revenue", emptyReason),
+    "display_contract_production_revenue_additive_facts"
+  );
+}
+
+function additiveVisibleFloatHours(
+  floatFacts: readonly FloatFact[],
+  scope: DashboardScope,
+  emptyReason: string
+): MetricValue {
+  const visibleFacts = floatFacts.filter((fact) => fact.sourceLayer === "float_visible" && fact.isAdditive);
+  if (visibleFacts.length === 0) {
+    return unsupportedTotal("floatHours", scope, "float", emptyReason);
+  }
+
+  return {
+    kind: "hours",
+    value: visibleFacts.reduce((total, fact) => {
+      if (fact.hours?.kind !== "hours") {
+        return total;
+      }
+
+      return total + fact.hours.value;
+    }, 0),
+    unit: "decimal_hours"
+  };
+}
+
+function additiveMoneyTotal(
+  facts: readonly { amount?: MetricValue; isAdditive: boolean }[],
+  emptyValue: () => MetricValue,
+  fxSource: string
+): MetricValue {
+  const additiveFacts = facts.filter((fact) => fact.isAdditive && fact.amount?.kind === "money");
+  if (additiveFacts.length === 0) {
+    return emptyValue();
+  }
+
+  let amountOriginal = 0;
+  let amountGbp = 0;
+  let currencyOriginal: "GBP" | "USD" | "EUR" | "SEK" | "UNKNOWN" = "GBP";
+
+  for (const fact of additiveFacts) {
+    if (fact.amount?.kind !== "money") {
+      continue;
+    }
+
+    amountOriginal += fact.amount.value.amountOriginal;
+    amountGbp += fact.amount.value.amountGbp;
+    currencyOriginal = fact.amount.value.currencyOriginal;
+  }
+
+  return {
+    kind: "money",
+    value: {
+      amountOriginal,
+      currencyOriginal,
+      amountGbp,
+      fxRateToGbp: amountOriginal === 0 ? 1 : amountGbp / amountOriginal,
+      fxSource,
+      fxCapturedAt: ""
+    }
+  };
+}
+
 function sourceTraceForSoldTotals(
   scope: DashboardScope,
   soldTotals: ReturnType<typeof additiveSoldTotals>
@@ -247,4 +363,10 @@ function sourceTraceForSoldTotals(
 
 function confidenceFor(totals: DashboardTotals): DashboardDisplayContract["confidence"] {
   return Object.values(totals).some((metric) => metric.kind === "unsupported") ? "medium" : "high";
+}
+
+function unsupportedFromTotals(totals: DashboardTotals): UnsupportedMetric[] {
+  return dashboardMetricKeys
+    .map((metric) => totals[metric])
+    .filter((metric): metric is UnsupportedMetric => metric.kind === "unsupported");
 }

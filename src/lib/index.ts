@@ -114,7 +114,9 @@ export type {
 } from "./source-archive";
 
 export type {
+  CompactDashboardTraceRow,
   BuildDashboardDisplayContractInput,
+  DashboardApprovalOutput,
   DashboardCsvRow,
   DashboardDisplayContract,
   DashboardProjectRow,
@@ -122,6 +124,33 @@ export type {
   RollupRow
 } from "./display/contract";
 export { buildDashboardDisplayContract } from "./display/contract";
+export {
+  buildApprovalOutputFromDisplayContract,
+  buildApprovalOutputRow
+} from "./display/approval-output";
+export type { ApprovalContractOutput, ApprovalOutputRow } from "./display/approval-output";
+export { buildCsvRowFromDisplayRow, buildCsvRowsFromDisplayContract } from "./display/csv";
+export { createFloatReconciliationChecks } from "./display/float-reconciliation";
+export type { FloatReconciliationInput } from "./display/float-reconciliation";
+export { buildProjectRows } from "./display/project-rows";
+export type { BuildProjectRowsInput, ProjectDisplayRow, ProjectRowSourceLabel } from "./display/project-rows";
+export {
+  buildClientRollups,
+  buildDepartmentRollups,
+  buildDisplayRollups,
+  buildMonthRollups,
+  buildRoleRollups,
+  preserveScopeForLink,
+  scopedHref,
+  scopeForRollupDrilldown,
+  scopeToSearchParams
+} from "./display/rollups";
+export type { BuildRollupsInput, DisplayRollups, RollupDimension } from "./display/rollups";
+export {
+  buildCompactTraceRowsFromDisplayContract,
+  buildCompactTraceRowsFromDisplayRow
+} from "./display/traces";
+export type { CompactSourceTraceRow } from "./display/traces";
 
 export {
   createParserFactEvidence,

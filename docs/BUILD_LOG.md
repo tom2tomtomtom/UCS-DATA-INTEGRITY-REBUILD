@@ -1062,3 +1062,58 @@ Next action:
 - commit and push P5-A plus the initial Phase 5 gate,
 - close GitHub `#48`,
 - keep `#53` open until the full Phase 5 verifier covers all display modules.
+
+### Checkpoint: P5-B Through P5-F Display Contract Integrated
+
+Phase: 5
+
+Tickets: `#49`, `#50`, `#51`, `#52`, `#53`
+
+Status: implemented locally, push-blocking verification passed, awaiting commit
+
+What changed:
+
+- added scoped project rows with source labels, trace refs, warnings, confidence, source-only row types, and explicit Float ID separation,
+- added display rollups for department, role, client, and month,
+- added scope-preserving link helpers and exact client drilldown support,
+- added Float raw/cache/visible reconciliation checks for missing cache, cache-only, raw/cache deltas, and inactive visible hours,
+- added CSV rows, compact trace rows, and approval output helpers derived from display contract rows,
+- integrated project rows, rollups, CSV rows, and Float reconciliation into `buildDashboardDisplayContract`,
+- tightened `scripts/verify-phase5.mjs` so the Phase 5 gate requires all display modules, tests, exports, scope guards, named Float checks, and no forbidden live source or old selector paths.
+
+TDD evidence:
+
+- P5-B red: project row tests failed on missing `display/project-rows`,
+- P5-C red: rollup and scope-preservation tests failed on missing `display/rollups`,
+- P5-D red: Float reconciliation tests failed on missing `display/float-reconciliation`,
+- P5-E red: CSV, trace, and approval tests failed on missing modules,
+- controller red: scoped project row test failed because out-of-scope USA, April, and Strategy facts leaked into rows,
+- controller red: top-level display contract integration test failed because `visibleRows` was still empty,
+- controller red: scoped Float reconciliation test failed because out-of-scope Float facts entered the active dashboard scope,
+- green: focused display tests passed with 9 display test files and 26 active display tests,
+- green: `npm run verify:phase5` passed with 28 passed test files, 98 active tests, 85 todo tests, typecheck, and Phase 5 verification.
+
+Boundary kept:
+
+- one display contract now owns visible rows, rollups, CSV, and reconciliation,
+- rows and Float checks scope their own facts instead of trusting callers,
+- raw Float facts do not become visible dashboard Float hours,
+- source-only rows remain visible,
+- unsupported remains unsupported, not zero,
+- raw parser summaries remain non-additive unless explicitly marked additive,
+- exact client filtering remains separate from search,
+- no product UI pages,
+- no live source pulls,
+- no database calls,
+- no old dashboard selectors,
+- no migrations applied,
+- no deploys,
+- no sync,
+- no source-system mutation.
+
+Next action:
+
+- run final build, audit, diff, and punctuation hygiene checks,
+- commit and push P5-B through P5-F,
+- close GitHub `#49`, `#50`, `#51`, `#52`, and `#53`,
+- run P5-G Doctrine Steward review before closing parent Phase 5.

@@ -58,8 +58,21 @@ function checkPackageScripts() {
 function checkRequiredFiles() {
   const requiredFiles = [
     "src/lib/display/contract.ts",
+    "src/lib/display/project-rows.ts",
+    "src/lib/display/rollups.ts",
+    "src/lib/display/float-reconciliation.ts",
+    "src/lib/display/csv.ts",
+    "src/lib/display/traces.ts",
+    "src/lib/display/approval-output.ts",
     "tests/display/display-contract-shape.test.ts",
-    "tests/display/display-totalling-laws.test.ts"
+    "tests/display/display-totalling-laws.test.ts",
+    "tests/display/project-rows.test.ts",
+    "tests/display/rollups.test.ts",
+    "tests/display/scope-preservation.test.ts",
+    "tests/display/float-reconciliation.test.ts",
+    "tests/display/csv.test.ts",
+    "tests/display/traces.test.ts",
+    "tests/display/approval-output.test.ts"
   ];
 
   for (const file of requiredFiles) {
@@ -153,7 +166,17 @@ function checkActiveDisplayTests() {
     "sourceTrace",
     "visibleRows",
     "csvRows",
-    "legacySelectorOutput"
+    "legacySelectorOutput",
+    "builds rows, rollups, and CSV from the same scoped display contract",
+    "filters project rows to the active display scope",
+    "LDN Q1 Design",
+    "Pipeline does not support",
+    "exact client",
+    "PCS00250",
+    "BT_RAW_CACHE",
+    "raw/cache",
+    "out-of-scope Float facts",
+    "approval contract output"
   ];
 
   for (const marker of requiredMarkers) {
@@ -166,13 +189,68 @@ function checkActiveDisplayTests() {
 function checkExports() {
   const rootIndex = read("src/lib/index.ts");
   const contract = read("src/lib/display/contract.ts");
+  const requiredExports = [
+    "buildDashboardDisplayContract",
+    "buildProjectRows",
+    "buildDisplayRollups",
+    "createFloatReconciliationChecks",
+    "buildCsvRowsFromDisplayContract",
+    "buildCompactTraceRowsFromDisplayContract",
+    "buildApprovalOutputFromDisplayContract"
+  ];
 
   if (!contract.includes("buildDashboardDisplayContract")) {
     fail("Display contract must export buildDashboardDisplayContract");
   }
 
-  if (!rootIndex.includes("buildDashboardDisplayContract")) {
-    fail("Root library must export buildDashboardDisplayContract");
+  for (const exportedName of requiredExports) {
+    if (!rootIndex.includes(exportedName)) {
+      fail(`Root library must export ${exportedName}`);
+    }
+  }
+}
+
+function checkDisplayModulesContainDoctrineAnchors() {
+  const fileMarkers = {
+    "src/lib/display/contract.ts": [
+      "filterFactsByScope",
+      "buildProjectRows",
+      "buildDisplayRollups",
+      "createFloatReconciliationChecks",
+      "buildCsvRowsFromDisplayContract"
+    ],
+    "src/lib/display/project-rows.ts": [
+      "filterFactsByScope",
+      "sourceLabels",
+      "float_visible",
+      "rowType"
+    ],
+    "src/lib/display/rollups.ts": [
+      "scopeForRollupDrilldown",
+      "dimensionSupportsPipelineAndProduction",
+      "Pipeline does not support",
+      "Production Revenue does not support"
+    ],
+    "src/lib/display/float-reconciliation.ts": [
+      "filterFactsByScope",
+      "FLOAT_VISIBLE_CACHE_MISSING_CACHE",
+      "FLOAT_INACTIVE_VISIBLE_HOURS",
+      "PCS00250_RAW_CACHE_UNRESOLVED",
+      "BT_RAW_CACHE_UNRESOLVED"
+    ],
+    "src/lib/display/csv.ts": ["visibleRows", "unsupported", "sourceTrace"],
+    "src/lib/display/traces.ts": ["MetricValue", "sourceRefs", "unsupported"],
+    "src/lib/display/approval-output.ts": ["heroTotals", "footerTotals", "reconciliation"]
+  };
+
+  for (const [file, markers] of Object.entries(fileMarkers)) {
+    const source = read(file);
+
+    for (const marker of markers) {
+      if (!source.includes(marker)) {
+        fail(`${file} is missing doctrine anchor: ${marker}`);
+      }
+    }
   }
 }
 
@@ -183,6 +261,7 @@ function run() {
   checkDisplayCodeDoesNotCheat();
   checkActiveDisplayTests();
   checkExports();
+  checkDisplayModulesContainDoctrineAnchors();
 
   if (failures.length > 0) {
     console.error("Phase 5 verification failed:");

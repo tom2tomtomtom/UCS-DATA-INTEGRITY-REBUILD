@@ -77,12 +77,10 @@ describe("P5-A display contract shape", () => {
     expect(Array.isArray(contract.visibleRows)).toBe(true);
     expect(contract.heroTotals).toBeDefined();
     expect(contract.footerTotals).toBeDefined();
-    expect(contract.rollups).toEqual({
-      byDepartment: [],
-      byRole: [],
-      byMonth: [],
-      byClient: []
-    });
+    expect(Array.isArray(contract.rollups.byDepartment)).toBe(true);
+    expect(Array.isArray(contract.rollups.byRole)).toBe(true);
+    expect(Array.isArray(contract.rollups.byMonth)).toBe(true);
+    expect(Array.isArray(contract.rollups.byClient)).toBe(true);
     expect(Array.isArray(contract.csvRows)).toBe(true);
     expect(Array.isArray(contract.unsupported)).toBe(true);
     expect(Array.isArray(contract.reconciliation)).toBe(true);
@@ -120,5 +118,33 @@ describe("P5-A display contract shape", () => {
         })
       ])
     );
+  });
+
+  test("builds rows, rollups, and CSV from the same scoped display contract", () => {
+    const contract = buildDashboardDisplayContract(baseInput());
+
+    expect(contract.visibleRows).toHaveLength(1);
+    expect(contract.visibleRows[0]).toMatchObject({
+      jobNumber: "UCS04154",
+      rowType: "matched",
+      totals: {
+        soldFee: {
+          kind: "money",
+          value: { amountGbp: 1000 }
+        },
+        soldHours: {
+          kind: "hours",
+          value: 10
+        }
+      }
+    });
+    expect(contract.rollups.byClient).toHaveLength(1);
+    expect(contract.rollups.byMonth).toHaveLength(1);
+    expect(contract.csvRows).toHaveLength(1);
+    expect(contract.csvRows[0]?.cells).toMatchObject({
+      jobNumber: "UCS04154",
+      soldFeeGbp: 1000,
+      soldHours: 10
+    });
   });
 });
