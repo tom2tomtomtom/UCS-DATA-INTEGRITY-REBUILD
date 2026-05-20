@@ -146,6 +146,11 @@ function checkUiCodeDoesNotCheat() {
 }
 
 function checkShellMarkers() {
+  const dashboardPage = read("app/dashboard/page.tsx");
+  if (!dashboardPage.includes("searchParams") || !dashboardPage.includes("scopeFromSearchParams")) {
+    fail("app/dashboard/page.tsx must derive its contract scope from searchParams via scopeFromSearchParams");
+  }
+
   const combined = [
     read("src/components/dashboard/chrome/dashboard-chrome.ts"),
     read("src/components/dashboard/rollups/dashboard-home.ts"),

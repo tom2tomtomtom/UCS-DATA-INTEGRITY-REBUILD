@@ -1481,3 +1481,46 @@ Next action:
 - run full `npm run build`, audit, diff, and punctuation checks,
 - commit and push the blocker fix,
 - rerun P6-H Doctrine Steward review.
+
+### Checkpoint: P6-H Root Dashboard Scope Blocker Fix
+
+Phase: 6
+
+Tickets: `#60`, `#62`
+
+Status: accepted by Doctrine Steward, commit pending
+
+Doctrine Steward blocker:
+
+- the first P6-H review accepted the named destination route fix but found that root `/dashboard` still hard-coded the default LDN Q1 fixture scope.
+
+What changed:
+
+- added a route-level regression test that renders `/dashboard` with explicit `office`, `from`, `to`, `department`, `role`, `client`, `search`, and `jobNumber` params,
+- rewired root `/dashboard` to accept `searchParams` and build its contract through `scopeFromSearchParams`,
+- expanded `scripts/verify-phase6.mjs` so the root dashboard route must include both `searchParams` and `scopeFromSearchParams`.
+
+TDD evidence:
+
+- red: `npm run test -- tests/ui/app-shell.test.ts` failed because the route still rendered `2026-03-31` instead of the requested `2026-12-31`,
+- green: the same focused test passed after the route used the shared scope parser,
+- full gate: `npm run build` passed with 38 test files, 111 passing tests, 85 todo tests, TypeScript, Next build, and Phase 6 verifier,
+- hygiene: `npm audit --omit=dev`, `git diff --check`, and the punctuation scan passed.
+
+Doctrine evidence:
+
+- second P6-H read-only review returned `ACCEPTED`,
+- reviewer found no remaining Phase 6 scope leak,
+- reviewer found no Supabase, live source reads, old selector use, database reads, fetch calls, or mutation paths in the Phase 6 UI surface.
+
+Remaining Phase 6 warnings:
+
+- Phase 6 has deterministic render tests but no Playwright browser run yet,
+- 85 law and scenario tests remain as todo anchors for later real-data phases,
+- verifier marker checks are supported by behavior tests, but are not AST-level proofs.
+
+Next action:
+
+- commit and push the root dashboard scope fix,
+- close `#60`, `#62`, and parent `#7`,
+- move into Phase 7 chat evidence agent work.
