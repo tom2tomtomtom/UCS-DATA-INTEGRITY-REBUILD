@@ -1117,3 +1117,41 @@ Next action:
 - commit and push P5-B through P5-F,
 - close GitHub `#49`, `#50`, `#51`, `#52`, and `#53`,
 - run P5-G Doctrine Steward review before closing parent Phase 5.
+
+### Checkpoint: Phase 5 Doctrine Steward Accepted
+
+Phase: 5
+
+Tickets: `#6`, `#54`
+
+Status: `ACCEPTED_WITH_PROCESS_WARN`, Phase 5 can close
+
+Doctrine Steward result:
+
+- blocking findings: none,
+- P5-G can close,
+- parent Phase 5 can close with process warnings carried forward.
+
+Evidence:
+
+- `npm run verify:phase5` passed with 28 passed test files, 98 active tests, 85 todo tests, typecheck, and Phase 5 verification,
+- `npm run build` passed and delegates to `verify:phase5`,
+- `npm audit --omit=dev` found 0 vulnerabilities,
+- full `npm audit` still reports the known dev-only `next -> postcss` advisory,
+- `git diff --check` passed,
+- forbidden display/test scan returned no live source, database, old selector, SQL mutation, product UI path, or source-system mutation matches,
+- no SQL migrations, `src/app`, `src/pages`, `src/components`, or `src/lib/db` exist,
+- em dash/en dash scan returned no matches,
+- GitHub CI for commit `8f07295` completed successfully.
+
+Accepted process warnings carried forward:
+
+- full `npm audit` dev-only Next/PostCSS advisory remains accepted while there is no product UI or deploy,
+- `LDN_Q1_DESIGN` is covered at the display contract and rollup level, but UI parity remains Phase 6 work,
+- `USA00262` and `USA00323` named USA template checks remain deferred to Phase 8 real-data dual run,
+- `PCS00250` and `BT_RAW_CACHE` are represented in Float reconciliation, but remain source/data warnings unless scoped cache/raw facts resolve them.
+
+Next action:
+
+- close GitHub `#54` and parent `#6`,
+- create bounded Phase 6 UI parity implementation tickets before starting any product UI work.
