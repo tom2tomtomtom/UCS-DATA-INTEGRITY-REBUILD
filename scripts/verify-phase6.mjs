@@ -64,16 +64,23 @@ function checkRequiredShellFiles() {
     "app/dashboard/layout.tsx",
     "app/dashboard/page.tsx",
     "app/dashboard/projects/page.tsx",
+    "app/dashboard/projects/[jobNumber]/page.tsx",
+    "app/dashboard/float/page.tsx",
+    "app/dashboard/float/[floatProjectId]/page.tsx",
     "app/globals.css",
     "src/components/dashboard/chrome/dashboard-chrome.ts",
     "src/components/dashboard/rollups/dashboard-home.ts",
     "src/components/dashboard/projects/projects-table.ts",
+    "src/components/dashboard/project-detail/project-detail.ts",
+    "src/components/dashboard/float/float-diagnostics.ts",
     "src/components/dashboard/export/csv-export.ts",
     "src/lib/ui/fixture-contract.ts",
     "tests/ui/app-shell.test.ts",
     "tests/ui/dashboard-home.test.ts",
     "tests/ui/projects-page.test.ts",
-    "tests/ui/csv-export.test.ts"
+    "tests/ui/csv-export.test.ts",
+    "tests/ui/project-detail.test.ts",
+    "tests/ui/float-diagnostics.test.ts"
   ];
 
   for (const file of requiredFiles) {
@@ -131,13 +138,20 @@ function checkShellMarkers() {
     read("src/components/dashboard/chrome/dashboard-chrome.ts"),
     read("src/components/dashboard/rollups/dashboard-home.ts"),
     read("src/components/dashboard/projects/projects-table.ts"),
+    read("src/components/dashboard/project-detail/project-detail.ts"),
+    read("src/components/dashboard/float/float-diagnostics.ts"),
     read("src/components/dashboard/export/csv-export.ts"),
     read("src/lib/ui/fixture-contract.ts"),
     read("tests/ui/app-shell.test.ts"),
     read("tests/ui/dashboard-home.test.ts"),
     read("tests/ui/projects-page.test.ts"),
     read("tests/ui/csv-export.test.ts"),
+    read("tests/ui/project-detail.test.ts"),
+    read("tests/ui/float-diagnostics.test.ts"),
     read("app/dashboard/projects/page.tsx"),
+    read("app/dashboard/projects/[jobNumber]/page.tsx"),
+    read("app/dashboard/float/page.tsx"),
+    read("app/dashboard/float/[floatProjectId]/page.tsx"),
     read("app/dashboard/page.tsx")
   ].join("\n");
   const requiredMarkers = [
@@ -169,7 +183,16 @@ function checkShellMarkers() {
     "float_only",
     "Download CSV",
     "client",
-    "search"
+    "search",
+    "ProjectDetail",
+    "FloatDiagnostics",
+    "FLOAT_VISIBLE_CACHE_MISSING_CACHE",
+    "PCS00250_RAW_CACHE_UNRESOLVED",
+    "BT_RAW_CACHE_UNRESOLVED",
+    "UCS04787",
+    "UCS05186",
+    "manual-ucs05186",
+    "fixture-float-visible-ucs04787"
   ];
 
   for (const marker of requiredMarkers) {

@@ -97,7 +97,8 @@ export function fixtureFactSet(): SourceFactSet {
         client: "British Airways",
         projectName: "BA March Madness",
         hoursValue: 861,
-        month: "2026-02"
+        month: "2026-02",
+        department: "Design"
       }),
       floatFact({
         id: "fixture:float:ucs04787-raw",
@@ -108,7 +109,8 @@ export function fixtureFactSet(): SourceFactSet {
         client: "British Airways",
         projectName: "BA March Madness",
         hoursValue: 1_597.5,
-        month: "2026-02"
+        month: "2026-02",
+        department: "Design"
       }),
       floatFact({
         id: "fixture:float:pcs00250-cache",
@@ -121,6 +123,41 @@ export function fixtureFactSet(): SourceFactSet {
         hoursValue: 20,
         month: "2026-03",
         warnings: [floatWarning]
+      }),
+      floatFact({
+        id: "fixture:float:bt-raw",
+        rawRowId: "fixture-float-raw-bt",
+        sourceLayer: "float_raw",
+        jobNumber: "UCSBT001",
+        floatProjectId: "1350219",
+        client: "BT Group",
+        projectName: "BT Launch Campaign",
+        hoursValue: 2.1,
+        month: "2026-02"
+      }),
+      floatFact({
+        id: "fixture:float:ucs05186-canonical-visible",
+        rawRowId: "fixture-float-visible-ucs05186-canonical",
+        sourceLayer: "float_visible",
+        jobNumber: "UCS05186",
+        floatProjectId: "11413292",
+        client: "Boldbean",
+        projectName: "Boldbean Brand Platform",
+        hoursValue: 1_051.4,
+        month: "2026-03"
+      }),
+      floatFact({
+        id: "fixture:float:ucs05186-manual-visible",
+        rawRowId: "fixture-float-visible-ucs05186-manual",
+        sourceLayer: "float_visible",
+        jobNumber: "UCS05186",
+        floatProjectId: "manual-ucs05186",
+        client: "Boldbean",
+        projectName: "Boldbean Manual Duplicate",
+        hoursValue: 1_051,
+        month: "2026-03",
+        activeState: "archived",
+        allocationClass: "orphan"
       })
     ],
     readOnlySqlFacts: [],
@@ -240,6 +277,9 @@ function floatFact(input: {
   projectName: string;
   hoursValue: number;
   month: string;
+  department?: string;
+  activeState?: FloatFact["activeState"];
+  allocationClass?: FloatFact["allocationClass"];
   warnings?: SourceWarning[];
 }): FloatFact {
   return {
@@ -256,9 +296,10 @@ function floatFact(input: {
     sourceProjectName: input.projectName,
     office: "LDN",
     month: input.month,
+    ...(input.department !== undefined ? { department: input.department } : {}),
     hours: hours(input.hoursValue),
-    activeState: "active",
-    allocationClass: input.sourceLayer === "float_cache" ? "allocated" : "placeholder",
+    activeState: input.activeState ?? "active",
+    allocationClass: input.allocationClass ?? (input.sourceLayer === "float_cache" ? "allocated" : "placeholder"),
     isAdditive: true,
     confidence: input.sourceLayer === "float_cache" ? "medium" : "high",
     warnings: input.warnings ?? [],

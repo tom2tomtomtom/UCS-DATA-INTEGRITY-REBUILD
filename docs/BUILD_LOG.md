@@ -1325,3 +1325,46 @@ Next action:
 - run full `npm run build`, audit, diff, and punctuation checks,
 - commit and push P6-C,
 - close GitHub `#58`.
+
+### Checkpoint: P6-D Project Detail And Float Diagnostics
+
+Phase: 6
+
+Tickets: `#56`, partial `#60`
+
+Status: implemented locally, push-blocking verification pending
+
+What changed:
+
+- extended deterministic Float fixture evidence for BT raw-without-cache and UCS05186 duplicate/manual visibility,
+- added project detail component and `/dashboard/projects/[jobNumber]` route,
+- added Float diagnostics component plus `/dashboard/float` and `/dashboard/float/[floatProjectId]` routes,
+- project detail renders KPI cards, scope, back link, Float reconciliation checks, and source trace from contract evidence,
+- Float diagnostics renders fee-sheet and Float IDs, raw/cache/visible checks, PCS00250, BT raw/cache, UCS04787, UCS05186, and archived/manual candidate states,
+- expanded `scripts/verify-phase6.mjs` with P6-D file and marker checks.
+
+TDD evidence:
+
+- red: project detail and Float diagnostics tests failed because the components did not exist,
+- green: focused tests passed after adding contract-backed components,
+- project detail first exposed a fixture capability gap where department-scoped detail lost Float hours, fixed by adding department attribution to the deterministic UCS04787 Float facts,
+- Next build passed after adding the routes,
+- focused project detail, Float diagnostics, and Projects tests passed,
+- TypeScript passed after integration.
+
+Boundary kept:
+
+- project detail and Float diagnostics use display contract rows and reconciliation checks,
+- fixture gaps are labelled as pending rather than invented live comparisons,
+- no archive action,
+- no sync action,
+- no Float mutation,
+- no live source pulls,
+- no database calls,
+- no old dashboard selectors.
+
+Next action:
+
+- run full `npm run build`, audit, diff, and punctuation checks,
+- commit and push P6-D,
+- close GitHub `#56`.
