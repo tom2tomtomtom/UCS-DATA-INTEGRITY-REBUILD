@@ -295,6 +295,61 @@ Next action:
 - implement `#77` first,
 - keep actual Railway deployment behind the later target and health gates.
 
+### Checkpoint: P9-A Launch Readiness No-Deploy Gate
+
+Phase: 9
+
+Ticket: `#77`
+
+Status: implemented, local verification passed
+
+What changed:
+
+- added a pure launch readiness report builder,
+- added a safe launch readiness report CLI,
+- added `npm run verify:phase9`,
+- added a Phase 9 verifier that keeps `npm run build` on the Phase 8 gate and protects P9-A no-deploy markers,
+- exported launch readiness types from the shared library.
+
+Current readiness report:
+
+- status: `fail`,
+- pass: `npm run build` delegates to Phase 8,
+- pass: `npm run verify:phase9` exists,
+- pass: required `.env.example` keys are declared without values,
+- pass: package scripts do not contain `railway up`, `supabase db push`, migration, or DB push commands,
+- pass: no Railway mutating command has been recorded,
+- fail: `/api/health` is missing,
+- fail: `/api/readiness` is missing.
+
+Why this is acceptable for P9-A:
+
+- P9-A is the no-deploy readiness gate, not the health route implementation,
+- the readiness report must block launch until health and readiness routes exist,
+- `#78` owns those routes next.
+
+Verification:
+
+- red: launch tests failed because the readiness module, script, and Phase 9 verifier did not exist,
+- green: `npm test -- tests/launch/launch-readiness.test.ts tests/launch/phase9-verifier.test.ts` passed with 2 files passed and 6 tests passed,
+- `node scripts/launch-readiness-report.mjs` emitted safe JSON with explicit `fail` status and health/readiness blockers,
+- `npm run verify:phase9` passed with 59 files passed, 15 skipped, 193 tests passed, 79 todo, typecheck, Next build, Phase 8 verifier, and Phase 9 verifier.
+
+Boundary kept:
+
+- no Railway deploy,
+- no Railway variable mutation,
+- no DB migration,
+- no source sync,
+- no source mutation,
+- no committed secrets.
+
+Next action:
+
+- stage, secret-scan, commit, push,
+- close `#77` after CI,
+- start `#78` health and readiness routes.
+
 ### Checkpoint: Overnight Control Started
 
 Phase: 0
