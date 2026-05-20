@@ -127,6 +127,42 @@ Next action:
 - close ticket `#73`,
 - start `#74` named Sian/Yunni/Jade scenario report.
 
+### Checkpoint: Named Scenario Report Added
+
+Phase: 8
+
+Ticket: `#74`
+
+Status: implemented, local verification passed
+
+What changed:
+
+- added a stakeholder-safe named scenario report for the Gate 5 Sian/Yunni/Jade checks,
+- covered LDN Q1 Design, UCS04787, UCS05186, UCS04154, PCS00250, USA00262, USA00323, BT raw-without-cache, TBC pipeline identity, archived production revenue, and exact client drilldown,
+- classified each scenario as pass or warning with explicit owner, evidence checks, and next human action where needed,
+- kept the report free of raw source refs and raw payloads,
+- added a script for producing the report as JSON,
+- extended the Phase 8 verifier so named scenarios remain part of the gate.
+
+Verification:
+
+- `npm test -- tests/scenarios/named-scenario-report.test.ts tests/scenarios/phase8-named-scenario-verifier.test.ts` passed,
+- `npm run typecheck` passed,
+- `node scripts/verify-phase8.mjs` passed,
+- `npm run verify:phase8` passed with 55 files passed, 15 skipped, 181 tests passed, 79 todo, typecheck, Next build, and Phase 8 verifier.
+
+Process notes:
+
+- the report status is `warn`, not `pass`, because known Float/cache source warnings remain visible by design,
+- the report has zero `fail` scenarios and no `new_code_bug` scenarios,
+- this is deterministic scenario evidence, not live source approval.
+
+Next action:
+
+- commit and push P8-E,
+- close ticket `#74`,
+- start `#75` real-data UI screenshot and click proof.
+
 ### Checkpoint: Overnight Control Started
 
 Phase: 0

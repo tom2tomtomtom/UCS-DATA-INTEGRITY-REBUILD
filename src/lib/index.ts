@@ -195,3 +195,16 @@ export type {
   DualRunMetric,
   OldDashboardComparisonLane
 } from "./dual-run";
+
+export {
+  buildNamedScenarioReport
+} from "./scenarios";
+
+export type {
+  NamedScenarioCheck,
+  NamedScenarioClassification,
+  NamedScenarioOwner,
+  NamedScenarioReport,
+  NamedScenarioResult,
+  NamedScenarioStatus
+} from "./scenarios";

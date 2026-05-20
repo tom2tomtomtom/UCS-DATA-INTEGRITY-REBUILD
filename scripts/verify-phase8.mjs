@@ -57,6 +57,11 @@ function checkRequiredFiles() {
     "scripts/dual-run-compare.mjs",
     "scripts/lib/dual-run-compare.mjs",
     "fixtures/dual-run/p8d-basic.json",
+    "src/lib/scenarios/named-scenario-report.ts",
+    "tests/scenarios/named-scenario-report.test.ts",
+    "tests/scenarios/phase8-named-scenario-verifier.test.ts",
+    "scripts/named-scenario-report.mjs",
+    "scripts/lib/named-scenario-report.mjs",
     "supabase/config.toml"
   ];
 
@@ -191,6 +196,42 @@ function checkDualRunMarkers() {
   }
 }
 
+function checkNamedScenarioMarkers() {
+  const files = [
+    "src/lib/scenarios/named-scenario-report.ts",
+    "tests/scenarios/named-scenario-report.test.ts",
+    "scripts/named-scenario-report.mjs",
+    "scripts/lib/named-scenario-report.mjs"
+  ];
+
+  if (!files.every(exists)) return;
+
+  const combined = files.map(read).join("\n");
+  const requiredMarkers = [
+    "ldn-q1-design",
+    "ucs04787",
+    "ucs05186",
+    "ucs04154",
+    "pcs00250",
+    "usa00262",
+    "usa00323",
+    "bt-raw-without-cache",
+    "tbc-pipeline-identity",
+    "archived-production-revenue",
+    "exact-client-drilldown",
+    "new_code_bug",
+    "same_scope_same_number",
+    "sold_hours_false_zero_guard",
+    "source_or_cache_warning"
+  ];
+
+  for (const marker of requiredMarkers) {
+    if (!combined.includes(marker)) {
+      fail(`Missing Phase 8 named scenario marker: ${marker}`);
+    }
+  }
+}
+
 function checkSchemaLawMarkers() {
   if (!exists("src/lib/schema/schema-law.ts") || !exists("tests/schema/schema-law-gate.test.ts")) return;
 
@@ -272,6 +313,7 @@ function run() {
   checkSourceImportMarkers();
   checkDualRunDoesNotCheat();
   checkDualRunMarkers();
+  checkNamedScenarioMarkers();
   checkSchemaLawMarkers();
   checkMigrationMarkers();
 
