@@ -940,3 +940,37 @@ Next action:
 - commit and push P4-B through P4-F,
 - close GitHub `#42`, `#43`, `#44`, `#45`, and `#46`,
 - run P4-G Doctrine Steward review.
+
+### Checkpoint: Phase 4 Doctrine Steward Accepted
+
+Phase: 4
+
+Tickets: `#5`, `#47`
+
+Status: `ACCEPTED_WITH_PROCESS_WARN`, Phase 4 can close
+
+Doctrine Steward result:
+
+- blocking findings: none,
+- P4-G can close,
+- parent Phase 4 can close with process warnings carried forward.
+
+Evidence:
+
+- `npm run build` passed with 19 passed test files, 71 active tests, typecheck, and Phase 4 verification,
+- `npm audit --omit=dev` found 0 vulnerabilities,
+- `git diff --check` passed,
+- forbidden canon-query scans returned no live source, display, selector, database, SQL mutation, or aggregation matches,
+- em dash/en dash scan returned no matches.
+
+Accepted process warnings carried forward:
+
+- `LDN_Q1_DESIGN` display reconciliation remains deferred to Phase 5 and Phase 6,
+- `USA00262` and `USA00323` named USA template fixtures remain deferred to Phase 8 real data dual run,
+- `PCS00250` and `BT_RAW_CACHE` remain open `PROCESS_WARN` raw/cache Float issues unless scoped cache facts exist.
+
+Next action:
+
+- commit and push the Phase 4 acceptance log,
+- close GitHub `#47` and parent `#5`,
+- create bounded Phase 5 implementation tickets before starting display contract code.
