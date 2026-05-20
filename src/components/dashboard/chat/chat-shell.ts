@@ -1,6 +1,7 @@
 import React from "react";
 
 import type { DashboardScope } from "../../../lib";
+import { ChatEvidenceTrace } from "./chat-evidence-trace";
 
 export type ChatShellState = "closed" | "idle" | "working" | "evidence" | "error";
 
@@ -8,6 +9,7 @@ export type ChatShellEvidence = {
   sourcesChecked: string[];
   confidence: "high" | "medium" | "low";
   warnings: string[];
+  unresolved?: string[];
 };
 
 export function ChatShell({
@@ -45,15 +47,7 @@ function evidenceSection(evidence: ChatShellEvidence | undefined) {
     return React.createElement("p", null, "Ask a scoped question to build a read-only evidence pack in Phase 7.");
   }
 
-  return React.createElement(
-    "section",
-    { className: "chat-evidence" },
-    React.createElement("strong", null, `Confidence: ${evidence.confidence}`),
-    React.createElement("h3", null, "Sources checked"),
-    React.createElement("ul", null, evidence.sourcesChecked.map((source) => React.createElement("li", { key: source }, source))),
-    React.createElement("h3", null, "Warnings"),
-    React.createElement("ul", null, evidence.warnings.map((warning) => React.createElement("li", { key: warning }, warning)))
-  );
+  return React.createElement(ChatEvidenceTrace, { evidence });
 }
 
 function labelForState(state: ChatShellState): string {

@@ -1716,3 +1716,40 @@ Next action:
 - run full `npm run test`,
 - commit and push P7-D,
 - close `#66` after CI.
+
+### Checkpoint: P7-E Chat Route And Evidence UI
+
+Phase: 7
+
+Ticket: `#67`
+
+Status: implemented locally, push-blocking verification pending
+
+What changed:
+
+- added `/api/chat` route,
+- route returns backward-compatible server-sent events,
+- stream includes status, investigation, tool start, tool result, evidence, Needs Codex, and text events,
+- route delegates investigation to the Phase 7 orchestrator and reporter,
+- added `ChatEvidenceTrace`,
+- chat shell now renders unresolved checks as well as sources, warnings, confidence, and Needs Codex.
+
+TDD evidence:
+
+- red: route/UI tests failed because `/api/chat` did not exist and chat evidence did not render unresolved checks,
+- green: focused chat route and chat shell tests passed after implementation,
+- typecheck passed.
+
+Boundary kept:
+
+- route has no model call,
+- route has no live source pull,
+- route has no database call,
+- route has no mutation, sync, or deploy action,
+- route streams only deterministic evidence-pack output.
+
+Next action:
+
+- run `npm run build`,
+- commit and push P7-E,
+- close `#67` after CI.

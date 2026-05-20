@@ -18,7 +18,8 @@ describe("P6-F chat shell", () => {
         evidence: {
           sourcesChecked: ["display contract", "visible rows", "Float reconciliation"],
           confidence: "medium",
-          warnings: ["Live Float API requires Codex or Phase 7 tools."]
+          warnings: ["Live Float API requires Codex or Phase 7 tools."],
+          unresolved: ["MISSING_FLOAT_EXPORT"]
         },
         needsCodexReasons: ["repo inspection", "browser testing", "sync", "deployment", "stakeholder communication"]
       })
@@ -30,6 +31,8 @@ describe("P6-F chat shell", () => {
     expect(html).toContain("Design");
     expect(html).toContain("display contract");
     expect(html).toContain("Float reconciliation");
+    expect(html).toContain("Unresolved checks");
+    expect(html).toContain("MISSING_FLOAT_EXPORT");
     expect(html).toContain("medium");
     expect(html).toContain("Needs Codex");
     expect(html).toContain("repo inspection");
