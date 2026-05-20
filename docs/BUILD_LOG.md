@@ -974,3 +974,43 @@ Next action:
 - commit and push the Phase 4 acceptance log,
 - close GitHub `#47` and parent `#5`,
 - create bounded Phase 5 implementation tickets before starting display contract code.
+
+### Checkpoint: Phase 5 Ticketing Started
+
+Phase: 5
+
+Ticket: `#6`
+
+Status: ticketed, implementation not started
+
+What changed:
+
+- created bounded Phase 5 implementation tickets `#48` through `#54`,
+- mirrored Phase 5 implementation tickets into `docs/EXECUTION_TICKETS.md`.
+
+Worker split:
+
+- `#48` P5-A owns display contract result shape and totalling laws,
+- `#49` P5-B owns project row builder and source-only rows,
+- `#50` P5-C owns rollups, scope preservation, and unsupported Pipeline/Production slices,
+- `#51` P5-D owns Float raw/cache/visible reconciliation checks,
+- `#52` P5-E owns CSV rows, trace rows, and approval contract outputs,
+- `#53` P5-F owns Phase 5 verification gate,
+- `#54` P5-G is read-only Doctrine Steward review.
+
+Phase boundary:
+
+- Phase 5 may build the pure display contract, visible rows, rollups, CSV rows, traces, approval outputs, unsupported flags, and reconciliation checks,
+- no product UI pages,
+- no live source pulls,
+- no database calls,
+- no old dashboard selectors,
+- no migrations applied,
+- no deploys,
+- no sync,
+- no source-system mutation.
+
+Next action:
+
+- commit and push Phase 5 ticketing,
+- start P5-A before project rows or rollups.

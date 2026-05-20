@@ -53,6 +53,13 @@ This file is the local mirror of the GitHub issue board. GitHub issues are the o
 | `#45` | P4-E: Source Fact Set Assembly and Capability Index |
 | `#46` | P4-F: Phase 4 Verification Gate |
 | `#47` | P4-G: Doctrine Review Gate for Canon Queries |
+| `#48` | P5-A: Display Contract Result Shape and Totalling Laws |
+| `#49` | P5-B: Project Row Builder and Source-Only Rows |
+| `#50` | P5-C: Rollups, Scope Preservation, and Unsupported Pipeline/Production Slices |
+| `#51` | P5-D: Float Raw Cache Visible Reconciliation Checks |
+| `#52` | P5-E: CSV Rows, Trace Rows, and Approval Contract Outputs |
+| `#53` | P5-F: Phase 5 Verification Gate |
+| `#54` | P5-G: Doctrine Review Gate for Display Contract |
 
 ## Implementation Ticket Rule
 
@@ -75,7 +82,9 @@ Phase 2 currently has bounded implementation tickets `#26` through `#32`. It mus
 
 Phase 3 has bounded implementation tickets `#33` through `#40`. It may parse archived raw rows into parser facts, but it must not create canon queries, display rows, product UI, live source pulls, applied migrations, deploys, sync, or source-system mutation.
 
-Phase 4 currently has bounded implementation tickets `#41` through `#47`. It may expose scoped parser facts and source capability metadata, but it must not create display rows, totals, CSV rows, product UI, live source pulls, applied migrations, deploys, sync, source-system mutation, or old dashboard selector truth.
+Phase 4 has bounded implementation tickets `#41` through `#47`. It may expose scoped parser facts and source capability metadata, but it must not create display rows, totals, CSV rows, product UI, live source pulls, applied migrations, deploys, sync, source-system mutation, or old dashboard selector truth.
+
+Phase 5 currently has bounded implementation tickets `#48` through `#54`. It may build the pure display contract, visible rows, rollups, CSV rows, traces, approval outputs, unsupported flags, and reconciliation checks. It must not create product UI pages, live source pulls, database calls, applied migrations, deploys, sync, source-system mutation, or old dashboard selector truth.
 
 ## Phase Tickets
 
@@ -865,3 +874,146 @@ Must prove:
 - raw/cache/visible Float issues are not falsely marked solved,
 - all process warnings are either resolved or carried forward explicitly,
 - no source-system mutation, sync, deploy, migration application, live source pull, database call, product UI, display row, dashboard total, CSV row, or old selector truth happened.
+
+## Phase 5 Work Tickets
+
+Phase 5 builds the one pure display contract. It may construct visible rows, rollups, CSV rows, trace summaries, approval outputs, unsupported flags, and reconciliation checks from canon query outputs. It must not build product UI pages, pull live sources, call databases, apply migrations, deploy, sync, mutate source systems, or import old dashboard selector truth.
+
+### P5-A: Display Contract Result Shape And Totalling Laws
+
+Issue: `#48`
+
+Owns:
+
+- `src/lib/display/contract.ts`,
+- `tests/display/display-contract-shape.test.ts`,
+- `tests/display/display-totalling-laws.test.ts`,
+- `src/lib/index.ts` only for exports.
+
+Must prove:
+
+- `buildDashboardDisplayContract` is pure and takes scope plus facts as input,
+- additive facts can contribute to supported totals,
+- non-additive source summary facts remain evidence and do not double count,
+- unsupported metrics remain unsupported, not zero,
+- contract output includes project rows, rollup rows, totals, CSV rows, unsupported flags, source traces, reconciliation checks, warnings, and confidence fields,
+- no page-local calculation hooks exist.
+
+### P5-B: Project Row Builder And Source-Only Rows
+
+Issue: `#49`
+
+Owns:
+
+- `src/lib/display/project-rows.ts`,
+- `tests/display/project-rows.test.ts`,
+- `fixtures/golden-scenarios/*` only if a new synthetic fixture is required.
+
+Must prove:
+
+- source-only rows are visible, not dropped,
+- archive state is overlay, not hide rule,
+- duplicate Float and manual candidates do not collapse into one row,
+- Pipeline never becomes sold fee,
+- production-only rows stay production source rows,
+- every visible row carries source labels, trace refs, warnings, and confidence.
+
+### P5-C: Rollups, Scope Preservation, And Unsupported Pipeline/Production Slices
+
+Issue: `#50`
+
+Owns:
+
+- `src/lib/display/rollups.ts`,
+- `tests/display/rollups.test.ts`,
+- `tests/display/scope-preservation.test.ts`.
+
+Must prove:
+
+- LDN Q1 Design parent rollup and Projects drilldown share one contract scope,
+- department and role rollups do not imply Pipeline or Production Revenue attribution,
+- Pipeline stays unsupported in department and role slices,
+- Production Revenue stays unsupported in department and role slices,
+- exact client drilldown does not use search,
+- links can preserve office/from/to/department/role/client/jobNumber state.
+
+### P5-D: Float Raw Cache Visible Reconciliation Checks
+
+Issue: `#51`
+
+Owns:
+
+- `src/lib/display/float-reconciliation.ts`,
+- `tests/display/float-reconciliation.test.ts`,
+- `fixtures/golden-scenarios/*` only if a new synthetic fixture is required.
+
+Must prove:
+
+- raw > 0 and cache = 0 is `FAIL`,
+- visible > 0 and cache = 0 is `FAIL`,
+- cache > 0 and raw = 0 is `WARN`,
+- non-trivial raw/cache delta is at least `WARN`,
+- inactive Float contributing visible dashboard hours is `FAIL`,
+- cache-only data explains why raw cannot currently prove it,
+- PCS00250 and BT raw/cache named checks are represented.
+
+### P5-E: CSV Rows, Trace Rows, And Approval Contract Outputs
+
+Issue: `#52`
+
+Owns:
+
+- `src/lib/display/csv.ts`,
+- `src/lib/display/traces.ts`,
+- `src/lib/display/approval-output.ts`,
+- `tests/display/csv.test.ts`,
+- `tests/display/traces.test.ts`,
+- `tests/display/approval-output.test.ts`.
+
+Must prove:
+
+- CSV rows are generated only from display contract rows,
+- approval output equals contract row values,
+- every important number carries source trace refs,
+- warnings and unsupported metrics survive into exports,
+- no separate export, approval, or verifier calculation model exists.
+
+### P5-F: Phase 5 Verification Gate
+
+Issue: `#53`
+
+Owns:
+
+- `scripts/verify-phase5.mjs`,
+- `package.json`,
+- `docs/BUILD_LOG.md`,
+- `docs/EXECUTION_TICKETS.md`.
+
+Must prove:
+
+- `npm run verify:phase5` exists,
+- build runs Phase 5 verification,
+- display contract code does not use live sources, database calls, old selectors, product UI pages, or source-system mutation,
+- all visible/export/approval values come from display contract helpers,
+- active tests cover display shape, source-only rows, rollups, unsupported slices, Float reconciliation, CSV, traces, and approval output,
+- `npm test`, `npm run typecheck`, `npm run verify:phase5`, `npm run build`, `npm audit --omit=dev`, `git diff --check`, and em dash/en dash scan pass.
+
+### P5-G: Doctrine Review Gate For Display Contract
+
+Issue: `#54`
+
+Owns:
+
+- read-only review only.
+
+Must prove:
+
+- one display contract owns visible numbers,
+- rollups, Projects rows, CSV, approval, traces, and verifier outputs use the same contract outputs,
+- source-only rows are visible,
+- unsupported is not zero,
+- raw parser rows are not summed without additive proof,
+- exact scope is preserved,
+- Float raw/cache/visible checks classify WARN/FAIL correctly,
+- all process warnings are either resolved or explicitly carried forward,
+- no source-system mutation, sync, deploy, migration application, live source pull, database call, product UI page, old selector truth, or alternate calculation path happened.
