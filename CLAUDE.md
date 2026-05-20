@@ -8,10 +8,14 @@ The rebuild must keep the same useful UCS dashboard UX, but the data engine must
 
 Before writing code, read:
 
-1. `docs/IMMUTABLE_LAWS.md`
-2. `docs/DEVELOPMENT_DOCTRINE.md`
-3. `docs/WHAT_NOT_TO_REPEAT.md`
-4. `docs/ACCEPTANCE_GATES.md`
+1. `OBJECTIVE.md`
+2. `docs/OVERNIGHT_BUILD_CONTROL.md`
+3. `docs/EXECUTION_TICKETS.md`
+4. `docs/BUILD_LOG.md`
+5. `docs/IMMUTABLE_LAWS.md`
+6. `docs/DEVELOPMENT_DOCTRINE.md`
+7. `docs/WHAT_NOT_TO_REPEAT.md`
+8. `docs/ACCEPTANCE_GATES.md`
 
 ## Product Identity
 

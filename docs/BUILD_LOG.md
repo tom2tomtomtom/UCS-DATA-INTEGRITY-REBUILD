@@ -105,3 +105,39 @@ Next action:
 
 - commit and push this checkpoint,
 - then spawn bounded Phase 0 implementation agents.
+
+### Checkpoint: Red Room Prebuild Review
+
+Phase: 0
+
+Ticket: `#1`
+
+Status: `PROCESS_WARN`, no Phase 0 blocker after mitigation
+
+What changed:
+
+- added `docs/RED_ROOM_PREBUILD_REVIEW.md`,
+- promoted `OBJECTIVE.md`, overnight controls, execution tickets, and build log into the required startup docs,
+- checked current env posture,
+- confirmed stack is pinned in doctrine,
+- kept Phase 0 green and later phases blocked.
+
+Worst plausible failures identified:
+
+- incomplete doctrine read by agents,
+- stack drift before package setup,
+- accidental remote Supabase mutation,
+- old DB used as product truth,
+- missing Pipeline and Production Revenue sheet IDs,
+- secrets pasted into chat need rotation before production,
+- UI parity confused with logic parity,
+- screenshot gaps hidden,
+- placeholder tests becoming permanent ceremony,
+- chat becoming a second dashboard,
+- unsupported values becoming zeros,
+- fixture cleanliness hiding real source mess.
+
+Next action:
+
+- commit and push red room docs,
+- spawn bounded Phase 0 agents only after disjoint write sets are restated.
