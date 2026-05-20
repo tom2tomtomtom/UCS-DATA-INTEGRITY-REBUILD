@@ -10,6 +10,10 @@ The rebuild must preserve the approved old-site UX while replacing the data plum
 
 This phase is a waiting gate. It does not block Phase 10 source approval work that can run without the design spec, but it does block stakeholder UI approval and production cutover.
 
+The parity target is recognisable UX, not pixel-perfect copying. Preserve the current functionality, granularity, workflow order, and mental model. Allow small improvements when they make source truth easier to understand.
+
+Granularity includes data access, not only visual density. Users must still be able to move from summary numbers to rollups, Projects rows, project detail, Float trace rows, CSV exports, warning evidence, and source references.
+
 ## Intake Contract
 
 When the old-site UI UX spec arrives, convert it into:
@@ -69,7 +73,11 @@ Before UI parity can pass:
 
 ## Current Status
 
-Pending external input from Tom.
+Old-site UI UX report received from Tom on 2026-05-21 and encoded into `docs/phase-9-5/legacy-ui-ux-spec.md`.
+
+Current review state: UX reviewer PASS after second pass.
+
+Implementation agents must read `docs/phase-9-5/legacy-ui-ux-spec.md` and `docs/phase-9-5/ui-parity-acceptance-checklist.md` together. Legacy behaviours like `Sync Now`, archive actions, `All sources fresh`, and archived-project explanations are preserved only under the caveats in the checklist and data-law override section.
 
 Allowed in the meantime:
 
@@ -79,7 +87,7 @@ Allowed in the meantime:
 - issue/ticket setup,
 - non-UI docs and tests.
 
-Blocked until spec arrives:
+Blocked until UX review and parity proof:
 
 - UI redesign,
 - final UI parity sign-off,
