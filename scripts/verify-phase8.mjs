@@ -62,6 +62,11 @@ function checkRequiredFiles() {
     "tests/scenarios/phase8-named-scenario-verifier.test.ts",
     "scripts/named-scenario-report.mjs",
     "scripts/lib/named-scenario-report.mjs",
+    "src/lib/ui/ui-proof.ts",
+    "tests/ui/ui-proof-manifest.test.ts",
+    "tests/ui/phase8-ui-proof-verifier.test.ts",
+    "scripts/ui-proof-manifest.mjs",
+    "scripts/lib/ui-proof-manifest.mjs",
     "supabase/config.toml"
   ];
 
@@ -232,6 +237,40 @@ function checkNamedScenarioMarkers() {
   }
 }
 
+function checkUiProofMarkers() {
+  const files = [
+    "src/lib/ui/ui-proof.ts",
+    "tests/ui/ui-proof-manifest.test.ts",
+    "scripts/ui-proof-manifest.mjs",
+    "scripts/lib/ui-proof-manifest.mjs"
+  ];
+
+  if (!files.every(exists)) return;
+
+  const combined = files.map(read).join("\n");
+  const requiredMarkers = [
+    "deterministic-ui-proof",
+    "dashboard-home",
+    "projects-design-drilldown",
+    "project-detail-ucs04787",
+    "float-diagnostics",
+    "data-quality",
+    "approval-audit",
+    "chat-evidence",
+    "Design department row opens Projects with the same scope",
+    "redacted_or_fixture_safe",
+    "Needs Codex",
+    "BT_RAW_CACHE_UNRESOLVED",
+    "PCS00250_RAW_CACHE_UNRESOLVED"
+  ];
+
+  for (const marker of requiredMarkers) {
+    if (!combined.includes(marker)) {
+      fail(`Missing Phase 8 UI proof marker: ${marker}`);
+    }
+  }
+}
+
 function checkSchemaLawMarkers() {
   if (!exists("src/lib/schema/schema-law.ts") || !exists("tests/schema/schema-law-gate.test.ts")) return;
 
@@ -314,6 +353,7 @@ function run() {
   checkDualRunDoesNotCheat();
   checkDualRunMarkers();
   checkNamedScenarioMarkers();
+  checkUiProofMarkers();
   checkSchemaLawMarkers();
   checkMigrationMarkers();
 

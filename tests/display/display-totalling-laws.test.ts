@@ -146,4 +146,36 @@ describe("P5-A display totalling laws", () => {
       value: { amountGbp: 0 }
     });
   });
+
+  test("propagates unsupported scoped metrics into visible rows and CSV rows", () => {
+    const unsupportedPipeline: UnsupportedMetric = {
+      kind: "unsupported",
+      metric: "pipelineFee",
+      scope,
+      source: "pipeline",
+      reason: "Pipeline does not support department scope.",
+      displayLabel: "Unsupported",
+      severity: "warn"
+    };
+    const contract = buildDashboardDisplayContract(
+      inputFor(
+        [
+          soldFact({
+            id: "fee_sheet:batch:design-row",
+            rawRowId: "design-row",
+            amountGbp: 100,
+            hours: 10,
+            isAdditive: true,
+            department: "Design"
+          })
+        ],
+        [unsupportedPipeline]
+      )
+    );
+
+    expect(contract.visibleRows[0]?.totals.pipelineFee).toEqual(unsupportedPipeline);
+    expect(contract.csvRows[0]?.cells.pipelineFee).toBe("Unsupported");
+    expect(contract.csvRows[0]?.cells.pipelineFeeGbp).toBeUndefined();
+    expect(contract.csvRows[0]?.unsupported).toContainEqual(unsupportedPipeline);
+  });
 });

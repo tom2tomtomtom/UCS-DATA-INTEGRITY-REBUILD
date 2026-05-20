@@ -208,3 +208,15 @@ export type {
   NamedScenarioResult,
   NamedScenarioStatus
 } from "./scenarios";
+
+export {
+  buildUiProofManifest
+} from "./ui/ui-proof";
+
+export type {
+  BuildUiProofManifestInput,
+  UiProofClickProof,
+  UiProofManifest,
+  UiProofStatus,
+  UiProofSurface
+} from "./ui/ui-proof";

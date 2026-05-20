@@ -163,6 +163,58 @@ Next action:
 - close ticket `#74`,
 - start `#75` real-data UI screenshot and click proof.
 
+### Checkpoint: UI Screenshot And Click Proof Added
+
+Phase: 8
+
+Ticket: `#75`
+
+Status: implemented, browser proof recorded, local verification passed
+
+What changed:
+
+- added a deterministic UI proof manifest for dashboard home, Projects drilldown, project detail, Float diagnostics, Data Quality, Approval Audit, and chat evidence,
+- added a manifest CLI that emits stakeholder-safe JSON and never includes raw source refs, raw payloads, or secrets,
+- extended the Phase 8 verifier so the UI proof gate cannot drift out of the lockdown,
+- found a real Sian-style UI/data contract leak during browser testing: department-scoped Projects rows showed Pipeline and Production Revenue as `£0` while the footer correctly said `Unsupported`,
+- fixed the display contract so unsupported scoped metrics propagate into visible rows and CSV rows, not just footer totals.
+
+Browser proof recorded:
+
+- `http://localhost:3030/dashboard?office=LDN&from=2026-01-01&to=2026-03-31` rendered dashboard home and the Design rollup link,
+- clicking Design opened `/dashboard/projects?office=LDN&from=2026-01-01&to=2026-03-31&department=Design`,
+- Projects row and CSV now show Pipeline and Production Revenue as `Unsupported`, not `£0`,
+- clicking UCS04787 opened `/dashboard/projects/UCS04787?office=LDN&from=2026-01-01&to=2026-03-31&department=Design&jobNumber=UCS04787`,
+- project detail preserved scope and showed `FLOAT_VISIBLE_CACHE_MISSING_CACHE`,
+- Float diagnostics showed PCS00250, BT raw/cache, UCS05186 duplicate/manual, and inactive/archive evidence,
+- Data Quality showed named checks and `Needs Codex`,
+- Approval Audit showed source trace and source-only law language,
+- chat evidence route showed sources checked, warnings, confidence, and `Needs Codex`.
+
+Screenshot artifacts:
+
+- Playwright MCP screenshots were captured as `p8f-dashboard-home-final.png`, `p8f-projects-design-drilldown-fixed.png`, `p8f-project-detail-ucs04787-final.png`, `p8f-float-diagnostics-final.png`, `p8f-data-quality-final.png`, `p8f-approval-audit-final.png`, and `p8f-chat-evidence-final.png`,
+- local ignored manifest written to `test-results/ui-proof/p8f/manifest.json`.
+
+Verification so far:
+
+- `npm test -- tests/ui/ui-proof-manifest.test.ts` passed after red-green,
+- `npm test -- tests/ui/phase8-ui-proof-verifier.test.ts` passed after red-green,
+- `npm test -- tests/display/display-totalling-laws.test.ts` passed after red-green for unsupported row and CSV propagation,
+- `npm test -- tests/ui/projects-page.test.ts tests/ui/csv-export.test.ts` passed,
+- `npm run verify:phase8` passed with 57 files passed, 15 skipped, 187 tests passed, 79 todo, typecheck, Next build, and Phase 8 verifier.
+
+Process notes:
+
+- this is deterministic fixture UI proof, not authenticated live source approval,
+- it still materially caught and fixed a real dashboard display-contract bug,
+- screenshots are not committed because UI proof artifacts can carry sensitive rendered data.
+
+Next action:
+
+- stage, secret-scan, commit, push,
+- close ticket `#75` only after CI passes.
+
 ### Checkpoint: Overnight Control Started
 
 Phase: 0

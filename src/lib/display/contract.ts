@@ -159,7 +159,10 @@ export function buildDashboardDisplayContract(
       unsupportedByMetric.get("floatHours") ??
       additiveVisibleFloatHours(floatFacts, input.scope, emptyReason)
   };
-  const visibleRows = buildProjectRows(input);
+  const visibleRows = buildProjectRows({
+    ...input,
+    unsupportedMetrics: unsupportedFromTotals(totals)
+  });
   const rollups = buildDisplayRollups({
     scope: input.scope,
     soldFacts,

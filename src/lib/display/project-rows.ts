@@ -11,7 +11,8 @@ import type {
   SourceLayer,
   SourceName,
   SourceTraceRef,
-  SourceWarning
+  SourceWarning,
+  UnsupportedMetric
 } from "../canon/types";
 import { filterFactsByScope } from "../canon-queries/scope";
 
@@ -30,6 +31,7 @@ export type BuildProjectRowsInput = Pick<
   "soldFacts" | "pipelineFacts" | "productionRevenueFacts" | "floatFacts" | "sourceIssues"
 > & {
   scope: DashboardScope;
+  unsupportedMetrics?: readonly UnsupportedMetric[];
 };
 
 type MutableProjectRow = ProjectDisplayRow & {
@@ -81,7 +83,7 @@ export function buildProjectRows(input: BuildProjectRowsInput): ProjectDisplayRo
     addSourceIssueToMatchingRows(rows, warning);
   }
 
-  return Array.from(rows.values()).map(finalizeRow);
+  return Array.from(rows.values()).map((row) => finalizeRow(row, input.unsupportedMetrics ?? []));
 }
 
 function rowKeyForSold(fact: SoldFact): string {
@@ -323,7 +325,7 @@ function findFeeSheetRowKeyByFloatId(rows: Map<string, MutableProjectRow>, fact:
   return undefined;
 }
 
-function finalizeRow(row: MutableProjectRow): ProjectDisplayRow {
+function finalizeRow(row: MutableProjectRow, unsupportedMetrics: readonly UnsupportedMetric[]): ProjectDisplayRow {
   const sourceNames = new Set(row.sourceLabels.map((sourceLabel) => sourceLabel.source));
 
   if (sourceNames.has("fee_sheet")) {
@@ -338,8 +340,27 @@ function finalizeRow(row: MutableProjectRow): ProjectDisplayRow {
     row.rowType = "source_only";
   }
 
+  for (const unsupportedMetric of unsupportedMetrics) {
+    applyUnsupportedMetric(row, unsupportedMetric);
+  }
+
   const { factIds: _factIds, rawRowIds: _rawRowIds, ...publicRow } = row;
   return publicRow;
+}
+
+function applyUnsupportedMetric(row: MutableProjectRow, unsupportedMetric: UnsupportedMetric): void {
+  const metric = unsupportedMetric.metric;
+
+  if (metric === "soldFee" || metric === "soldHours" || metric === "pipelineFee" || metric === "productionRevenue" || metric === "floatHours") {
+    row.totals[metric] = cloneUnsupportedMetric(unsupportedMetric);
+  }
+}
+
+function cloneUnsupportedMetric(metric: UnsupportedMetric): UnsupportedMetric {
+  return {
+    ...metric,
+    scope: { ...metric.scope }
+  };
 }
 
 function lowerConfidence(
