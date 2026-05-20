@@ -28,6 +28,9 @@ This file is the local mirror of the GitHub issue board. GitHub issues are the o
 | `#20` | P1-D: Screenshot Coverage and Recapture Plan |
 | `#21` | P1-E: UX Parity Map Assembly and Phase 1 Gate |
 | `#22` | P1-F: Doctrine Review Gate for UX Parity Map |
+| `#23` | P1-G: Long-timeout Project Detail and Named Scenario Captures |
+| `#24` | P1-H: Float and Diagnostic Route Captures |
+| `#25` | P1-I: Deterministic Fixture Screenshot States |
 
 ## Implementation Ticket Rule
 
@@ -43,6 +46,8 @@ Before a phase starts implementation, it must have bounded implementation ticket
 - stop conditions.
 
 Phase 0 and Phase 1 currently have bounded implementation tickets. Later phase implementation tickets must be created after the prior phase exits, when the real file boundaries are known.
+
+Phase 1 screenshot recapture tickets `#23`, `#24`, and `#25` are follow-up evidence tickets. They do not block Phase 2 if their blockers are documented, because deterministic fixture screenshots depend on later display-contract and UI harness work.
 
 ## Phase Tickets
 
@@ -84,6 +89,12 @@ Exit criteria:
 
 - approved UX is separated from confusing legacy behaviour,
 - all missing screenshots have explicit blockers or recapture tickets.
+
+Follow-up evidence tickets:
+
+- `#23`, long-timeout captures for project detail and named scenarios,
+- `#24`, long-timeout captures for Float and diagnostic routes,
+- `#25`, deterministic fixture screenshot states for edge-case UX that should not depend on live data.
 
 ### Phase 2: Source Archive
 

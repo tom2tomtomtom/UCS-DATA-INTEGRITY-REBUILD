@@ -282,3 +282,97 @@ Next action:
 
 - spawn read-only Phase 1 agents for `#17` through `#20`,
 - integrate into Phase 1 assembly after their reports return.
+
+### Checkpoint: Phase 1 Worker Reports Integrated
+
+Phase: 1
+
+Tickets: `#17`, `#18`, `#19`, `#20`, `#21`
+
+Status: candidate integrated, awaiting Doctrine Steward review
+
+What changed:
+
+- integrated route/navigation, scope/filter, table/export, and screenshot coverage worker reports,
+- added `docs/phase-1/ux-parity-map.md`,
+- added `docs/phase-1/phase-1-exit-check.md`,
+- created follow-up screenshot evidence tickets `#23`, `#24`, and `#25`,
+- updated `docs/EXECUTION_TICKETS.md` with the follow-up evidence tickets.
+
+Preserved UX now mapped:
+
+- dashboard home and rollups,
+- Projects table, filters, active chips, footer, and CSV,
+- project detail,
+- Float diagnostics and Float trace,
+- Data Quality, Approval, admin, glossary, and diagnostic surfaces,
+- chat shell and evidence requirements.
+
+Do-not-preserve rules now explicit:
+
+- old selectors are not product truth,
+- unsupported values are not zero,
+- source-only rows stay visible,
+- fuzzy search is not exact client/job identity,
+- CSV cannot be a second authority,
+- chat cannot answer outside an EvidencePack,
+- old route latency, horizontal overflow, and hydration mismatch are not parity targets.
+
+Verification so far:
+
+- `npm test` passed with 17 skipped files and 85 todo tests,
+- `git diff --check` passed.
+
+Accepted process warnings:
+
+- screenshot coverage remains partial,
+- project detail, Float, diagnostic, admin, and chat screenshots need follow-up capture,
+- deterministic screenshot states depend on later fixture and UI harness work,
+- Phase 1 can only exit after Doctrine Steward review confirms these warnings are honestly tracked.
+
+Next action:
+
+- run the full Phase 1 verification command set,
+- dispatch Doctrine Steward review for `#22`,
+- fix any doctrine findings before closing or pushing Phase 1.
+
+### Checkpoint: Doctrine Steward Accepted Phase 1 Candidate
+
+Phase: 1
+
+Tickets: `#17`, `#18`, `#19`, `#20`, `#21`, `#22`
+
+Status: `PROCESS_WARN`, commit allowed
+
+Initial Doctrine Steward finding:
+
+- `BLOCKED`: `docs/DEVELOPMENT_DOCTRINE.md` still contained an older phase table that could authorize Source Archive work inside Phase 1.
+
+Action taken:
+
+- aligned `docs/DEVELOPMENT_DOCTRINE.md` with `docs/BUILD_PHASES.md` and `docs/EXECUTION_TICKETS.md`,
+- made `BUILD_PHASES` and `EXECUTION_TICKETS` the authoritative phase references,
+- confirmed Phase 1 is UX parity mapping only and Source Archive starts in Phase 2.
+
+Doctrine Steward re-review:
+
+- blocking findings: none,
+- accepted process warning: screenshot coverage remains partial,
+- missing visual evidence is honestly tracked by GitHub `#23`, `#24`, and `#25`,
+- current changes are docs only,
+- no product UI, source archive, parser, display logic, chat tool, migration, deploy, sync, Supabase mutation, or source-system mutation was introduced.
+
+Verification after the fix:
+
+- `npm test` passed with 17 skipped files and 85 todo tests,
+- `npm run verify:phase0` passed,
+- `npm run build` passed,
+- `npm audit --omit=dev` found 0 vulnerabilities,
+- `git diff --check` passed,
+- em dash/en dash scan over touched docs found no matches.
+
+Next action:
+
+- commit and push Phase 1 UX parity map,
+- update and close GitHub `#17` through `#22`,
+- keep screenshot follow-up issues `#23` through `#25` open.

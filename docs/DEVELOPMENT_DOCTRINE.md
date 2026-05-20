@@ -440,31 +440,60 @@ Chat must say `Needs Codex` when the question requires:
 
 ## Development Phases
 
-### Phase 0: Freeze UX
+The authoritative phase plan lives in `docs/BUILD_PHASES.md` and the active ticket map lives in `docs/EXECUTION_TICKETS.md`.
+
+This summary must stay aligned with those two files. If there is a conflict, stop and update the doctrine before implementation continues.
+
+### Phase 0: Repo Foundation And Law Test Scaffold
 
 Deliver:
 
-- UX parity map,
-- current route list,
-- screenshots,
-- key click paths,
-- CSV column list,
-- chat affordance list.
-
-### Phase 1: Immutable Source Archive
-
-Deliver:
-
-- raw source batches,
-- raw source rows,
-- pull logs,
-- source browser.
+- repository scaffold,
+- law and doctrine docs,
+- CI/test runner,
+- fixture folder structure,
+- pending law tests,
+- typed display contract interface.
 
 Acceptance:
 
-- every non-empty source row is findable.
+- CI can run the scaffold,
+- every named law has a pending or active test,
+- no product UI, parser, sync, migration, deploy, or source mutation exists.
 
-### Phase 2: Parsers
+### Phase 1: UX Parity Map
+
+Deliver:
+
+- route and navigation inventory,
+- scope/filter/URL workflow inventory,
+- table/control/CSV inventory,
+- screenshot coverage and recapture plan,
+- assembled UX parity map.
+
+Acceptance:
+
+- approved UX is separated from bad legacy behaviour,
+- missing screenshots have explicit blockers or follow-up tickets,
+- no old selector, display calculation, parser, source archive, or mutation work is introduced.
+
+### Phase 2: Source Archive
+
+Deliver:
+
+- source batch model,
+- raw source row model,
+- pull logs,
+- source browser,
+- skipped-row ledger.
+
+Acceptance:
+
+- every non-empty source row is findable,
+- unexplained dropped rows fail tests,
+- raw row IDs are available for every parsed fact.
+
+### Phase 3: Parsers
 
 Deliver:
 
@@ -476,57 +505,105 @@ Deliver:
 Acceptance:
 
 - every skipped row is explained,
-- every parser row has source identity.
+- every parser row has source identity,
+- additive status is explicit.
 
-### Phase 3: Display Contract
+### Phase 4: Canon Queries
+
+Deliver:
+
+- `selectSoldFacts(scope)`,
+- `selectPipelineFacts(scope)`,
+- `selectProductionRevenueFacts(scope)`,
+- `selectFloatFacts(scope)`,
+- source capability metadata.
+
+Acceptance:
+
+- source facts do not build UI rows,
+- source facts do not hide source-only rows,
+- unsupported fields remain unsupported.
+
+### Phase 5: Display Contract
 
 Deliver:
 
 - `buildDashboardDisplayContract`,
+- visible rows,
+- hero totals,
+- rollups,
+- CSV rows,
 - source capability matrix,
 - unsupported metrics,
 - reconciliation checks.
 
 Acceptance:
 
-- generated scope tests pass before UI is attached.
+- generated scope tests pass before UI is attached,
+- no page-local business calculations exist.
 
-### Phase 4: UI Parity
+### Phase 6: UI Parity
 
 Deliver:
 
 - same core dashboard UX,
-- all surfaces wired to display contract,
-- no page-local business totals.
+- all surfaces wired to the display contract,
+- in-dashboard data integrity tests,
+- CSV export,
+- chat shell.
 
 Acceptance:
 
-- deterministic UI tests prove drilldowns and totals.
+- deterministic UI tests prove drilldowns and totals,
+- every page consumes the display contract.
 
-### Phase 5: Chat And Diagnostics
+### Phase 7: Chat Evidence Agent
 
 Deliver:
 
-- evidence-pack chat,
-- Float diagnostics,
-- Data Quality,
-- Approval.
+- `EvidencePack`,
+- claim guard,
+- read-only tools,
+- investigation orchestrator,
+- tactical playbooks,
+- progress stream,
+- `Needs Codex` handoff.
 
 Acceptance:
 
-- trap prompts cannot produce unsupported claims.
+- trap prompts cannot produce unsupported claims,
+- source conflicts are reported as unresolved,
+- tool errors become evidence warnings.
 
-### Phase 6: Dual Run And Cutover
+### Phase 8: Real Data Dual Run
 
 Deliver:
 
 - side-by-side comparison with old app,
-- classified differences,
-- launch gate report.
+- source vs contract comparison,
+- in-dashboard integrity report,
+- UI screenshot and click proof,
+- Sian/Yunni/Jade named scenario report.
 
 Acceptance:
 
-- differences are explained as old bug, new bug, source issue, or intentional change.
+- all differences are classified,
+- no unsupported metric is presented as fact,
+- no hidden source rows.
+
+### Phase 9: Launch
+
+Deliver:
+
+- Railway deployment,
+- live app commit proof,
+- final acceptance report,
+- stakeholder-ready caveats.
+
+Acceptance:
+
+- all blocking gates pass,
+- remaining warnings are real source limitations or conflicts.
 
 ## Definition Of Done
 
