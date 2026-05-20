@@ -1014,3 +1014,51 @@ Next action:
 
 - commit and push Phase 5 ticketing,
 - start P5-A before project rows or rollups.
+
+### Checkpoint: P5-A Display Contract Shape And Initial Phase 5 Gate
+
+Phase: 5
+
+Tickets: `#48`, partial `#53`
+
+Status: implemented locally, push-blocking verification passed, awaiting commit
+
+What changed:
+
+- replaced the Phase 0 display contract stub with additive-only sold fee and sold hours totals,
+- preserved unsupported metrics as unsupported instead of zero,
+- added source trace summaries for supported sold totals,
+- kept visible rows, rollups, CSV rows, reconciliation, and approval outputs empty for later Phase 5 tickets,
+- added initial `scripts/verify-phase5.mjs`,
+- rewired `npm run build` to Phase 5 verification.
+
+TDD evidence:
+
+- red: display contract tests failed because totals were still unsupported and confidence was low,
+- green: focused display contract tests passed with 4 active tests,
+- red: `npm run verify:phase5` failed because the script did not exist,
+- first verifier run failed on an over-strict `displayRows` coverage marker,
+- green: `npm run verify:phase5` passed with 21 passed test files, 75 active tests, typecheck, and Phase 5 verification,
+- `npm run build` passed with 21 passed test files, 75 active tests, typecheck, and Phase 5 verification,
+- `npm audit --omit=dev` found 0 vulnerabilities,
+- `git diff --check` passed,
+- em dash/en dash scan returned no matches.
+
+Boundary kept:
+
+- additive facts can contribute to supported totals,
+- non-additive source summary facts remain evidence and do not double count,
+- unsupported metrics remain unsupported, not zero,
+- contract remains pure and takes facts and scope as input,
+- no project rows or rollups yet,
+- no product UI pages,
+- no live source pulls,
+- no database calls,
+- no old dashboard selectors,
+- no source-system mutation.
+
+Next action:
+
+- commit and push P5-A plus the initial Phase 5 gate,
+- close GitHub `#48`,
+- keep `#53` open until the full Phase 5 verifier covers all display modules.
