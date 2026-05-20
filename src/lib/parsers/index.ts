@@ -1,4 +1,20 @@
 export {
+  parseArchivedFeeSheetRows
+} from "./fee-sheet";
+
+export {
+  parseArchivedFloatRows
+} from "./float";
+
+export {
+  parsePipelineRows
+} from "./pipeline";
+
+export {
+  parseProductionRevenueRows
+} from "./production-revenue";
+
+export {
   createParserFactEvidence,
   createParserResult,
   createParserWarning,
@@ -20,3 +36,14 @@ export type {
   ParserWarningInput,
   ParserWarningSeverity
 } from "./types";
+
+export type {
+  FeeSheetArchivedRowPayload,
+  FeeSheetRowKind,
+  FeeSheetSoldFact
+} from "./fee-sheet";
+
+export type {
+  FloatArchivedTaskPayload,
+  FloatParserFact
+} from "./float";

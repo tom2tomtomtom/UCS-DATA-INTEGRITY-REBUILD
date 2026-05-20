@@ -1,0 +1,183 @@
+[
+  {
+    "kind": "raw_source_row",
+    "archiveStatus": "archived",
+    "id": "raw_pr_001",
+    "batchId": "batch_production_revenue_p3d",
+    "source": "production_revenue",
+    "identity": {
+      "stableSourceRowKey": "production_revenue_fixture:Production Revenue:2",
+      "sourceDocumentId": "production_revenue_fixture",
+      "sourceTab": "Production Revenue",
+      "sourceRowNumber": 2
+    },
+    "raw": {
+      "jobNumber": "UCS90001",
+      "client": "Archive Client",
+      "projectName": "Archived Launch Film",
+      "month": "2026-04",
+      "amount": 12000,
+      "currency": "GBP",
+      "status": "Confirmed",
+      "office": "LDN",
+      "projectArchiveState": "archived"
+    },
+    "contentHash": "sha256:p3d-production-revenue-001",
+    "observedAt": "2026-05-20T00:00:00.000Z",
+    "sourceRefs": [
+      {
+        "source": "production_revenue",
+        "sourceLayer": "production_revenue",
+        "batchId": "batch_production_revenue_p3d",
+        "rawRowId": "raw_pr_001",
+        "sourceDocumentId": "production_revenue_fixture",
+        "sourceTab": "Production Revenue",
+        "sourceRowNumber": 2
+      }
+    ]
+  },
+  {
+    "kind": "raw_source_row",
+    "archiveStatus": "archived",
+    "id": "raw_pr_002",
+    "batchId": "batch_production_revenue_p3d",
+    "source": "production_revenue",
+    "identity": {
+      "stableSourceRowKey": "production_revenue_fixture:USA Revenue:3",
+      "sourceDocumentId": "production_revenue_fixture",
+      "sourceTab": "USA Revenue",
+      "sourceRowNumber": 3
+    },
+    "raw": {
+      "jobNumber": "USA90002",
+      "client": "Blank Status Client",
+      "projectName": "Blank Status Production",
+      "month": "2026-04",
+      "amount": 8000,
+      "currency": "GBP",
+      "status": ""
+    },
+    "contentHash": "sha256:p3d-production-revenue-002",
+    "observedAt": "2026-05-20T00:00:00.000Z",
+    "sourceRefs": [
+      {
+        "source": "production_revenue",
+        "sourceLayer": "production_revenue",
+        "batchId": "batch_production_revenue_p3d",
+        "rawRowId": "raw_pr_002",
+        "sourceDocumentId": "production_revenue_fixture",
+        "sourceTab": "USA Revenue",
+        "sourceRowNumber": 3
+      }
+    ]
+  },
+  {
+    "kind": "raw_source_row",
+    "archiveStatus": "archived",
+    "id": "raw_pr_003",
+    "batchId": "batch_production_revenue_p3d",
+    "source": "production_revenue",
+    "identity": {
+      "stableSourceRowKey": "production_revenue_fixture:Production Revenue:4",
+      "sourceDocumentId": "production_revenue_fixture",
+      "sourceTab": "Production Revenue",
+      "sourceRowNumber": 4
+    },
+    "raw": {
+      "jobNumber": "UCS90003",
+      "client": "Collision Client",
+      "projectName": "Collision Production",
+      "month": "2026-04",
+      "amount": 5000,
+      "currency": "GBP",
+      "status": "Confirmed",
+      "office": "LDN"
+    },
+    "contentHash": "sha256:p3d-production-revenue-003",
+    "observedAt": "2026-05-20T00:00:00.000Z",
+    "sourceRefs": [
+      {
+        "source": "production_revenue",
+        "sourceLayer": "production_revenue",
+        "batchId": "batch_production_revenue_p3d",
+        "rawRowId": "raw_pr_003",
+        "sourceDocumentId": "production_revenue_fixture",
+        "sourceTab": "Production Revenue",
+        "sourceRowNumber": 4
+      }
+    ]
+  },
+  {
+    "kind": "raw_source_row",
+    "archiveStatus": "archived",
+    "id": "raw_pr_004",
+    "batchId": "batch_production_revenue_p3d",
+    "source": "production_revenue",
+    "identity": {
+      "stableSourceRowKey": "production_revenue_fixture:Production Revenue:5",
+      "sourceDocumentId": "production_revenue_fixture",
+      "sourceTab": "Production Revenue",
+      "sourceRowNumber": 5
+    },
+    "raw": {
+      "jobNumber": "UCS90003",
+      "client": "Collision Client",
+      "projectName": "Collision Production",
+      "month": "2026-04",
+      "amount": 5000,
+      "currency": "GBP",
+      "status": "Negotiating",
+      "office": "LDN"
+    },
+    "contentHash": "sha256:p3d-production-revenue-004",
+    "observedAt": "2026-05-20T00:00:00.000Z",
+    "sourceRefs": [
+      {
+        "source": "production_revenue",
+        "sourceLayer": "production_revenue",
+        "batchId": "batch_production_revenue_p3d",
+        "rawRowId": "raw_pr_004",
+        "sourceDocumentId": "production_revenue_fixture",
+        "sourceTab": "Production Revenue",
+        "sourceRowNumber": 5
+      }
+    ]
+  },
+  {
+    "kind": "raw_source_row",
+    "archiveStatus": "archived",
+    "id": "raw_pr_005",
+    "batchId": "batch_production_revenue_p3d",
+    "source": "production_revenue",
+    "identity": {
+      "stableSourceRowKey": "production_revenue_fixture:LDN Revenue:6",
+      "sourceDocumentId": "production_revenue_fixture",
+      "sourceTab": "LDN Revenue",
+      "sourceRowNumber": 6
+    },
+    "raw": {
+      "jobNumber": "",
+      "client": "No Job Client",
+      "projectName": "Unnumbered Production",
+      "month": "2026-04",
+      "amount": 3000,
+      "currency": "GBP",
+      "status": "Expected",
+      "department": "Design",
+      "role": "Producer"
+    },
+    "contentHash": "sha256:p3d-production-revenue-005",
+    "observedAt": "2026-05-20T00:00:00.000Z",
+    "sourceRefs": [
+      {
+        "source": "production_revenue",
+        "sourceLayer": "production_revenue",
+        "batchId": "batch_production_revenue_p3d",
+        "rawRowId": "raw_pr_005",
+        "sourceDocumentId": "production_revenue_fixture",
+        "sourceTab": "LDN Revenue",
+        "sourceRowNumber": 6
+      }
+    ]
+  }
+]

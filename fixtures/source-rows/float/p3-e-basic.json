@@ -1,0 +1,268 @@
+[
+  {
+    "kind": "raw_source_row",
+    "archiveStatus": "archived",
+    "id": "raw_float_p3e_001_allocated",
+    "batchId": "batch_float_p3e_001",
+    "source": "float",
+    "identity": {
+      "stableSourceRowKey": "float:task:task_allocated_001",
+      "sourceObjectId": "task_allocated_001"
+    },
+    "raw": {
+      "objectType": "task",
+      "floatProjectId": "11000001",
+      "projectCode": "UCS04787",
+      "projectName": "Core Launch",
+      "taskId": "task_allocated_001",
+      "taskName": "Design allocation",
+      "personId": "person_001",
+      "personName": "Alex Allocated",
+      "department": "Design",
+      "role": "Senior Designer",
+      "startDate": "2026-03-02",
+      "endDate": "2026-03-06",
+      "month": "2026-03",
+      "hours": 12.5,
+      "tentative": false,
+      "activeState": "active",
+      "allocationClass": "allocated",
+      "expansionRule": "raw_float_task_span_not_dashboard_hours"
+    },
+    "contentHash": "sha256:p3e-float-allocated",
+    "observedAt": "2026-05-20T09:00:00.000Z",
+    "sourceRefs": [
+      {
+        "source": "float",
+        "sourceLayer": "float_raw",
+        "batchId": "batch_float_p3e_001",
+        "rawRowId": "raw_float_p3e_001_allocated",
+        "sourceObjectId": "task_allocated_001"
+      }
+    ]
+  },
+  {
+    "kind": "raw_source_row",
+    "archiveStatus": "archived",
+    "id": "raw_float_p3e_002_unallocated",
+    "batchId": "batch_float_p3e_001",
+    "source": "float",
+    "identity": {
+      "stableSourceRowKey": "float:task:task_unallocated_002",
+      "sourceObjectId": "task_unallocated_002"
+    },
+    "raw": {
+      "objectType": "task",
+      "floatProjectId": "11000002",
+      "projectCode": "UCS04852",
+      "projectName": "PR Support",
+      "taskId": "task_unallocated_002",
+      "taskName": "Unallocated PR placeholder",
+      "personName": "Unallocated PR",
+      "department": "PR",
+      "role": "Unallocated",
+      "startDate": "2026-03-09",
+      "endDate": "2026-03-10",
+      "month": "2026-03",
+      "hours": 8,
+      "tentative": true,
+      "activeState": "active",
+      "allocationClass": "unallocated",
+      "expansionRule": "raw_float_task_span_not_dashboard_hours"
+    },
+    "contentHash": "sha256:p3e-float-unallocated",
+    "observedAt": "2026-05-20T09:00:01.000Z",
+    "sourceRefs": [
+      {
+        "source": "float",
+        "sourceLayer": "float_raw",
+        "batchId": "batch_float_p3e_001",
+        "rawRowId": "raw_float_p3e_002_unallocated",
+        "sourceObjectId": "task_unallocated_002"
+      }
+    ]
+  },
+  {
+    "kind": "raw_source_row",
+    "archiveStatus": "archived",
+    "id": "raw_float_p3e_003_orphan_duplicate",
+    "batchId": "batch_float_p3e_001",
+    "source": "float",
+    "identity": {
+      "stableSourceRowKey": "float:task:task_orphan_003",
+      "sourceObjectId": "task_orphan_003"
+    },
+    "raw": {
+      "objectType": "task",
+      "floatProjectId": "11000003",
+      "projectCode": "UCS05186",
+      "projectName": "Live Duplicate Candidate",
+      "taskId": "task_orphan_003",
+      "taskName": "Float-only orphan",
+      "personId": "person_003",
+      "personName": "Ori Orphan",
+      "department": "Strategy",
+      "role": "Planner",
+      "startDate": "2026-03-11",
+      "endDate": "2026-03-12",
+      "month": "2026-03",
+      "hours": 6,
+      "tentative": false,
+      "activeState": "active",
+      "allocationClass": "orphan",
+      "expansionRule": "raw_float_task_span_not_dashboard_hours",
+      "duplicateGroupKey": "UCS05186",
+      "duplicateCandidateType": "float_candidate"
+    },
+    "contentHash": "sha256:p3e-float-orphan",
+    "observedAt": "2026-05-20T09:00:02.000Z",
+    "sourceRefs": [
+      {
+        "source": "float",
+        "sourceLayer": "float_raw",
+        "batchId": "batch_float_p3e_001",
+        "rawRowId": "raw_float_p3e_003_orphan_duplicate",
+        "sourceObjectId": "task_orphan_003"
+      }
+    ]
+  },
+  {
+    "kind": "raw_source_row",
+    "archiveStatus": "archived",
+    "id": "raw_float_p3e_004_inactive_placeholder",
+    "batchId": "batch_float_p3e_001",
+    "source": "float",
+    "identity": {
+      "stableSourceRowKey": "float:task:task_placeholder_004",
+      "sourceObjectId": "task_placeholder_004"
+    },
+    "raw": {
+      "objectType": "task",
+      "floatProjectId": "11000004",
+      "projectCode": "PITCH-001",
+      "projectName": "Inactive Placeholder Work",
+      "taskId": "task_placeholder_004",
+      "taskName": "Placeholder allocation",
+      "personId": "placeholder_001",
+      "personName": "Placeholder Strategy",
+      "department": "Strategy",
+      "role": "Placeholder",
+      "startDate": "2026-03-13",
+      "endDate": "2026-03-13",
+      "month": "2026-03",
+      "hours": 3,
+      "tentative": false,
+      "activeState": "inactive",
+      "allocationClass": "placeholder",
+      "expansionRule": "raw_float_task_span_not_dashboard_hours"
+    },
+    "contentHash": "sha256:p3e-float-placeholder",
+    "observedAt": "2026-05-20T09:00:03.000Z",
+    "sourceRefs": [
+      {
+        "source": "float",
+        "sourceLayer": "float_raw",
+        "batchId": "batch_float_p3e_001",
+        "rawRowId": "raw_float_p3e_004_inactive_placeholder",
+        "sourceObjectId": "task_placeholder_004"
+      }
+    ]
+  },
+  {
+    "kind": "raw_source_row",
+    "archiveStatus": "archived",
+    "id": "raw_float_p3e_005_pencil_split",
+    "batchId": "batch_float_p3e_001",
+    "source": "float",
+    "identity": {
+      "stableSourceRowKey": "float:task:task_pencil_005",
+      "sourceObjectId": "task_pencil_005"
+    },
+    "raw": {
+      "objectType": "task",
+      "floatProjectId": "11000005",
+      "projectCode": "PENCIL-001",
+      "projectName": "Pencil Hold",
+      "taskId": "task_pencil_005",
+      "taskName": "Pencil multi-person hold",
+      "personId": "multi_person",
+      "personName": "Multiple people",
+      "department": "Creative",
+      "role": "Mixed team",
+      "startDate": "2026-03-16",
+      "endDate": "2026-03-20",
+      "month": "2026-03",
+      "hours": 10,
+      "tentative": true,
+      "activeState": "active",
+      "allocationClass": "pencil",
+      "expansionRule": "raw_float_task_span_not_dashboard_hours",
+      "assignedPeople": [
+        {
+          "personId": "person_005a",
+          "personName": "Priya Pencil"
+        },
+        {
+          "personId": "person_005b",
+          "personName": "Maya Pencil"
+        }
+      ]
+    },
+    "contentHash": "sha256:p3e-float-pencil-split",
+    "observedAt": "2026-05-20T09:00:04.000Z",
+    "sourceRefs": [
+      {
+        "source": "float",
+        "sourceLayer": "float_raw",
+        "batchId": "batch_float_p3e_001",
+        "rawRowId": "raw_float_p3e_005_pencil_split",
+        "sourceObjectId": "task_pencil_005"
+      }
+    ]
+  },
+  {
+    "kind": "raw_source_row",
+    "archiveStatus": "archived",
+    "id": "raw_float_p3e_006_archived_manual_duplicate",
+    "batchId": "batch_float_p3e_001",
+    "source": "float",
+    "identity": {
+      "stableSourceRowKey": "float:task:task_manual_duplicate_006",
+      "sourceObjectId": "task_manual_duplicate_006"
+    },
+    "raw": {
+      "objectType": "task",
+      "floatProjectId": "11009999",
+      "projectCode": "UCS05186",
+      "projectName": "Manual Duplicate Archived",
+      "taskId": "task_manual_duplicate_006",
+      "taskName": "Archived manual duplicate",
+      "personId": "person_006",
+      "personName": "Aria Archived",
+      "department": "Strategy",
+      "role": "Planner",
+      "startDate": "2026-03-18",
+      "endDate": "2026-03-19",
+      "month": "2026-03",
+      "hours": 4,
+      "tentative": false,
+      "activeState": "archived",
+      "allocationClass": "allocated",
+      "expansionRule": "raw_float_task_span_not_dashboard_hours",
+      "duplicateGroupKey": "UCS05186",
+      "duplicateCandidateType": "manual_duplicate",
+      "manualDuplicateOfFloatProjectId": "11000003"
+    },
+    "contentHash": "sha256:p3e-float-manual-duplicate",
+    "observedAt": "2026-05-20T09:00:05.000Z",
+    "sourceRefs": [
+      {
+        "source": "float",
+        "sourceLayer": "float_raw",
+        "batchId": "batch_float_p3e_001",
+        "rawRowId": "raw_float_p3e_006_archived_manual_duplicate",
+        "sourceObjectId": "task_manual_duplicate_006"
+      }
+    ]
+  }
+]

@@ -1,0 +1,36 @@
+{
+  "factIds": [
+    "fee_sheet:batch_fee_p3b_001:raw_fee_p3b_002_client_summary",
+    "fee_sheet:batch_fee_p3b_001:raw_fee_p3b_003_vtab_design",
+    "fee_sheet:batch_fee_p3b_001:raw_fee_p3b_004_vtab_strategy_zero_fee",
+    "fee_sheet:batch_fee_p3b_001:raw_fee_p3b_005_vtab_total"
+  ],
+  "expectedWarningCodes": [
+    "ZERO_FEE_WITH_HOURS",
+    "CLIENT_SUMMARY_VTAB_DISAGREE"
+  ],
+  "firstTabFloatId": "10480262",
+  "clientSummaryFact": {
+    "sourceTab": "CLIENT SUMMARY",
+    "additiveStatus": "source_summary",
+    "isAdditive": false,
+    "soldFee": 10000,
+    "soldHours": 40
+  },
+  "rowLevelOfficeFact": {
+    "rawRowId": "raw_fee_p3b_003_vtab_design",
+    "office": "USA"
+  },
+  "zeroFeeHoursFact": {
+    "rawRowId": "raw_fee_p3b_004_vtab_strategy_zero_fee",
+    "soldFee": 0,
+    "soldHours": 8,
+    "additiveStatus": "additive",
+    "isAdditive": true
+  },
+  "vTabSummaryFact": {
+    "rawRowId": "raw_fee_p3b_005_vtab_total",
+    "additiveStatus": "source_summary",
+    "isAdditive": false
+  }
+}

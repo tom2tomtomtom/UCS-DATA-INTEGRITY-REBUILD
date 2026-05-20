@@ -89,10 +89,19 @@ export {
   createParserResult,
   createParserWarning,
   PARSER_ADDITIVE_STATUSES,
+  parseArchivedFeeSheetRows,
+  parseArchivedFloatRows,
+  parsePipelineRows,
+  parseProductionRevenueRows,
   toIsAdditive
 } from "./parsers";
 
 export type {
+  FeeSheetArchivedRowPayload,
+  FeeSheetRowKind,
+  FeeSheetSoldFact,
+  FloatArchivedTaskPayload,
+  FloatParserFact,
   ParserAdditiveStatus,
   ParserCapabilitySummary,
   ParserFactEvidence,

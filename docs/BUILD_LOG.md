@@ -675,3 +675,50 @@ Next action:
 - commit and push P3-A,
 - close GitHub `#33`,
 - spawn source-specific parser workers for P3-B through P3-E.
+
+### Checkpoint: P3-B Through P3-E Parser Integration And Phase 3 Gate
+
+Phase: 3
+
+Tickets: `#34`, `#35`, `#36`, `#37`, `#39`
+
+Status: implemented locally, push-blocking verification passed, awaiting commit
+
+What changed:
+
+- added fee-sheet parser fixtures and parser,
+- added Pipeline parser fixtures and parser,
+- added Production Revenue parser fixtures and parser,
+- added Float parser fixtures and parser,
+- exported source-specific parsers from the parser barrel and root library,
+- added `scripts/verify-phase3.mjs`,
+- rewired `npm run build` to the Phase 3 verifier instead of the old Phase 2 verifier.
+
+TDD and gate evidence:
+
+- red: `npm run verify:phase3` failed because the script did not exist,
+- first green attempt failed on a too-strict unknown-status marker in the verifier,
+- fixed the verifier to check the actual `unknown-status` test coverage marker,
+- `npm run verify:phase3` passed,
+- `npm run build` passed,
+- `npm audit --omit=dev` found 0 vulnerabilities,
+- `git diff --check` passed,
+- em dash/en dash scan returned no matches.
+
+Boundary kept:
+
+- parsers consume archived source rows only,
+- parser facts carry raw row IDs, batch IDs, source refs, and explicit additive status,
+- CLIENT SUMMARY, V-tab, TBC, archived, inactive, duplicate, manual duplicate, and multi-person cases are represented in fixtures and tests,
+- no canon queries,
+- no display rows,
+- no product UI,
+- no live source pulls,
+- no migrations,
+- no source-system mutation.
+
+Next action:
+
+- commit and push the parser integration checkpoint,
+- close GitHub `#34`, `#35`, `#36`, `#37`, and `#39`,
+- then implement parser fixture manifest ticket `#38`.

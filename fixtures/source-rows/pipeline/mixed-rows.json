@@ -1,0 +1,187 @@
+[
+  {
+    "kind": "raw_source_row",
+    "archiveStatus": "archived",
+    "id": "raw_pipeline_001",
+    "batchId": "batch_pipeline_001",
+    "source": "pipeline",
+    "identity": {
+      "stableSourceRowKey": "pipeline_fixture_doc:Pipeline:12",
+      "sourceDocumentId": "pipeline_fixture_doc",
+      "sourceTab": "Pipeline",
+      "sourceRowNumber": 12
+    },
+    "raw": {
+      "jobNumber": "TBC",
+      "client": "Acme + Co",
+      "projectName": "Spring Launch TBC",
+      "month": "2026-06",
+      "amountGbp": 12000,
+      "status": "Provisional",
+      "office": "LDN",
+      "sourceLabel": "Master Pipeline FY26-27"
+    },
+    "contentHash": "pipeline_fixture_hash_001",
+    "observedAt": "2026-05-20T00:00:00.000Z",
+    "sourceRefs": [
+      {
+        "source": "pipeline",
+        "sourceLayer": "pipeline",
+        "batchId": "batch_pipeline_001",
+        "rawRowId": "raw_pipeline_001",
+        "sourceDocumentId": "pipeline_fixture_doc",
+        "sourceTab": "Pipeline",
+        "sourceRowNumber": 12
+      }
+    ]
+  },
+  {
+    "kind": "raw_source_row",
+    "archiveStatus": "archived",
+    "id": "raw_pipeline_002",
+    "batchId": "batch_pipeline_001",
+    "source": "pipeline",
+    "identity": {
+      "stableSourceRowKey": "pipeline_fixture_doc:Pipeline:13",
+      "sourceDocumentId": "pipeline_fixture_doc",
+      "sourceTab": "Pipeline",
+      "sourceRowNumber": 13
+    },
+    "raw": {
+      "jobNumber": "TBC",
+      "client": "Acme + Co",
+      "projectName": "Summer Launch TBC",
+      "month": "2026-07",
+      "amountGbp": 34000,
+      "status": "Provisional",
+      "office": "LDN",
+      "sourceLabel": "Master Pipeline FY26-27"
+    },
+    "contentHash": "pipeline_fixture_hash_002",
+    "observedAt": "2026-05-20T00:00:00.000Z",
+    "sourceRefs": [
+      {
+        "source": "pipeline",
+        "sourceLayer": "pipeline",
+        "batchId": "batch_pipeline_001",
+        "rawRowId": "raw_pipeline_002",
+        "sourceDocumentId": "pipeline_fixture_doc",
+        "sourceTab": "Pipeline",
+        "sourceRowNumber": 13
+      }
+    ]
+  },
+  {
+    "kind": "raw_source_row",
+    "archiveStatus": "archived",
+    "id": "raw_pipeline_003",
+    "batchId": "batch_pipeline_001",
+    "source": "pipeline",
+    "identity": {
+      "stableSourceRowKey": "pipeline_fixture_doc:Pipeline:14",
+      "sourceDocumentId": "pipeline_fixture_doc",
+      "sourceTab": "Pipeline",
+      "sourceRowNumber": 14
+    },
+    "raw": {
+      "jobNumber": null,
+      "client": "B&Q Retail + Digital",
+      "projectName": "Retail: Q3 Store/Online + Partner Launch",
+      "month": "2026-08",
+      "amountGbp": 58000,
+      "status": "Likely",
+      "office": "UNKNOWN",
+      "sourceLabel": "Master Pipeline FY26-27"
+    },
+    "contentHash": "pipeline_fixture_hash_003",
+    "observedAt": "2026-05-20T00:00:00.000Z",
+    "sourceRefs": [
+      {
+        "source": "pipeline",
+        "sourceLayer": "pipeline",
+        "batchId": "batch_pipeline_001",
+        "rawRowId": "raw_pipeline_003",
+        "sourceDocumentId": "pipeline_fixture_doc",
+        "sourceTab": "Pipeline",
+        "sourceRowNumber": 14
+      }
+    ]
+  },
+  {
+    "kind": "raw_source_row",
+    "archiveStatus": "archived",
+    "id": "raw_pipeline_004",
+    "batchId": "batch_pipeline_001",
+    "source": "pipeline",
+    "identity": {
+      "stableSourceRowKey": "pipeline_fixture_doc:Pipeline:15",
+      "sourceDocumentId": "pipeline_fixture_doc",
+      "sourceTab": "Pipeline",
+      "sourceRowNumber": 15
+    },
+    "raw": {
+      "jobNumber": "UCS09999",
+      "client": "Nike ACG",
+      "projectName": "Nike ACG FW26 - Trail",
+      "month": "2026-09",
+      "amountGbp": 90000,
+      "status": "Likely",
+      "office": "USA",
+      "sourceLabel": "Master Pipeline FY26-27"
+    },
+    "contentHash": "pipeline_fixture_hash_004",
+    "observedAt": "2026-05-20T00:00:00.000Z",
+    "sourceRefs": [
+      {
+        "source": "pipeline",
+        "sourceLayer": "pipeline",
+        "batchId": "batch_pipeline_001",
+        "rawRowId": "raw_pipeline_004",
+        "sourceDocumentId": "pipeline_fixture_doc",
+        "sourceTab": "Pipeline",
+        "sourceRowNumber": 15
+      }
+    ]
+  },
+  {
+    "kind": "skipped_source_row",
+    "archiveStatus": "skipped",
+    "id": "raw_pipeline_empty_005",
+    "batchId": "batch_pipeline_001",
+    "source": "pipeline",
+    "identity": {
+      "stableSourceRowKey": "pipeline_fixture_doc:Pipeline:16",
+      "sourceDocumentId": "pipeline_fixture_doc",
+      "sourceTab": "Pipeline",
+      "sourceRowNumber": 16
+    },
+    "observedAt": "2026-05-20T00:00:00.000Z",
+    "raw": {},
+    "contentHash": "pipeline_fixture_hash_005",
+    "skip": {
+      "allowedByLaw": true,
+      "classification": "literally_empty",
+      "reason": "Fixture row is source-archive classified as literally empty.",
+      "evidence": {
+        "hasJobNumber": false,
+        "hasProjectName": false,
+        "hasClient": false,
+        "hasDate": false,
+        "hasAmount": false,
+        "hasHours": false,
+        "hasUsefulSourceIdentifier": false
+      }
+    },
+    "sourceRefs": [
+      {
+        "source": "pipeline",
+        "sourceLayer": "pipeline",
+        "batchId": "batch_pipeline_001",
+        "rawRowId": "raw_pipeline_empty_005",
+        "sourceDocumentId": "pipeline_fixture_doc",
+        "sourceTab": "Pipeline",
+        "sourceRowNumber": 16
+      }
+    ]
+  }
+]

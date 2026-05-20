@@ -1,0 +1,82 @@
+{
+  "sourceFixture": "fixtures/source-rows/pipeline/mixed-rows.json",
+  "parserFamily": "pipeline",
+  "parserVersion": "p3-c-initial",
+  "lawsProtected": ["Law 1", "Law 2", "Law 5", "P3-C"],
+  "facts": [
+    {
+      "id": "pipeline:batch_pipeline_001:raw_pipeline_001",
+      "batchId": "batch_pipeline_001",
+      "rawRowIds": ["raw_pipeline_001"],
+      "stablePipelineIdentity": "source-row:raw_pipeline_001",
+      "sourceClient": "Acme + Co",
+      "sourceProjectName": "Spring Launch TBC",
+      "month": "2026-06",
+      "amountGbp": 12000,
+      "additiveStatus": "not_additive",
+      "isAdditive": false
+    },
+    {
+      "id": "pipeline:batch_pipeline_001:raw_pipeline_002",
+      "batchId": "batch_pipeline_001",
+      "rawRowIds": ["raw_pipeline_002"],
+      "stablePipelineIdentity": "source-row:raw_pipeline_002",
+      "sourceClient": "Acme + Co",
+      "sourceProjectName": "Summer Launch TBC",
+      "month": "2026-07",
+      "amountGbp": 34000,
+      "additiveStatus": "not_additive",
+      "isAdditive": false
+    },
+    {
+      "id": "pipeline:batch_pipeline_001:raw_pipeline_003",
+      "batchId": "batch_pipeline_001",
+      "rawRowIds": ["raw_pipeline_003"],
+      "stablePipelineIdentity": "source-row:raw_pipeline_003",
+      "sourceClient": "B&Q Retail + Digital",
+      "sourceProjectName": "Retail: Q3 Store/Online + Partner Launch",
+      "month": "2026-08",
+      "amountGbp": 58000,
+      "additiveStatus": "not_additive",
+      "isAdditive": false
+    },
+    {
+      "id": "pipeline:batch_pipeline_001:raw_pipeline_004",
+      "batchId": "batch_pipeline_001",
+      "rawRowIds": ["raw_pipeline_004"],
+      "stablePipelineIdentity": "job:UCS09999",
+      "sourceClient": "Nike ACG",
+      "sourceProjectName": "Nike ACG FW26 - Trail",
+      "month": "2026-09",
+      "amountGbp": 90000,
+      "additiveStatus": "not_additive",
+      "isAdditive": false
+    }
+  ],
+  "warnings": [
+    {
+      "code": "PIPELINE_TBC_JOB_NUMBER",
+      "batchId": "batch_pipeline_001",
+      "rawRowIds": ["raw_pipeline_001"],
+      "severity": "DATA_WARN"
+    },
+    {
+      "code": "PIPELINE_TBC_JOB_NUMBER",
+      "batchId": "batch_pipeline_001",
+      "rawRowIds": ["raw_pipeline_002"],
+      "severity": "DATA_WARN"
+    },
+    {
+      "code": "PIPELINE_NO_JOB_NUMBER",
+      "batchId": "batch_pipeline_001",
+      "rawRowIds": ["raw_pipeline_003"],
+      "severity": "DATA_WARN"
+    }
+  ],
+  "skippedRows": [
+    {
+      "id": "raw_pipeline_empty_005",
+      "classification": "literally_empty"
+    }
+  ]
+}

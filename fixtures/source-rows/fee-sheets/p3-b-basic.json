@@ -1,0 +1,201 @@
+[
+  {
+    "kind": "raw_source_row",
+    "archiveStatus": "archived",
+    "id": "raw_fee_p3b_001_first_tab",
+    "batchId": "batch_fee_p3b_001",
+    "source": "fee_sheet",
+    "identity": {
+      "stableSourceRowKey": "fee_sheet_p3b:FIRST TAB:5",
+      "sourceDocumentId": "fee_sheet_p3b",
+      "sourceTab": "FIRST TAB",
+      "sourceRowNumber": 5
+    },
+    "raw": {
+      "rowKind": "project_header",
+      "jobNumber": "UCS04154",
+      "client": "Chobani",
+      "projectName": "Q1 Campaign",
+      "office": "LDN",
+      "feeSheetFloatId": "10480262",
+      "currency": "GBP",
+      "fxRateToGbp": 1,
+      "fxCapturedAt": "2026-05-20T00:00:00.000Z"
+    },
+    "contentHash": "sha256:p3b-first-tab",
+    "observedAt": "2026-05-20T10:00:00.000Z",
+    "sourceRefs": [
+      {
+        "source": "fee_sheet",
+        "sourceLayer": "fee_sheet_parser_summary",
+        "batchId": "batch_fee_p3b_001",
+        "rawRowId": "raw_fee_p3b_001_first_tab",
+        "sourceDocumentId": "fee_sheet_p3b",
+        "sourceTab": "FIRST TAB",
+        "sourceRowNumber": 5,
+        "field": "feeSheetFloatId"
+      }
+    ]
+  },
+  {
+    "kind": "raw_source_row",
+    "archiveStatus": "archived",
+    "id": "raw_fee_p3b_002_client_summary",
+    "batchId": "batch_fee_p3b_001",
+    "source": "fee_sheet",
+    "identity": {
+      "stableSourceRowKey": "fee_sheet_p3b:CLIENT SUMMARY:18",
+      "sourceDocumentId": "fee_sheet_p3b",
+      "sourceTab": "CLIENT SUMMARY",
+      "sourceRowNumber": 18
+    },
+    "raw": {
+      "rowKind": "client_summary",
+      "jobNumber": "UCS04154",
+      "client": "Chobani",
+      "projectName": "Q1 Campaign",
+      "month": "2026-03",
+      "office": "LDN",
+      "soldFee": 10000,
+      "soldHours": 40,
+      "currency": "GBP",
+      "fxRateToGbp": 1,
+      "fxCapturedAt": "2026-05-20T00:00:00.000Z"
+    },
+    "contentHash": "sha256:p3b-client-summary",
+    "observedAt": "2026-05-20T10:00:01.000Z",
+    "sourceRefs": [
+      {
+        "source": "fee_sheet",
+        "sourceLayer": "fee_sheet_parser_summary",
+        "batchId": "batch_fee_p3b_001",
+        "rawRowId": "raw_fee_p3b_002_client_summary",
+        "sourceDocumentId": "fee_sheet_p3b",
+        "sourceTab": "CLIENT SUMMARY",
+        "sourceRowNumber": 18
+      }
+    ]
+  },
+  {
+    "kind": "raw_source_row",
+    "archiveStatus": "archived",
+    "id": "raw_fee_p3b_003_vtab_design",
+    "batchId": "batch_fee_p3b_001",
+    "source": "fee_sheet",
+    "identity": {
+      "stableSourceRowKey": "fee_sheet_p3b:V1:22",
+      "sourceDocumentId": "fee_sheet_p3b",
+      "sourceTab": "V1",
+      "sourceRowNumber": 22
+    },
+    "raw": {
+      "rowKind": "v_tab",
+      "jobNumber": "UCS04154",
+      "client": "Chobani",
+      "projectName": "Q1 Campaign",
+      "month": "2026-03",
+      "department": "Design",
+      "role": "Senior Designer",
+      "office": "USA",
+      "soldFee": 6000,
+      "soldHours": 24,
+      "currency": "GBP",
+      "fxRateToGbp": 1,
+      "fxCapturedAt": "2026-05-20T00:00:00.000Z"
+    },
+    "contentHash": "sha256:p3b-vtab-design",
+    "observedAt": "2026-05-20T10:00:02.000Z",
+    "sourceRefs": [
+      {
+        "source": "fee_sheet",
+        "sourceLayer": "sold",
+        "batchId": "batch_fee_p3b_001",
+        "rawRowId": "raw_fee_p3b_003_vtab_design",
+        "sourceDocumentId": "fee_sheet_p3b",
+        "sourceTab": "V1",
+        "sourceRowNumber": 22
+      }
+    ]
+  },
+  {
+    "kind": "raw_source_row",
+    "archiveStatus": "archived",
+    "id": "raw_fee_p3b_004_vtab_strategy_zero_fee",
+    "batchId": "batch_fee_p3b_001",
+    "source": "fee_sheet",
+    "identity": {
+      "stableSourceRowKey": "fee_sheet_p3b:V1:23",
+      "sourceDocumentId": "fee_sheet_p3b",
+      "sourceTab": "V1",
+      "sourceRowNumber": 23
+    },
+    "raw": {
+      "rowKind": "v_tab",
+      "jobNumber": "UCS04154",
+      "client": "Chobani",
+      "projectName": "Q1 Campaign",
+      "month": "2026-03",
+      "department": "Strategy",
+      "role": "Strategy Director",
+      "office": "LDN",
+      "soldFee": 0,
+      "soldHours": 8,
+      "currency": "GBP",
+      "fxRateToGbp": 1,
+      "fxCapturedAt": "2026-05-20T00:00:00.000Z"
+    },
+    "contentHash": "sha256:p3b-vtab-zero-fee",
+    "observedAt": "2026-05-20T10:00:03.000Z",
+    "sourceRefs": [
+      {
+        "source": "fee_sheet",
+        "sourceLayer": "sold",
+        "batchId": "batch_fee_p3b_001",
+        "rawRowId": "raw_fee_p3b_004_vtab_strategy_zero_fee",
+        "sourceDocumentId": "fee_sheet_p3b",
+        "sourceTab": "V1",
+        "sourceRowNumber": 23
+      }
+    ]
+  },
+  {
+    "kind": "raw_source_row",
+    "archiveStatus": "archived",
+    "id": "raw_fee_p3b_005_vtab_total",
+    "batchId": "batch_fee_p3b_001",
+    "source": "fee_sheet",
+    "identity": {
+      "stableSourceRowKey": "fee_sheet_p3b:V1:30",
+      "sourceDocumentId": "fee_sheet_p3b",
+      "sourceTab": "V1",
+      "sourceRowNumber": 30
+    },
+    "raw": {
+      "rowKind": "source_summary",
+      "summaryFor": "V1",
+      "jobNumber": "UCS04154",
+      "client": "Chobani",
+      "projectName": "Q1 Campaign",
+      "month": "2026-03",
+      "office": "LDN",
+      "soldFee": 6000,
+      "soldHours": 32,
+      "currency": "GBP",
+      "fxRateToGbp": 1,
+      "fxCapturedAt": "2026-05-20T00:00:00.000Z"
+    },
+    "contentHash": "sha256:p3b-vtab-total",
+    "observedAt": "2026-05-20T10:00:04.000Z",
+    "sourceRefs": [
+      {
+        "source": "fee_sheet",
+        "sourceLayer": "fee_sheet_parser_summary",
+        "batchId": "batch_fee_p3b_001",
+        "rawRowId": "raw_fee_p3b_005_vtab_total",
+        "sourceDocumentId": "fee_sheet_p3b",
+        "sourceTab": "V1",
+        "sourceRowNumber": 30
+      }
+    ]
+  }
+]

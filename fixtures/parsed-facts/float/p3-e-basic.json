@@ -1,0 +1,55 @@
+{
+  "factIds": [
+    "float:batch_float_p3e_001:raw_float_p3e_001_allocated",
+    "float:batch_float_p3e_001:raw_float_p3e_002_unallocated",
+    "float:batch_float_p3e_001:raw_float_p3e_003_orphan_duplicate",
+    "float:batch_float_p3e_001:raw_float_p3e_004_inactive_placeholder",
+    "float:batch_float_p3e_001:raw_float_p3e_005_pencil_split",
+    "float:batch_float_p3e_001:raw_float_p3e_006_archived_manual_duplicate"
+  ],
+  "expectedWarningCodes": [
+    "DUPLICATE_FLOAT_CANDIDATE",
+    "MANUAL_DUPLICATE_CANDIDATE",
+    "INACTIVE_FLOAT_WITH_HOURS",
+    "ARCHIVED_FLOAT_WITH_HOURS",
+    "MULTI_PERSON_SPLIT_AMBIGUITY"
+  ],
+  "expectedAllocationClasses": [
+    "allocated",
+    "unallocated",
+    "orphan",
+    "placeholder",
+    "pencil"
+  ],
+  "allocatedFact": {
+    "rawRowId": "raw_float_p3e_001_allocated",
+    "floatProjectId": "11000001",
+    "projectName": "Core Launch",
+    "taskId": "task_allocated_001",
+    "personId": "person_001",
+    "person": "Alex Allocated",
+    "department": "Design",
+    "role": "Senior Designer",
+    "from": "2026-03-02",
+    "to": "2026-03-06",
+    "month": "2026-03",
+    "hours": 12.5,
+    "tentative": false,
+    "activeState": "active",
+    "allocationClass": "allocated",
+    "additiveStatus": "unknown_requires_review",
+    "isAdditive": false
+  },
+  "tentativeRawRowIds": [
+    "raw_float_p3e_002_unallocated",
+    "raw_float_p3e_005_pencil_split"
+  ],
+  "duplicateWarningRawRowIds": [
+    "raw_float_p3e_003_orphan_duplicate",
+    "raw_float_p3e_006_archived_manual_duplicate"
+  ],
+  "manualDuplicateRawRowId": "raw_float_p3e_006_archived_manual_duplicate",
+  "inactiveRawRowId": "raw_float_p3e_004_inactive_placeholder",
+  "archivedRawRowId": "raw_float_p3e_006_archived_manual_duplicate",
+  "multiPersonRawRowId": "raw_float_p3e_005_pencil_split"
+}

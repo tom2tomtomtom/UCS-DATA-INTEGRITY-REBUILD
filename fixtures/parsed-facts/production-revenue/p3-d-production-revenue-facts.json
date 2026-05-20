@@ -1,0 +1,90 @@
+{
+  "parserName": "production-revenue",
+  "source": "production_revenue",
+  "expectedFacts": [
+    {
+      "id": "production_revenue:batch_production_revenue_p3d:raw_pr_001",
+      "rawRowIds": ["raw_pr_001"],
+      "batchId": "batch_production_revenue_p3d",
+      "jobNumber": "UCS90001",
+      "client": "Archive Client",
+      "projectName": "Archived Launch Film",
+      "month": "2026-04",
+      "office": "LDN",
+      "productionStatus": "CONFIRMED",
+      "amountGbp": 12000,
+      "isAdditive": false,
+      "warningCodes": ["ARCHIVED_PROJECT_REVENUE"]
+    },
+    {
+      "id": "production_revenue:batch_production_revenue_p3d:raw_pr_002",
+      "rawRowIds": ["raw_pr_002"],
+      "batchId": "batch_production_revenue_p3d",
+      "jobNumber": "USA90002",
+      "client": "Blank Status Client",
+      "projectName": "Blank Status Production",
+      "month": "2026-04",
+      "office": "USA",
+      "productionStatus": "UNKNOWN",
+      "amountGbp": 8000,
+      "isAdditive": false,
+      "warningCodes": ["BLANK_STATUS_UNKNOWN", "OFFICE_INFERRED"]
+    },
+    {
+      "id": "production_revenue:batch_production_revenue_p3d:raw_pr_003",
+      "rawRowIds": ["raw_pr_003"],
+      "batchId": "batch_production_revenue_p3d",
+      "jobNumber": "UCS90003",
+      "client": "Collision Client",
+      "projectName": "Collision Production",
+      "month": "2026-04",
+      "office": "LDN",
+      "productionStatus": "CONFIRMED",
+      "amountGbp": 5000,
+      "isAdditive": false,
+      "warningCodes": ["STATUS_COLLISION"]
+    },
+    {
+      "id": "production_revenue:batch_production_revenue_p3d:raw_pr_004",
+      "rawRowIds": ["raw_pr_004"],
+      "batchId": "batch_production_revenue_p3d",
+      "jobNumber": "UCS90003",
+      "client": "Collision Client",
+      "projectName": "Collision Production",
+      "month": "2026-04",
+      "office": "LDN",
+      "productionStatus": "NEGOTIATING",
+      "amountGbp": 5000,
+      "isAdditive": false,
+      "warningCodes": ["STATUS_COLLISION"]
+    },
+    {
+      "id": "production_revenue:batch_production_revenue_p3d:raw_pr_005",
+      "rawRowIds": ["raw_pr_005"],
+      "batchId": "batch_production_revenue_p3d",
+      "client": "No Job Client",
+      "projectName": "Unnumbered Production",
+      "month": "2026-04",
+      "office": "LDN",
+      "productionStatus": "EXPECTED",
+      "amountGbp": 3000,
+      "isAdditive": false,
+      "warningCodes": [
+        "NO_JOB_NUMBER",
+        "OFFICE_INFERRED",
+        "UNSUPPORTED_DEPARTMENT_ATTRIBUTION",
+        "UNSUPPORTED_ROLE_ATTRIBUTION"
+      ]
+    }
+  ],
+  "expectedWarningCodes": [
+    "ARCHIVED_PROJECT_REVENUE",
+    "BLANK_STATUS_UNKNOWN",
+    "OFFICE_INFERRED",
+    "STATUS_COLLISION",
+    "NO_JOB_NUMBER",
+    "UNSUPPORTED_DEPARTMENT_ATTRIBUTION",
+    "UNSUPPORTED_ROLE_ATTRIBUTION"
+  ],
+  "unsupportedCapabilities": ["department", "role"]
+}
