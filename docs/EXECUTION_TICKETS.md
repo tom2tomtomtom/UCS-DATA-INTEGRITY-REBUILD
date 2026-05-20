@@ -74,6 +74,12 @@ This file is the local mirror of the GitHub issue board. GitHub issues are the o
 | `#74` | P8-E: Named Sian Yunni Jade Scenario Report |
 | `#75` | P8-F: Real-data UI Screenshot And Click Proof |
 | `#76` | P8-G: Phase 8 Verification And Doctrine Gate |
+| `#77` | P9-A: Launch Readiness And No-Deploy Gate |
+| `#78` | P9-B: Health And Readiness Routes |
+| `#79` | P9-C: Railway Target And Env Verification |
+| `#80` | P9-D: Railway Build Configuration |
+| `#81` | P9-E: Staging Deploy And Post-Deploy Health |
+| `#82` | P9-F: Final Acceptance Report And Stakeholder Caveats |
 
 ## Implementation Ticket Rule
 
@@ -304,6 +310,23 @@ Exit criteria:
 - Railway service is the rebuild service,
 - production DB is the new Supabase project,
 - named checks pass.
+
+Phase 9 child tickets:
+
+- `#77` P9-A Launch Readiness And No-Deploy Gate,
+- `#78` P9-B Health And Readiness Routes,
+- `#79` P9-C Railway Target And Env Verification,
+- `#80` P9-D Railway Build Configuration,
+- `#81` P9-E Staging Deploy And Post-Deploy Health,
+- `#82` P9-F Final Acceptance Report And Stakeholder Caveats.
+
+Phase 9 boundary:
+
+- deployment is allowed only after readiness, health, target, and env gates pass,
+- target must be a separate rebuild Railway service, not the old UCS dashboard service,
+- production domain cutover is a separate approval after staging health is proven,
+- old DB remains legacy comparison only,
+- no scheduled source sync exists at first deploy.
 
 ## Phase 0 Work Tickets
 

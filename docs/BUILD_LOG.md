@@ -257,6 +257,44 @@ Remaining before closing Phase 8:
 - stage, secret-scan, commit, push,
 - close `#76` and parent `#9` only after CI passes.
 
+### Checkpoint: Phase 8 Closed And Phase 9 Ticketed
+
+Phase: 9
+
+Tickets: parent `#10`, child tickets `#77` through `#82`
+
+Status: ticketed, implementation not started
+
+Phase 8 closure evidence:
+
+- `#70` through `#76` are closed,
+- final Phase 8 commit `72be9e1` pushed to `origin/main`,
+- GitHub CI run `26183355683` passed,
+- parent Phase 8 ticket `#9` is closed.
+
+Phase 9 child tickets:
+
+- `#77` Launch Readiness And No-Deploy Gate,
+- `#78` Health And Readiness Routes,
+- `#79` Railway Target And Env Verification,
+- `#80` Railway Build Configuration,
+- `#81` Staging Deploy And Post-Deploy Health,
+- `#82` Final Acceptance Report And Stakeholder Caveats.
+
+Boundary for Phase 9:
+
+- do not create or deploy a Railway service until launch readiness, health/readiness routes, target verification, and build configuration are proven,
+- do not deploy to the old UCS dashboard Railway service,
+- do not cut over a production domain during staging deploy,
+- do not create scheduled sync jobs,
+- do not run DB migrations or source writes as part of launch,
+- old DB remains comparison evidence only.
+
+Next action:
+
+- implement `#77` first,
+- keep actual Railway deployment behind the later target and health gates.
+
 ### Checkpoint: Overnight Control Started
 
 Phase: 0
