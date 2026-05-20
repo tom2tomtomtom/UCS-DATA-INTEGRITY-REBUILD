@@ -15,7 +15,8 @@
     "verify:phase4": "npm run test && npm run typecheck && node scripts/verify-phase4.mjs",
     "verify:phase5": "npm run test && npm run typecheck && node scripts/verify-phase5.mjs",
     "verify:phase6": "npm run test && npm run typecheck && next build && node scripts/verify-phase6.mjs",
-    "verify:phase7": "npm run test && npm run typecheck && next build && node scripts/verify-phase7.mjs"
+    "verify:phase7": "npm run test && npm run typecheck && next build && node scripts/verify-phase7.mjs",
+    "verify:phase8": "npm run test && npm run typecheck && next build && node scripts/verify-phase8.mjs"
   },
   "devDependencies": {
     "@types/node": "^24.10.1",

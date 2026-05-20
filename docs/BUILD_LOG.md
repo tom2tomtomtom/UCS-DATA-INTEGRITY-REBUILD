@@ -6,6 +6,47 @@ The controller updates this whenever a ticket completes, an agent reports back, 
 
 ## 2026-05-20
 
+### Checkpoint: Phase 8 Schema Law Gate Added
+
+Phase: 8
+
+Ticket: `#71`
+
+Status: implemented, local verification passed
+
+What changed:
+
+- added a pure schema law validator for the rebuild Supabase schema,
+- added the initial integrity schema migration artifact without applying it remotely,
+- created law-aligned tables for source batches, raw rows, parsed facts, conflicts, display snapshots, warning events, user overlays, and audit log,
+- enabled RLS on all public app tables and revoked table access from `anon` and `authenticated`,
+- added database-level update and delete guards for `raw_source_rows`,
+- constrained `read_only_sql` facts to diagnostic-only evidence,
+- added a Phase 8 verifier to keep schema and legacy-cache boundaries executable.
+
+Verification:
+
+- read the linked rebuild public schema with `supabase db dump --linked --schema public --file /tmp/ucs-rebuild-public-schema.sql`,
+- confirmed no app tables existed before the migration artifact,
+- `npm test -- tests/schema/schema-law-gate.test.ts tests/schema/phase8-verifier.test.ts` passed,
+- `npm test` passed with 49 files passed, 15 skipped, 160 tests passed, and 79 todo,
+- `npm run typecheck` passed,
+- `node scripts/verify-phase8.mjs` passed,
+- `npm run verify:phase8` passed, including Next build,
+- staged secret scan found no supplied Supabase or source credentials in changed files.
+
+Process notes:
+
+- the migration has not been applied to remote Supabase in this ticket,
+- old dashboard DB remains comparison evidence only,
+- the remote public schema currently includes a pre-existing public `rls_auto_enable` SECURITY DEFINER helper and broad default privileges. This ticket does not mutate that remote posture, but the migration revokes defaults for new app tables and keeps the new immutability helper in `app_private`.
+
+Next action:
+
+- commit and push P8-B,
+- close ticket `#71`,
+- start `#72` read-only source snapshot import using the new schema law as the boundary.
+
 ### Checkpoint: Overnight Control Started
 
 Phase: 0
