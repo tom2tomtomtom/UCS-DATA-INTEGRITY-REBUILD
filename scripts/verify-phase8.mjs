@@ -37,6 +37,10 @@ function checkPackageScripts() {
   if (pkg.scripts?.["verify:phase8"] !== "npm run test && npm run typecheck && next build && node scripts/verify-phase8.mjs") {
     fail("package.json must define verify:phase8 as test, typecheck, next build, then scripts/verify-phase8.mjs");
   }
+
+  if (pkg.scripts?.build !== "npm run verify:phase8") {
+    fail("package.json build must run verify:phase8 once Phase 8 real-data dual-run gates exist");
+  }
 }
 
 function checkRequiredFiles() {

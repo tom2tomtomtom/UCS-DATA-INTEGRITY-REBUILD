@@ -3,7 +3,7 @@ import fs from "node:fs";
 import { describe, expect, test } from "vitest";
 
 describe("P7-F phase 7 verifier wiring", () => {
-  test("package build is wired to a Phase 7 verification gate", () => {
+  test("package still exposes a Phase 7 verification gate for historical replay", () => {
     const pkg = JSON.parse(fs.readFileSync("package.json", "utf8")) as {
       scripts?: Record<string, string>;
     };
@@ -11,7 +11,6 @@ describe("P7-F phase 7 verifier wiring", () => {
     expect(pkg.scripts?.["verify:phase7"]).toBe(
       "npm run test && npm run typecheck && next build && node scripts/verify-phase7.mjs"
     );
-    expect(pkg.scripts?.build).toBe("npm run verify:phase7");
   });
 
   test("Phase 7 verifier script protects the chat evidence boundary", () => {

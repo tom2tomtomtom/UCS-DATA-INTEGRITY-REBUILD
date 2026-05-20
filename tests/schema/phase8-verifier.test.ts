@@ -11,6 +11,7 @@ describe("P8-B phase 8 verifier wiring", () => {
     expect(pkg.scripts?.["verify:phase8"]).toBe(
       "npm run test && npm run typecheck && next build && node scripts/verify-phase8.mjs"
     );
+    expect(pkg.scripts?.build).toBe("npm run verify:phase8");
   });
 
   test("Phase 8 verifier protects schema laws and legacy-cache boundaries", () => {

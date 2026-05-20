@@ -8,7 +8,7 @@
   "scripts": {
     "test": "vitest run",
     "typecheck": "tsc --noEmit",
-    "build": "npm run verify:phase7",
+    "build": "npm run verify:phase8",
     "verify:phase0": "npm run test && npm run typecheck && node scripts/verify-phase0.mjs",
     "verify:phase2": "npm run test && npm run typecheck && node scripts/verify-phase2.mjs",
     "verify:phase3": "npm run test && npm run typecheck && node scripts/verify-phase3.mjs",

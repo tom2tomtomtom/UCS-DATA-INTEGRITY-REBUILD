@@ -215,6 +215,48 @@ Next action:
 - stage, secret-scan, commit, push,
 - close ticket `#75` only after CI passes.
 
+### Checkpoint: Phase 8 Verification Gate Started
+
+Phase: 8
+
+Ticket: `#76`
+
+Status: build gate blocker fixed, doctrine review blocked only on commit and CI
+
+What changed:
+
+- found that `npm run build` still pointed at `verify:phase7`,
+- wrote a failing Phase 8 verifier test for the active build gate,
+- rewired `npm run build` to `npm run verify:phase8`,
+- updated `scripts/verify-phase8.mjs` so the build script cannot drift back to an older phase gate,
+- relaxed the Phase 7 verifier test so Phase 7 remains replayable without claiming current build ownership.
+
+Read-only doctrine sweep so far:
+
+- tracked secret scan for the known Supabase/Float secret prefixes returned no hits,
+- old dashboard terms appear only in forbidden-path verifiers, law docs, or comparison-only import planning,
+- no source mutation, sync, deploy, or destructive DB action was run,
+- no live source API pull was run,
+- old database output remains comparison evidence only.
+
+Verification so far:
+
+- `npm test -- tests/schema/phase8-verifier.test.ts tests/chat/phase7-verifier.test.ts` failed first because `build` still pointed at Phase 7,
+- after the fix, the same focused test passed with 2 files passed and 4 tests passed,
+- `npm run build` passed and showed `build` delegating to `verify:phase8`,
+- `npm run build` passed with 57 files passed, 15 skipped, 187 tests passed, 79 todo, typecheck, Next build, and Phase 8 verifier.
+
+Doctrine steward review:
+
+- returned `BLOCKED` because the build-gate fix was still uncommitted at review time,
+- accepted the doctrine checks in code inspection: old DB is comparison evidence only, differences are classified, source rows are not hidden, no committed secrets were found, and Phase 8 verifier forbids source/live DB/write paths,
+- required action is to commit the P8-G gate changes, push, and require CI success before closing `#76` or parent `#9`.
+
+Remaining before closing Phase 8:
+
+- stage, secret-scan, commit, push,
+- close `#76` and parent `#9` only after CI passes.
+
 ### Checkpoint: Overnight Control Started
 
 Phase: 0
