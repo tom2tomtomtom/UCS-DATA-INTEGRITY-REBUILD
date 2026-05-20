@@ -2,9 +2,11 @@
 
 ## Current Status
 
-Not ready to build app code yet.
+Not ready to build product UI yet.
 
-The doctrine foundation is pushed, env is migrated locally, and initial UI screenshots exist. The remaining work is small but important: finish the reference capture, make Supabase/Railway decisions, and turn the laws into the first pending tests.
+Ready to start Phase 0 scaffolding once this ADR is pushed.
+
+The doctrine foundation is pushed, env is migrated locally, initial UI screenshots exist, and the key product/infrastructure decisions are now made. The next work is not product UI. It is test and contract scaffolding.
 
 ## Ready To Start App Code When
 
@@ -31,7 +33,7 @@ Status: in progress.
 - `.env.local` exists locally and is ignored.
 - Old database credentials are treated as legacy comparison only.
 
-Status: done locally, pending new Supabase decision.
+Status: done locally.
 
 ### Supabase
 
@@ -39,7 +41,7 @@ Status: done locally, pending new Supabase decision.
 - Old production DB is not the rebuild `DATABASE_URL`.
 - If old DB is used, it is only `LEGACY_DATABASE_URL`.
 
-Status: not done.
+Status: decision made. New Supabase project/database required before real app data work.
 
 ### Railway
 
@@ -47,7 +49,7 @@ Status: not done.
 - No service is created until app skeleton, health route, readiness route, and build exist.
 - Rebuild will use a separate Railway service.
 
-Status: documented, not created.
+Status: decision made. Create only after app skeleton, health route, readiness route, and build exist.
 
 ### Tests
 
@@ -55,7 +57,7 @@ Status: documented, not created.
 - Fixture folder shape exists.
 - CI skeleton exists.
 
-Status: not done.
+Status: not done. This is the next required work.
 
 ## No-Go Conditions
 
@@ -80,3 +82,9 @@ The first coding task should be Phase 0 test scaffolding:
 6. empty `buildDashboardDisplayContract` interface.
 
 Do not start with UI pages.
+
+## Current Go/No-Go
+
+Go for Phase 0 scaffolding.
+
+No-go for product UI, live source sync, chat implementation, Railway deploy, or production data migration.

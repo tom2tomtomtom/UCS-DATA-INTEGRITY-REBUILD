@@ -48,6 +48,8 @@ Then review `.env.local` before running code:
 
 Use a separate Supabase database/project for the rebuild.
 
+Decision accepted on 2026-05-20.
+
 Do not build the new app directly on the old production schema.
 
 Reason:
@@ -212,3 +214,9 @@ For now:
 - create `.env.example`,
 - use old DB only as legacy comparison until the new schema exists,
 - do not run migrations against old Supabase from this repo.
+
+Next action:
+
+- create or select the new Supabase project/database,
+- move the old `DATABASE_URL` value to `LEGACY_DATABASE_URL` if comparison is needed,
+- set rebuild `DATABASE_URL` to the new database only.

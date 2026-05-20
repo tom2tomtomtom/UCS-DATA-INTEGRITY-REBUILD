@@ -32,6 +32,7 @@ Exit criteria:
 - docs explain the system before code exists,
 - CI can run an empty/pending test suite,
 - every named law has a pending test file.
+- first golden scenarios are declared: LDN Q1 Design and UCS04787.
 
 ## Phase 1: UX Parity Map
 

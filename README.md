@@ -32,5 +32,6 @@ Start here:
 22. `docs/CHAT_INVESTIGATION_AGENT_SPEC.md`
 23. `docs/GO_NO_GO_READINESS.md`
 24. `docs/BAD_CODE_UNRAVELLING_POLICY.md`
+25. `docs/adr/0002-rebuild-start-decisions.md`
 
 No app code should be written until the immutable laws are implemented as tests.

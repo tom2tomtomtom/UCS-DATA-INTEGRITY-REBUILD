@@ -30,6 +30,7 @@ Before editing files, every agent must read:
 20. `docs/CHAT_INVESTIGATION_AGENT_SPEC.md`
 21. `docs/GO_NO_GO_READINESS.md`
 22. `docs/BAD_CODE_UNRAVELLING_POLICY.md`
+23. `docs/adr/0002-rebuild-start-decisions.md`
 
 ## Mission
 

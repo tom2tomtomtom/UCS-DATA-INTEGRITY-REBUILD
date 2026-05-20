@@ -37,8 +37,8 @@ Named scenarios that must never regress.
 
 Required:
 
-- LDN Q1 Design,
-- UCS04787,
+- LDN Q1 Design, first proof slice,
+- UCS04787, first proof slice,
 - UCS05186,
 - UCS04154,
 - PCS00250,
