@@ -1873,3 +1873,53 @@ Boundary for Phase 8:
 Next action:
 
 - implement `#70` before any schema, import, or dual-run code.
+
+### Checkpoint: P8-A Environment And Supabase Readiness
+
+Phase: 8
+
+Ticket: `#70`
+
+Status: ready with warnings, push-blocking verification pending
+
+What changed:
+
+- added a pure environment readiness analyser,
+- added tests proving it redacts values, separates rebuild Supabase from legacy comparison DB, fails old/reused DB URLs, and fails non-read-only mutation guard,
+- inspected local `.env.local` without printing secrets,
+- confirmed `.env.local` and `supabase/.temp` are ignored and untracked,
+- confirmed Supabase CLI is linked to project ref `nxrzhwqsswhjgeouxsyr`,
+- confirmed Supabase project list reports `UCS-DATA-INTEGRITY-REBUILD` in `ap-northeast-2` as active and healthy.
+
+Local readiness result:
+
+- status: `warn`,
+- pass: `DATABASE_URL` points at new rebuild Supabase ref,
+- pass: `NEXT_PUBLIC_SUPABASE_URL` points at new rebuild Supabase ref,
+- pass: `LEGACY_DATABASE_URL` is distinct from rebuild database,
+- pass: service role, anon key, Float key, Google service account, fee tracker ID, and mutation guard are present,
+- pass: `MUTATION_GUARD` is `read_only`,
+- warn: `PIPELINE_SHEET_ID` is missing,
+- warn: `PRODUCTION_REVENUE_SHEET_ID` is missing.
+
+Supabase probe notes:
+
+- `supabase status --linked` is not a valid CLI flag in this installed version,
+- a read-only `supabase db dump --schema public --data-only` probe started pulling a Postgres Docker image and was stopped before being used for schema or data evidence,
+- no migration, reset, push, sync, or source mutation command was run.
+
+Boundary kept:
+
+- no secrets committed,
+- no secret values logged into tracked files,
+- no migrations against old production,
+- no data import,
+- no source-system mutation,
+- old DB remains comparison evidence only through `LEGACY_DATABASE_URL`.
+
+Next action:
+
+- run full tests and typecheck,
+- commit and push P8-A,
+- close `#70` after CI with warnings,
+- do not begin `#72` source import until Pipeline and Production Revenue sheet IDs are resolved or intentionally mapped elsewhere.
