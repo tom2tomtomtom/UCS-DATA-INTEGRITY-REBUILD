@@ -1637,3 +1637,42 @@ Next action:
 - run full `npm run test`,
 - commit and push P7-B,
 - close `#64` after CI.
+
+### Checkpoint: P7-C Tactical Tools And Orchestrator
+
+Phase: 7
+
+Ticket: `#65`
+
+Status: implemented locally, push-blocking verification pending
+
+What changed:
+
+- added read-only tactical tool registry,
+- added deterministic tool execution against fixture display contract and fixture fact set,
+- added `runInvestigation` orchestration over required playbook tools,
+- serial tools accumulate into the same `EvidencePack`,
+- missing pasted Float export becomes unresolved evidence and triggers `Needs Codex`,
+- simulated tool failures become warnings and unresolved checks instead of thrown answers.
+
+TDD evidence:
+
+- red: `npm run test -- tests/chat/orchestrator.test.ts` failed because `executeReadOnlyTool`, `listReadOnlyToolNames`, and `runInvestigation` did not exist,
+- green: focused orchestrator tests passed after implementation,
+- typecheck initially caught exact optional property mistakes around optional metric values,
+- green: focused orchestrator tests and typecheck passed after optional values were only emitted when present.
+
+Boundary kept:
+
+- tools read from fixture display contract and archived fixture facts only,
+- no live source pull,
+- no database call,
+- no old dashboard selector,
+- no mutation tool,
+- no sync or deploy action.
+
+Next action:
+
+- run full `npm run test`,
+- commit and push P7-C,
+- close `#65` after CI.
