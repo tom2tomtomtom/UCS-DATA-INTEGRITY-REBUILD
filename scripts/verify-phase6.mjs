@@ -70,6 +70,7 @@ function checkRequiredShellFiles() {
     "app/dashboard/data-quality/page.tsx",
     "app/dashboard/approval/page.tsx",
     "app/dashboard/glossary/page.tsx",
+    "app/dashboard/chat-demo/page.tsx",
     "app/globals.css",
     "src/components/dashboard/chrome/dashboard-chrome.ts",
     "src/components/dashboard/rollups/dashboard-home.ts",
@@ -78,6 +79,7 @@ function checkRequiredShellFiles() {
     "src/components/dashboard/float/float-diagnostics.ts",
     "src/components/dashboard/data-quality/data-quality-dashboard.ts",
     "src/components/dashboard/approval/approval-dashboard.ts",
+    "src/components/dashboard/chat/chat-shell.ts",
     "src/components/dashboard/export/csv-export.ts",
     "src/lib/ui/fixture-contract.ts",
     "tests/ui/app-shell.test.ts",
@@ -87,7 +89,8 @@ function checkRequiredShellFiles() {
     "tests/ui/project-detail.test.ts",
     "tests/ui/float-diagnostics.test.ts",
     "tests/ui/data-quality.test.ts",
-    "tests/ui/approval.test.ts"
+    "tests/ui/approval.test.ts",
+    "tests/ui/chat-shell.test.ts"
   ];
 
   for (const file of requiredFiles) {
@@ -149,6 +152,7 @@ function checkShellMarkers() {
     read("src/components/dashboard/float/float-diagnostics.ts"),
     read("src/components/dashboard/data-quality/data-quality-dashboard.ts"),
     read("src/components/dashboard/approval/approval-dashboard.ts"),
+    read("src/components/dashboard/chat/chat-shell.ts"),
     read("src/components/dashboard/export/csv-export.ts"),
     read("src/lib/ui/fixture-contract.ts"),
     read("tests/ui/app-shell.test.ts"),
@@ -159,6 +163,7 @@ function checkShellMarkers() {
     read("tests/ui/float-diagnostics.test.ts"),
     read("tests/ui/data-quality.test.ts"),
     read("tests/ui/approval.test.ts"),
+    read("tests/ui/chat-shell.test.ts"),
     read("app/dashboard/projects/page.tsx"),
     read("app/dashboard/projects/[jobNumber]/page.tsx"),
     read("app/dashboard/float/page.tsx"),
@@ -166,6 +171,7 @@ function checkShellMarkers() {
     read("app/dashboard/data-quality/page.tsx"),
     read("app/dashboard/approval/page.tsx"),
     read("app/dashboard/glossary/page.tsx"),
+    read("app/dashboard/chat-demo/page.tsx"),
     read("app/dashboard/page.tsx")
   ].join("\n");
   const requiredMarkers = [
@@ -215,7 +221,13 @@ function checkShellMarkers() {
     "USA00323",
     "source-only rows remain visible",
     "unsupported is not zero",
-    "Needs Codex"
+    "Needs Codex",
+    "ChatShell",
+    "sourcesChecked",
+    "working",
+    "repo inspection",
+    "browser testing",
+    "deployment"
   ];
 
   for (const marker of requiredMarkers) {

@@ -434,6 +434,32 @@ select {
   grid-template-columns: repeat(3, minmax(140px, 1fr));
 }
 
+.chat-shell,
+.chat-evidence,
+.needs-codex-panel {
+  display: grid;
+  gap: 12px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--panel);
+  padding: 14px;
+}
+
+.chat-shell > .table-title {
+  margin: -14px -14px 0;
+}
+
+.chat-evidence ul,
+.needs-codex-panel ul {
+  margin: 0;
+  padding-left: 18px;
+}
+
+.chat-evidence h3 {
+  margin: 0;
+  font-size: 14px;
+}
+
 @media (max-width: 760px) {
   .quality-status-grid {
     grid-template-columns: 1fr;

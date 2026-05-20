@@ -1407,3 +1407,37 @@ Next action:
 - run full `npm run build`, audit, diff, and punctuation checks,
 - commit and push P6-E,
 - close GitHub `#59`.
+
+### Checkpoint: P6-F Chat Shell
+
+Phase: 6
+
+Tickets: `#61`, partial `#60`
+
+Status: implemented locally, push-blocking verification pending
+
+What changed:
+
+- added read-only chat shell component,
+- added deterministic `/dashboard/chat-demo` route,
+- chat shell renders active scope, working state, evidence sources, confidence, warnings, and `Needs Codex` reasons,
+- expanded `scripts/verify-phase6.mjs` with P6-F file and marker checks.
+
+TDD evidence:
+
+- red: chat shell test failed because `chat-shell` did not exist,
+- green: focused chat shell test passed after adding the shell,
+- Next build passed after adding the demo route.
+
+Boundary kept:
+
+- chat shell does not run tools,
+- chat shell does not generate diagnostic claims,
+- chat shell does not mutate, sync, deploy, or call live sources,
+- Phase 7 remains responsible for `EvidencePack`, read-only tools, claim guard, and investigation orchestration.
+
+Next action:
+
+- run full `npm run build`, audit, diff, and punctuation checks,
+- commit and push P6-F,
+- close GitHub `#61`.
