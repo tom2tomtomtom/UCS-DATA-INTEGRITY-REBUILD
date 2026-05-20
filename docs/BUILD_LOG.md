@@ -1561,3 +1561,41 @@ Boundary for Phase 7:
 Next action:
 
 - implement `#63` with tests first.
+
+### Checkpoint: P7-A Evidence Pack Types
+
+Phase: 7
+
+Ticket: `#63`
+
+Status: implemented locally, push-blocking verification pending
+
+What changed:
+
+- added typed `EvidencePack`, `ChatToolRun`, `EvidenceFact`, `EvidenceCheck`, `UnresolvedCheck`, `NeedsCodexDecision`, and `ChatStreamEvent` contracts,
+- added `createEvidencePack` normalisation,
+- added `recordToolError` so tool failures become warnings, unresolved checks, low confidence, and `Needs Codex`,
+- added `needsCodexForTriggers`,
+- added `evidenceEventFromPack` for compact evidence stream events without dropping warnings,
+- added module entrypoints under `src/lib/chat`.
+
+TDD evidence:
+
+- red: `npm run test -- tests/chat/evidence-pack.test.ts` failed because `src/lib/chat` did not exist,
+- green: focused evidence pack tests passed after implementation,
+- typecheck passed after fixing exact optional property handling around `needsCodex`.
+
+Boundary kept:
+
+- no model call,
+- no live source pull,
+- no database call,
+- no sync or deploy action,
+- no mutation path,
+- no reporter prose yet.
+
+Next action:
+
+- run full `npm run test`,
+- commit and push P7-A,
+- close `#63` after CI.
