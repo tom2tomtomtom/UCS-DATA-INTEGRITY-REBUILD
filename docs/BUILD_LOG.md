@@ -560,3 +560,30 @@ Next action:
 - commit and push P2-F,
 - close GitHub `#31`,
 - run Doctrine Steward review for `#32`.
+
+### Checkpoint: Phase 2 Doctrine Steward Accepted
+
+Phase: 2
+
+Ticket: `#32`
+
+Status: `PROCESS_WARN`, verifier hardening in progress
+
+Doctrine Steward result:
+
+- blocking findings: none,
+- current source archive code does not parse, tally, create UI/display rows, pull live sources, mutate source systems, apply migrations, deploy, or use old selectors as truth,
+- accepted process warning: `scripts/verify-phase2.mjs` had forbidden string checks but did not yet catch native `fetch(` or hard-coded `http://` and `https://` live source pulls.
+
+Action taken:
+
+- hardened `scripts/verify-phase2.mjs` to reject native fetch call shapes, `http://`, and `https://` inside `src/lib/source-archive`,
+- adjusted the native fetch check so the allowed read-only adapter method named `fetch` is not treated as a network call.
+
+Verification to run:
+
+- `npm run verify:phase2`,
+- `npm run build`,
+- `npm audit --omit=dev`,
+- `git diff --check`,
+- em dash/en dash scan.

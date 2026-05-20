@@ -103,6 +103,8 @@ function checkSourceArchiveDoesNotCheat() {
     "node:http",
     "node:https",
     "axios",
+    "http://",
+    "https://",
     "ParsedFact",
     "DashboardDisplayContract",
     "displayRows",
@@ -116,6 +118,21 @@ function checkSourceArchiveDoesNotCheat() {
   for (const needle of forbiddenNeedles) {
     if (combined.includes(needle)) {
       fail(`Phase 2 source archive code contains forbidden out-of-phase reference: ${needle}`);
+    }
+  }
+
+  const forbiddenPatterns = [
+    ["globalThis.fetch call", /\bglobalThis\.fetch\s*\(/],
+    ["window.fetch call", /\bwindow\.fetch\s*\(/],
+    ["await fetch call", /\bawait\s+fetch\s*\(/],
+    ["return fetch call", /\breturn\s+fetch\s*\(/],
+    ["assigned fetch call", /=\s*fetch\s*\(/],
+    ["literal URL fetch call", /\bfetch\s*\(\s*["'`]/]
+  ];
+
+  for (const [label, pattern] of forbiddenPatterns) {
+    if (pattern.test(combined)) {
+      fail(`Phase 2 source archive code contains forbidden out-of-phase ${label}`);
     }
   }
 }
