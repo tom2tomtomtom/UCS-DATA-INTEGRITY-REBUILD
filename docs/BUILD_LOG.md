@@ -80,3 +80,28 @@ Next action:
 - run doc verification,
 - commit and push governance docs,
 - then spawn bounded Phase 0 implementation agents.
+
+### Checkpoint: Objective Added
+
+Phase: 0
+
+Ticket: `#1`
+
+Status: human objective captured before implementation
+
+What changed:
+
+- added `OBJECTIVE.md` at repo root,
+- recorded the human reason for the rebuild,
+- anchored the product to Sian, Jade, and Yunni's trust problem,
+- confirmed the app is a source-traceable disagreement spotter, not a sheet replacement or auto-correction engine.
+
+Verification:
+
+- `OBJECTIVE.md` contains the five required sections from the `rethink` pre-code rule,
+- product UI remains blocked until Phase 0 scaffold and law tests exist.
+
+Next action:
+
+- commit and push this checkpoint,
+- then spawn bounded Phase 0 implementation agents.
