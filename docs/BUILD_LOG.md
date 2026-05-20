@@ -1241,3 +1241,43 @@ Next action:
 - commit and push P6-A plus the initial Phase 6 gate,
 - close GitHub `#55`,
 - keep `#60` open until deterministic UI tests cover all required Phase 6 surfaces.
+
+### Checkpoint: P6-B Dashboard Home Rollups
+
+Phase: 6
+
+Tickets: `#57`, partial `#60`
+
+Status: implemented locally, push-blocking verification pending
+
+What changed:
+
+- added dashboard home component for hero metrics and rollup tables,
+- rendered headline metrics from `contract.heroTotals`,
+- rendered Department, Role, Month, and Client rollups from `contract.rollups`,
+- linked rollup rows to Projects with scoped query params,
+- labelled unsupported rollup metrics as unsupported,
+- replaced the dashboard placeholder panel with the contract-backed dashboard home,
+- expanded `scripts/verify-phase6.mjs` with P6-B markers.
+
+TDD evidence:
+
+- red: dashboard home test failed because `dashboard-home` did not exist,
+- green: focused dashboard home test passed after adding the contract renderer,
+- focused app shell plus dashboard home tests passed,
+- TypeScript passed after integration.
+
+Boundary kept:
+
+- dashboard home formats contract metrics but does not query source facts,
+- no page-local business totals,
+- no live source pulls,
+- no database calls,
+- no old dashboard selectors,
+- no source-system mutation.
+
+Next action:
+
+- run full `npm run build`, audit, diff, and punctuation checks,
+- commit and push P6-B,
+- close GitHub `#57`.

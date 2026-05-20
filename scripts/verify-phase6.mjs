@@ -65,8 +65,10 @@ function checkRequiredShellFiles() {
     "app/dashboard/page.tsx",
     "app/globals.css",
     "src/components/dashboard/chrome/dashboard-chrome.ts",
+    "src/components/dashboard/rollups/dashboard-home.ts",
     "src/lib/ui/fixture-contract.ts",
-    "tests/ui/app-shell.test.ts"
+    "tests/ui/app-shell.test.ts",
+    "tests/ui/dashboard-home.test.ts"
   ];
 
   for (const file of requiredFiles) {
@@ -122,8 +124,10 @@ function checkUiCodeDoesNotCheat() {
 function checkShellMarkers() {
   const combined = [
     read("src/components/dashboard/chrome/dashboard-chrome.ts"),
+    read("src/components/dashboard/rollups/dashboard-home.ts"),
     read("src/lib/ui/fixture-contract.ts"),
     read("tests/ui/app-shell.test.ts"),
+    read("tests/ui/dashboard-home.test.ts"),
     read("app/dashboard/page.tsx")
   ].join("\n");
   const requiredMarkers = [
@@ -137,7 +141,15 @@ function checkShellMarkers() {
     "Ask AI",
     "Department Rollup",
     "Projects",
-    "Float"
+    "Float",
+    "DashboardHome",
+    "contract.heroTotals",
+    "contract.rollups",
+    "LDN",
+    "2026-01-01",
+    "2026-03-31",
+    "Unsupported",
+    "Confidence"
   ];
 
   for (const marker of requiredMarkers) {

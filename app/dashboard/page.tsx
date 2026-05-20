@@ -1,4 +1,5 @@
 import { DashboardChrome } from "../../src/components/dashboard/chrome/dashboard-chrome";
+import { DashboardHome } from "../../src/components/dashboard/rollups/dashboard-home";
 import { getFixtureDashboardContract } from "../../src/lib/ui/fixture-contract";
 
 export default function DashboardPage() {
@@ -10,13 +11,7 @@ export default function DashboardPage() {
 
   return (
     <DashboardChrome contract={contract} activePath="/dashboard">
-      <section className="placeholder-panel">
-        <h2>Department Rollup</h2>
-        <p>
-          Phase 6 shell is wired to a deterministic display contract fixture. Rollup rows come next under
-          P6-B.
-        </p>
-      </section>
+      <DashboardHome contract={contract} />
     </DashboardChrome>
   );
 }
