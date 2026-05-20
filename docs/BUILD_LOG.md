@@ -1281,3 +1281,47 @@ Next action:
 - run full `npm run build`, audit, diff, and punctuation checks,
 - commit and push P6-B,
 - close GitHub `#57`.
+
+### Checkpoint: P6-C Projects Table And CSV Export
+
+Phase: 6
+
+Tickets: `#58`, partial `#60`
+
+Status: implemented locally, push-blocking verification pending
+
+What changed:
+
+- added `/dashboard/projects` route with explicit scope parsing from query params,
+- added Projects table component rendered from `contract.visibleRows`,
+- added active scope chips for office/from/to/department/role/client/search,
+- added row-type badges for matched, Float-only, Pipeline-only, and Production Revenue-only rows,
+- added scoped project links preserving office/from/to and job number,
+- added footer row rendered from `contract.footerTotals`,
+- added CSV text and data URI helpers rendered from `contract.csvRows`,
+- expanded `scripts/verify-phase6.mjs` with P6-C file and marker checks.
+
+TDD evidence:
+
+- red: Projects and CSV tests failed because `projects-table` and `csv-export` did not exist,
+- green: focused Projects and CSV tests passed after adding the contract renderers,
+- Next build initially failed on exact optional scope assignment, then passed after scope assignment was made explicit,
+- focused Projects and CSV tests plus Next build passed.
+
+Boundary kept:
+
+- Projects table renders contract rows and contract footer totals,
+- CSV export renders contract CSV rows,
+- exact `client` and fuzzy `search` stay separate query params,
+- source-only rows stay visible,
+- no page-local business totals,
+- no live source pulls,
+- no database calls,
+- no old dashboard selectors,
+- no source-system mutation.
+
+Next action:
+
+- run full `npm run build`, audit, diff, and punctuation checks,
+- commit and push P6-C,
+- close GitHub `#58`.

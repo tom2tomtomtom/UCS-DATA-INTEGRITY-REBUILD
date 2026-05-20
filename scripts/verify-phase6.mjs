@@ -63,12 +63,17 @@ function checkRequiredShellFiles() {
     "app/page.tsx",
     "app/dashboard/layout.tsx",
     "app/dashboard/page.tsx",
+    "app/dashboard/projects/page.tsx",
     "app/globals.css",
     "src/components/dashboard/chrome/dashboard-chrome.ts",
     "src/components/dashboard/rollups/dashboard-home.ts",
+    "src/components/dashboard/projects/projects-table.ts",
+    "src/components/dashboard/export/csv-export.ts",
     "src/lib/ui/fixture-contract.ts",
     "tests/ui/app-shell.test.ts",
-    "tests/ui/dashboard-home.test.ts"
+    "tests/ui/dashboard-home.test.ts",
+    "tests/ui/projects-page.test.ts",
+    "tests/ui/csv-export.test.ts"
   ];
 
   for (const file of requiredFiles) {
@@ -125,9 +130,14 @@ function checkShellMarkers() {
   const combined = [
     read("src/components/dashboard/chrome/dashboard-chrome.ts"),
     read("src/components/dashboard/rollups/dashboard-home.ts"),
+    read("src/components/dashboard/projects/projects-table.ts"),
+    read("src/components/dashboard/export/csv-export.ts"),
     read("src/lib/ui/fixture-contract.ts"),
     read("tests/ui/app-shell.test.ts"),
     read("tests/ui/dashboard-home.test.ts"),
+    read("tests/ui/projects-page.test.ts"),
+    read("tests/ui/csv-export.test.ts"),
+    read("app/dashboard/projects/page.tsx"),
     read("app/dashboard/page.tsx")
   ].join("\n");
   const requiredMarkers = [
@@ -149,7 +159,17 @@ function checkShellMarkers() {
     "2026-01-01",
     "2026-03-31",
     "Unsupported",
-    "Confidence"
+    "Confidence",
+    "ProjectsTable",
+    "contract.visibleRows",
+    "contract.footerTotals",
+    "contract.csvRows",
+    "pipeline_only",
+    "production_revenue_only",
+    "float_only",
+    "Download CSV",
+    "client",
+    "search"
   ];
 
   for (const marker of requiredMarkers) {
