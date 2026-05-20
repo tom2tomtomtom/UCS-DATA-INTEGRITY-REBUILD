@@ -1790,3 +1790,47 @@ Next action:
 - commit and push P7-F,
 - close `#68` after CI,
 - run P7-G Doctrine Steward review.
+
+### Checkpoint: P7-G Doctrine Blocker Fix
+
+Phase: 7
+
+Tickets: `#68`, `#69`
+
+Status: blocker fixed locally, final review pending
+
+Doctrine Steward blockers:
+
+- route streamed reporter text even if the claim guard blocked the report,
+- required tactical tools could fall through to a generic empty pass,
+- high-confidence wording was not blocked when required evidence was missing,
+- Phase 7 verifier did not catch those failures.
+
+What changed:
+
+- route now streams an error event instead of text when `report.guard.status` is blocked,
+- unsupported fixture-backed tools now return unresolved evidence with `TOOL_NOT_FIXTURE_BACKED`,
+- claim guard blocks high-confidence wording when unresolved required evidence exists,
+- reporter accepts an optional draft override so route-bound guard blocking can be tested directly,
+- Phase 7 verifier now checks for route guard enforcement, missing-tool unresolved evidence, and high-confidence missing-evidence guard markers.
+
+TDD evidence:
+
+- red: route, orchestrator, claim guard, and verifier tests failed against the Doctrine Steward blockers,
+- green: focused blocker tests passed,
+- full gate: `npm run build` passed with 46 test files, 151 passing tests, 79 todo tests, typecheck, Next build, and Phase 7 verifier.
+
+Boundary kept:
+
+- unimplemented required tools do not pretend to have evidence,
+- blocked reports do not stream final text,
+- missing evidence lowers confidence and triggers Needs Codex,
+- no live source pull,
+- no database call,
+- no mutation, sync, or deploy action.
+
+Next action:
+
+- run hygiene checks,
+- commit and push blocker fix,
+- rerun P7-G Doctrine Steward review.

@@ -298,13 +298,22 @@ function genericToolResult(input: ExecuteReadOnlyToolInput): ReadOnlyToolResult 
   return result({
     tool: input.tool,
     label: `Run ${input.tool}`,
-    status: "pass",
+    status: "unresolved",
     sourceLayers: [],
     contractRows: [],
     facts: [],
     checks: [],
     unsupported: [],
-    warnings: []
+    unresolved: [
+      {
+        code: "TOOL_NOT_FIXTURE_BACKED",
+        label: `Run ${input.tool}`,
+        reason: "This required tool has no fixture-backed read-only implementation in Phase 7 yet.",
+        requiredTool: input.tool,
+        sourceLayers: []
+      }
+    ],
+    warnings: [`${input.tool} has no fixture-backed read-only implementation yet.`]
   });
 }
 

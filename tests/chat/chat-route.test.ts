@@ -40,4 +40,33 @@ describe("P7-E chat API route", () => {
     expect(events).toEqual(expect.arrayContaining([expect.objectContaining({ type: "needs_codex", needed: true })]));
     expect(events).toEqual(expect.arrayContaining([expect.objectContaining({ type: "text" })]));
   });
+
+  test("does not stream reporter text when the claim guard blocks it", async () => {
+    const response = await POST(
+      new Request("http://localhost/api/chat", {
+        method: "POST",
+        body: JSON.stringify({
+          message: "does USA00262 have zero sold hours?",
+          debugDraft: "USA00262 has zero sold hours.",
+          scope: {
+            office: "LDN",
+            from: "2026-01-01",
+            to: "2026-03-31"
+          }
+        })
+      })
+    );
+
+    const events = await readSse(response);
+
+    expect(events).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          type: "error",
+          message: expect.stringContaining("claim guard blocked")
+        })
+      ])
+    );
+    expect(events).not.toEqual(expect.arrayContaining([expect.objectContaining({ type: "text" })]));
+  });
 });

@@ -94,4 +94,28 @@ describe("P7-D claim guard and evidence-only reporter", () => {
     expect(report.text).toContain("Needs Codex");
     expect(report.guard.status).toBe("pass");
   });
+
+  test("blocks high-confidence wording when required evidence is missing", () => {
+    const pack = createEvidencePack({
+      question: "what errors can you see?",
+      scope,
+      playbook: "dashboard_scan",
+      unresolved: [
+        {
+          code: "TOOL_NOT_FIXTURE_BACKED",
+          label: "Run integrity check",
+          reason: "The tool has no fixture-backed implementation yet.",
+          requiredTool: "run_integrity_check",
+          sourceLayers: []
+        }
+      ]
+    });
+
+    const result = validateEvidenceClaims(pack, "I am highly confident this is fully checked.");
+
+    expect(result.status).toBe("blocked");
+    expect(result.blockedClaims).toEqual(
+      expect.arrayContaining([expect.objectContaining({ code: "high_confidence_with_missing_required_evidence" })])
+    );
+  });
 });

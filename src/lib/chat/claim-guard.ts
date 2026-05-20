@@ -48,6 +48,13 @@ export function validateEvidenceClaims(pack: EvidencePack, draft: string): Claim
     });
   }
 
+  if (matchesAny(normalised, ["highly confident", "high confidence", "fully checked"]) && pack.unresolved.length > 0) {
+    blockedClaims.push({
+      code: "high_confidence_with_missing_required_evidence",
+      message: "The draft uses high-confidence language while required evidence is unresolved."
+    });
+  }
+
   return {
     status: blockedClaims.length > 0 ? "blocked" : "pass",
     blockedClaims

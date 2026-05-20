@@ -6,7 +6,7 @@ export type EvidenceReport = {
   readonly guard: ClaimGuardResult;
 };
 
-export function generateEvidenceReport(pack: EvidencePack): EvidenceReport {
+export function generateEvidenceReport(pack: EvidencePack, draftOverride?: string): EvidenceReport {
   const lines = [
     `Playbook: ${pack.playbook}`,
     `Confidence: ${pack.confidence}`,
@@ -41,7 +41,7 @@ export function generateEvidenceReport(pack: EvidencePack): EvidenceReport {
     lines.push(`Needs Codex: ${pack.needsCodex.reason}`);
   }
 
-  const text = lines.join("\n");
+  const text = draftOverride ?? lines.join("\n");
 
   return {
     text,

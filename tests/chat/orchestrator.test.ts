@@ -86,4 +86,31 @@ describe("P7-C read-only tactical tools and orchestrator", () => {
     expect(toolNames).toEqual(expect.arrayContaining(["get_display_contract", "inspect_project"]));
     expect(toolNames).not.toEqual(expect.arrayContaining(["archive", "sync", "deploy", "write_sql"]));
   });
+
+  test("required tools without fixture evidence become unresolved instead of passing empty", () => {
+    const pack = runInvestigation({
+      question: "what errors can you see?",
+      scope
+    });
+
+    expect(pack.toolsRun).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          tool: "inspect_warning_lifecycle",
+          status: "unresolved"
+        }),
+        expect.objectContaining({
+          tool: "run_integrity_check",
+          status: "unresolved"
+        })
+      ])
+    );
+    expect(pack.unresolved).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ code: "TOOL_NOT_FIXTURE_BACKED", requiredTool: "inspect_warning_lifecycle" }),
+        expect.objectContaining({ code: "TOOL_NOT_FIXTURE_BACKED", requiredTool: "run_integrity_check" })
+      ])
+    );
+    expect(pack.confidence).toBe("low");
+  });
 });
