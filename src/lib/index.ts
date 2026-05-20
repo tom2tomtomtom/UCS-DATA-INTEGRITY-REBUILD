@@ -27,6 +27,14 @@ export type {
 export type { DashboardScope as CanonDashboardScope } from "./canon/scope";
 
 export {
+  ARCHIVABLE_ROW_REASON,
+  browseSourceRows,
+  classifyRawSourceRow,
+  createFixturePullResult,
+  createFixtureSourcePullAdapter,
+  createInMemorySourceArchiveStore,
+  createSkippedSourceRow,
+  LITERALLY_EMPTY_SKIP_REASON,
   SOURCE_ARCHIVE_SOURCES,
   SOURCE_ARCHIVE_VERSION
 } from "./source-archive";
@@ -34,14 +42,35 @@ export {
 export type {
   AllowedSkipClassification,
   AllowedSkipEvidence,
+  ArchiveRowClassification,
   ArchivedRawSourceRow,
+  ClassifyRawSourceRowOptions,
+  CreateSkippedSourceRowInput,
+  FixturePullResultInput,
+  FixtureSourcePullDefinition,
+  RawRowArchiveClassification,
+  RawSourceCandidateRow,
+  RowClassifierFieldHints,
   SkippedSourceRow,
+  SkipRowClassification,
   SourceArchiveBatch,
   SourceArchiveBatchStatus,
+  SourceArchiveIdentityQuery,
   SourceArchiveMode,
   SourceArchivePayload,
   SourceArchiveRecord,
+  SourceArchiveStore,
+  SourcePullAdapter,
+  SourcePullDescriptor,
+  SourcePullFetchRequest,
+  SourcePullListRequest,
   SourcePullMetadata,
+  SourcePullProvider,
+  SourcePullReadRequest,
+  SourcePullRequestTarget,
+  SourcePullResult,
+  SourceRowBrowserQuery,
+  SourceRowBrowserResult,
   SourceRowIdentity
 } from "./source-archive";
 

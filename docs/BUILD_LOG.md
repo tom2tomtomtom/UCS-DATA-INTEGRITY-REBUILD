@@ -463,3 +463,56 @@ Next action:
 - commit and push P2-A,
 - close GitHub `#26`,
 - start P2-B/P2-C/P2-D/P2-E on top of the shared types.
+
+### Checkpoint: P2-B To P2-E Source Archive Slices Integrated
+
+Phase: 2
+
+Tickets: `#27`, `#28`, `#29`, `#30`
+
+Status: implemented, awaiting commit
+
+TDD evidence from workers:
+
+- P2-B red: focused test failed because `row-classifier` module was missing,
+- P2-B green: focused classifier test passed with 5 active tests,
+- P2-C red: focused test failed because `archive-store` module was missing,
+- P2-C green: focused archive-store test passed with 6 active tests,
+- P2-D red: focused test failed because `source-pull` module was missing,
+- P2-D green: focused source-pull test passed with 3 active tests,
+- P2-E red: focused test failed because `source-row-browser` module was missing,
+- P2-E green: focused source-row-browser test passed with 6 active tests.
+
+What changed:
+
+- added pure raw row classifier and skipped-row ledger helper,
+- added immutable in-memory source archive store,
+- added read-only source pull interface and fixture adapter helper,
+- added development source row browser query helpers,
+- wired Phase 2 source archive exports through the source archive barrel and root library export.
+
+Verification after integration:
+
+- `npm test` passed with 5 active files and 17 skipped law scaffold files,
+- `npm run typecheck` passed,
+- `npm run build` passed,
+- `npm audit --omit=dev` found 0 vulnerabilities,
+- `git diff --check` passed,
+- em dash/en dash scan over touched docs and code found no matches.
+
+Boundary kept:
+
+- no parser facts,
+- no display rows,
+- no product UI,
+- no live source calls,
+- no migration,
+- no source-system mutation,
+- no old dashboard selector truth.
+
+Next action:
+
+- run the full pre-commit gate,
+- commit and push P2-B through P2-E,
+- close GitHub `#27` through `#30`,
+- then build Phase 2 verification gate in `#31`.
