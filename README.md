@@ -30,5 +30,6 @@ Start here:
 20. `docs/ENV_AND_SUPABASE_STRATEGY.md`
 21. `docs/RAILWAY_DEPLOYMENT_STRATEGY.md`
 22. `docs/CHAT_INVESTIGATION_AGENT_SPEC.md`
+23. `docs/GO_NO_GO_READINESS.md`
 
 No app code should be written until the immutable laws are implemented as tests.

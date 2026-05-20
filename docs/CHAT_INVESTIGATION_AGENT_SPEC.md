@@ -52,14 +52,24 @@ What to improve:
 ```txt
 User question
   -> Scope resolver
-  -> Playbook router
+  -> Deterministic playbook router
   -> Investigation orchestrator
+  -> Required evidence plan
   -> Read-only tactical tools
   -> EvidencePack
   -> Claim guard
   -> Reporter
   -> Chat UI with sources, warnings, confidence, Needs Codex
 ```
+
+Hard boundaries:
+
+- the reporter receives only the normalised `EvidencePack`,
+- raw tool outputs are normalised before reporting,
+- direct SQL rows never go straight to prose,
+- chat history is context, not evidence,
+- model memory is never evidence,
+- old-app or legacy inspection is comparison evidence only.
 
 ## Modules
 
@@ -122,7 +132,24 @@ Rules:
 - tool errors are evidence warnings,
 - unresolved required checks lower confidence,
 - unsupported metrics are explicit,
-- every important number has source layer and scope.
+- every important number has source layer and scope,
+- every important number includes source refs or row IDs where available,
+- every final answer references the display contract row or explains why no row exists.
+
+## Required Evidence Plan
+
+Each playbook creates a required evidence plan before tools run.
+
+The final answer is blocked from making high-confidence claims until required evidence is present.
+
+If required tools fail or are unavailable:
+
+- the missing check is added to `unresolved`,
+- confidence is lowered,
+- final prose must say unresolved,
+- `Needs Codex` is triggered when the missing evidence requires repo, browser, sync, deployment, or mutation-capable access.
+
+Do not let the model choose whether required evidence matters after the fact.
 
 ## Tactical Tool Set
 
@@ -183,6 +210,7 @@ Each playbook defines:
 - required tools,
 - optional tools,
 - required source layers,
+- required display contract fields,
 - forbidden claims,
 - confidence rules,
 - `Needs Codex` triggers.
@@ -237,6 +265,20 @@ Required UI states:
 - final with `Needs Codex`,
 - tool error with evidence warning.
 
+Final evidence trace must show:
+
+- source layers checked,
+- source refs or row IDs where available,
+- display contract row ID where available,
+- checks run,
+- unsupported metrics,
+- unresolved checks,
+- warnings,
+- confidence,
+- `Needs Codex` reason.
+
+Do not truncate warnings in a way that hides material evidence. Compact display is fine only if full detail is expandable.
+
 ## Needs Codex
 
 Chat must hand off when:
@@ -281,13 +323,17 @@ Reporter may not:
 - invent facts,
 - use model memory as evidence,
 - upgrade confidence,
-- hide warnings.
+- hide warnings,
+- quote raw SQL as product truth,
+- treat legacy app output as truth,
+- use raw parser rows as totals.
 
 ## Tests
 
 Required tests:
 
 - playbook routing,
+- required evidence plan blocks unsupported final claims,
 - evidence pack construction,
 - tool error becomes warning,
 - final answer after serial tools,
@@ -297,7 +343,8 @@ Required tests:
 - unsupported-not-zero in chat,
 - `Needs Codex` for mutation/code/deploy/browser requests,
 - UI shows status/progress while tools run,
-- UI shows sources/warnings/confidence.
+- UI shows sources/warnings/confidence,
+- UI exposes full warnings and unresolved checks.
 
 Named trap prompts:
 

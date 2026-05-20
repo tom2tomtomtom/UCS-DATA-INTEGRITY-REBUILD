@@ -28,6 +28,7 @@ Before editing files, every agent must read:
 18. `docs/ENV_AND_SUPABASE_STRATEGY.md`
 19. `docs/RAILWAY_DEPLOYMENT_STRATEGY.md`
 20. `docs/CHAT_INVESTIGATION_AGENT_SPEC.md`
+21. `docs/GO_NO_GO_READINESS.md`
 
 ## Mission
 
