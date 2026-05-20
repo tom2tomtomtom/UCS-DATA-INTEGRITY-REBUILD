@@ -410,6 +410,36 @@ select {
   color: var(--fail);
 }
 
+.quality-surface,
+.approval-surface {
+  display: grid;
+  gap: 16px;
+}
+
+.quality-surface h2,
+.approval-surface h2 {
+  margin: 0;
+  font-size: 24px;
+}
+
+.quality-surface h3,
+.approval-surface h3 {
+  margin: 6px 0 0;
+  font-size: 16px;
+}
+
+.quality-status-grid {
+  display: grid;
+  gap: 10px;
+  grid-template-columns: repeat(3, minmax(140px, 1fr));
+}
+
+@media (max-width: 760px) {
+  .quality-status-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
 @media (max-width: 1100px) {
   .metric-grid,
   .rollup-grid {

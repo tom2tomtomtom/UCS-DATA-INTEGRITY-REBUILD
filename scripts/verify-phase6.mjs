@@ -67,12 +67,17 @@ function checkRequiredShellFiles() {
     "app/dashboard/projects/[jobNumber]/page.tsx",
     "app/dashboard/float/page.tsx",
     "app/dashboard/float/[floatProjectId]/page.tsx",
+    "app/dashboard/data-quality/page.tsx",
+    "app/dashboard/approval/page.tsx",
+    "app/dashboard/glossary/page.tsx",
     "app/globals.css",
     "src/components/dashboard/chrome/dashboard-chrome.ts",
     "src/components/dashboard/rollups/dashboard-home.ts",
     "src/components/dashboard/projects/projects-table.ts",
     "src/components/dashboard/project-detail/project-detail.ts",
     "src/components/dashboard/float/float-diagnostics.ts",
+    "src/components/dashboard/data-quality/data-quality-dashboard.ts",
+    "src/components/dashboard/approval/approval-dashboard.ts",
     "src/components/dashboard/export/csv-export.ts",
     "src/lib/ui/fixture-contract.ts",
     "tests/ui/app-shell.test.ts",
@@ -80,7 +85,9 @@ function checkRequiredShellFiles() {
     "tests/ui/projects-page.test.ts",
     "tests/ui/csv-export.test.ts",
     "tests/ui/project-detail.test.ts",
-    "tests/ui/float-diagnostics.test.ts"
+    "tests/ui/float-diagnostics.test.ts",
+    "tests/ui/data-quality.test.ts",
+    "tests/ui/approval.test.ts"
   ];
 
   for (const file of requiredFiles) {
@@ -140,6 +147,8 @@ function checkShellMarkers() {
     read("src/components/dashboard/projects/projects-table.ts"),
     read("src/components/dashboard/project-detail/project-detail.ts"),
     read("src/components/dashboard/float/float-diagnostics.ts"),
+    read("src/components/dashboard/data-quality/data-quality-dashboard.ts"),
+    read("src/components/dashboard/approval/approval-dashboard.ts"),
     read("src/components/dashboard/export/csv-export.ts"),
     read("src/lib/ui/fixture-contract.ts"),
     read("tests/ui/app-shell.test.ts"),
@@ -148,10 +157,15 @@ function checkShellMarkers() {
     read("tests/ui/csv-export.test.ts"),
     read("tests/ui/project-detail.test.ts"),
     read("tests/ui/float-diagnostics.test.ts"),
+    read("tests/ui/data-quality.test.ts"),
+    read("tests/ui/approval.test.ts"),
     read("app/dashboard/projects/page.tsx"),
     read("app/dashboard/projects/[jobNumber]/page.tsx"),
     read("app/dashboard/float/page.tsx"),
     read("app/dashboard/float/[floatProjectId]/page.tsx"),
+    read("app/dashboard/data-quality/page.tsx"),
+    read("app/dashboard/approval/page.tsx"),
+    read("app/dashboard/glossary/page.tsx"),
     read("app/dashboard/page.tsx")
   ].join("\n");
   const requiredMarkers = [
@@ -192,7 +206,16 @@ function checkShellMarkers() {
     "UCS04787",
     "UCS05186",
     "manual-ucs05186",
-    "fixture-float-visible-ucs04787"
+    "fixture-float-visible-ucs04787",
+    "DataQualityDashboard",
+    "ApprovalDashboard",
+    "buildApprovalOutputFromDisplayContract",
+    "UNRESOLVED",
+    "USA00262",
+    "USA00323",
+    "source-only rows remain visible",
+    "unsupported is not zero",
+    "Needs Codex"
   ];
 
   for (const marker of requiredMarkers) {

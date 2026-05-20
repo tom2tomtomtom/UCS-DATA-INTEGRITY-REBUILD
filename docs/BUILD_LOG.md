@@ -1368,3 +1368,42 @@ Next action:
 - run full `npm run build`, audit, diff, and punctuation checks,
 - commit and push P6-D,
 - close GitHub `#56`.
+
+### Checkpoint: P6-E Data Quality, Approval, And Glossary
+
+Phase: 6
+
+Tickets: `#59`, partial `#60`
+
+Status: implemented locally, push-blocking verification pending
+
+What changed:
+
+- added Data Quality dashboard component and `/dashboard/data-quality` route,
+- added Approval Audit component and `/dashboard/approval` route,
+- added Glossary route,
+- Data Quality shows FAIL, WARN, and UNRESOLVED states, named user checks, owners, and `Needs Codex`,
+- Approval uses `buildApprovalOutputFromDisplayContract`,
+- Glossary explains unsupported vs zero, source-only rows, confidence, scope, and `Needs Codex`,
+- expanded `scripts/verify-phase6.mjs` with P6-E file and marker checks.
+
+TDD evidence:
+
+- red: Data Quality and Approval tests failed because the components did not exist,
+- green: focused tests passed after adding contract-backed components,
+- Next build passed after adding the routes.
+
+Boundary kept:
+
+- Data Quality and Approval render contract warnings, reconciliation, and approval output,
+- no separate approval total model,
+- no source mutation,
+- no live source pulls,
+- no database calls,
+- no old dashboard selectors.
+
+Next action:
+
+- run full `npm run build`, audit, diff, and punctuation checks,
+- commit and push P6-E,
+- close GitHub `#59`.
