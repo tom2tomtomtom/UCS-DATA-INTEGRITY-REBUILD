@@ -2538,3 +2538,40 @@ Boundary kept:
 - no source system mutation,
 - no secrets in the report,
 - `#82` remains open until staging deploy and live health/readiness evidence exist.
+
+### Checkpoint: P9-E/P9-F Staging Deployment
+
+Phase: 9
+
+Tickets: `#81`, `#82`
+
+Status: staging deployed, source and stakeholder approval still pending
+
+What changed:
+
+- Railway target is linked to project `UCS Data Integrity Rebuild`, service `ucs-data-integrity-rebuild`, environment `staging`,
+- old `ucs-data-integrity-dashboard` target was not touched,
+- staging variables were set from local `.env.local` using stdin without printing values,
+- `APP_ENV` was set to `staging`,
+- `NODE_ENV` and `DATABASE_URL_TEST` stayed local-only,
+- empty optional `PIPELINE_SHEET_ID` and `PRODUCTION_REVENUE_SHEET_ID` were not pushed as blank variables,
+- deployment `c823163d-4f4b-4571-8347-e63ed88032e4` succeeded,
+- Railway-generated staging URL is `https://ucs-data-integrity-rebuild-staging.up.railway.app`,
+- `docs/FINAL_ACCEPTANCE_REPORT.md` was updated from blocked to staging deployed.
+
+Live verification:
+
+- `/api/health` returned `status: ok`, `environment: staging`, and commit `ee9738eb8cd471e5616c42e0c4dd9f4a2f57529c`,
+- `/api/readiness` returned `status: pass`, no blockers, and no warnings,
+- `/dashboard` returned HTTP 200 HTML,
+- deployment logs showed the Next.js server ready,
+- no suspicious missing-env, database, exception, or runtime-failure lines were found,
+- a non-blocking npm warning appeared in logs: `npm warn config production Use --omit=dev instead`.
+
+Boundary kept:
+
+- no production domain cutover,
+- no source sync,
+- no Supabase migrations,
+- no source-system mutation,
+- old dashboard remains rollback/reference until source and stakeholder approval.

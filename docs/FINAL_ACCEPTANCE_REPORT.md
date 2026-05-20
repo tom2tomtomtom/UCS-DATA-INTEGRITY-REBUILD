@@ -2,86 +2,108 @@
 
 Issue: GitHub `#82`, P9-F.
 
-Generated: 2026-05-20.
+Generated: 2026-05-21.
 
-Launch status: NOT READY
+Launch status: STAGING DEPLOYED, SOURCE APPROVAL PENDING
 Code and CI: PASS
-Railway staging: BLOCKED
+Railway staging: PASS
+Live health: PASS
+Live readiness: PASS
 Source approval: NOT APPROVED
 Stakeholder approval: NOT APPROVED
 
-This report is intentionally not a launch sign-off yet. Code, tests, screenshots, and CI are green, but the app is not deployed to a separate rebuild Railway staging service. Until that happens, the status is not ready.
+This is a staging acceptance report, not a production cutover sign-off. The rebuild is deployed to a separate Railway staging service and the live health/readiness checks pass. Source-owner approval and stakeholder approval are still outstanding.
 
 ## Approval Split
 
 | Gate | Status | Evidence |
 |---|---|---|
-| Code and CI | PASS | Commit `026cbee`, CI run `26187535895` |
-| Railway staging | BLOCKED | `RAILWAY_PROJECT_NOT_LINKED` |
-| Live health | NOT RUN | Requires separate rebuild Railway deploy |
-| Live readiness | NOT RUN | Requires separate rebuild Railway deploy |
-| Source approval | NOT APPROVED | Source-owner review is after staging and source snapshots |
+| Code and CI | PASS | Commit `ee9738eb8cd471e5616c42e0c4dd9f4a2f57529c`, CI run `26193100449` |
+| Railway staging | PASS | Project `UCS Data Integrity Rebuild`, service `ucs-data-integrity-rebuild`, environment `staging` |
+| Live deployment | PASS | Deployment `c823163d-4f4b-4571-8347-e63ed88032e4` |
+| Live health | PASS | `/api/health` returns `status: ok`, `environment: staging`, commit `ee9738eb8cd471e5616c42e0c4dd9f4a2f57529c` |
+| Live readiness | PASS | `/api/readiness` returns `status: pass`, no blockers, no warnings |
+| Dashboard shell | PASS | `/dashboard` returns HTTP 200 HTML |
+| Source approval | NOT APPROVED | Source-owner review is after source snapshots and named scenario evidence |
 | Stakeholder approval | NOT APPROVED | Sian, Jade, and Yunni have not approved the rebuild output |
 
-The launch status must always separate deployed, healthy, source-approved, and stakeholder-approved. A green build is not the same as a live, trusted dashboard.
+The launch status must always separate deployed, healthy, source-approved, and stakeholder-approved. A green deployment is not the same as a source-approved dashboard.
+
+## Live URLs
+
+- Staging dashboard: `https://ucs-data-integrity-rebuild-staging.up.railway.app/dashboard`
+- Health: `https://ucs-data-integrity-rebuild-staging.up.railway.app/api/health`
+- Readiness: `https://ucs-data-integrity-rebuild-staging.up.railway.app/api/readiness`
+
+No production domain has been cut over.
 
 ## Current Evidence
 
 Current main commit:
 
-- `026cbee` Add deterministic fixture screenshot proof
+- `ee9738eb8cd471e5616c42e0c4dd9f4a2f57529c` Fix Railway readiness status parsing
 
 Latest green CI:
 
-- `26187535895`
+- `26193100449`
 
-Local gates run before push:
+Local gates run before deploy:
 
-- `npm test -- tests/ui/fixture-screenshot-reference.test.ts tests/ui/float-diagnostics.test.ts tests/ui/chat-shell.test.ts tests/ui/project-detail.test.ts`
-- `npm run typecheck`
+- `node scripts/railway-readiness-report.mjs`
 - `npm run verify:phase9`
+
+Railway target:
+
+- project: `UCS Data Integrity Rebuild`
+- service: `ucs-data-integrity-rebuild`
+- environment: `staging`
+- latest deployment: `c823163d-4f4b-4571-8347-e63ed88032e4`
+- deploy message: `Staging deploy ee9738e with health commit`
+
+Runtime variables:
+
+- `APP_ENV=staging`,
+- `MUTATION_GUARD=read_only`,
+- rebuild Supabase is the runtime database,
+- legacy database is present only as `LEGACY_DATABASE_URL`,
+- `NODE_ENV` and `DATABASE_URL_TEST` were not pushed from local `.env.local`,
+- empty optional `PIPELINE_SHEET_ID` and `PRODUCTION_REVENUE_SHEET_ID` were not set as blank Railway variables.
 
 Deterministic UI proof:
 
 - `reference/ui/fixture-app/manifest.json`
 - rollups, unsupported department scope, Projects row variants, exact client vs fuzzy search, project detail missing role allocation, Float diagnostics/export compare states, chat states, TBC pipeline identity, archived production revenue, and USA false-zero guards are represented in fixture screenshots.
 
-Railway readiness:
+Log check:
 
-- current status is `fail`,
-- blocker is `RAILWAY_PROJECT_NOT_LINKED`,
-- local Railway CLI is not linked to a project/service for this repo,
-- no deploy, Railway variable mutation, service creation, or production domain cutover has been run from this repo.
+- deploy/runtime logs show the Next.js server started and is ready,
+- no suspicious missing-env, database, exception, or runtime-failure lines were found,
+- Railway logs include an npm warning line: `npm warn config production Use --omit=dev instead`. This is a non-blocking deploy warning, not an application health failure.
 
 ## Current Caveats
 
-These caveats must go to the stakeholder report if launch is discussed before staging exists:
+These caveats must go to any stakeholder report:
 
-- The rebuild has not been deployed to a separate Railway staging service.
-- `/api/health` and `/api/readiness` are proven locally and in build gates, not on a live staging URL.
+- This is staging only. Production cutover has not happened.
 - Fixture screenshots prove UI states and laws, not live source correctness.
 - Source approval is still outstanding. The four source streams must be checked through source snapshots and named scenario evidence before anyone calls the dashboard accurate.
 - Stakeholder approval is still outstanding. Sian, Jade, and Yunni have not reviewed the rebuild against their live workflows.
 - The old dashboard remains the rollback and reference surface until cutover approval.
+- `PIPELINE_SHEET_ID` and `PRODUCTION_REVENUE_SHEET_ID` are not populated in staging yet, because local values were empty.
 
-## Required Before Closing P9-F
+## Required Before Production Cutover
 
-1. Create or select a separate rebuild Railway project/service.
-2. Link this repo to that rebuild service, not the old dashboard service.
-3. Set runtime variables without committing secrets.
-4. Re-run `node scripts/railway-readiness-report.mjs` and require no blockers.
-5. Deploy staging from the current main commit.
-6. Verify deployment commit matches GitHub main.
-7. Verify live `/api/health`.
-8. Verify live `/api/readiness` and list any non-secret warnings.
-9. Load the dashboard shell on the live URL.
-10. Check Railway logs for missing env, database, build, or runtime errors.
-11. Update this report with the live URL, deploy ID, health/readiness output, remaining caveats, and the stakeholder-ready summary.
+1. Run source snapshots against the four truth streams.
+2. Run named Sian, Jade, and Yunni scenario evidence against staging.
+3. Resolve or explicitly accept any source warnings.
+4. Get source-owner approval.
+5. Get stakeholder approval.
+6. Cut over a production domain only after explicit approval.
 
 ## Do Not Claim
 
 - Do not claim source approval from fixture screenshots.
-- Do not claim stakeholder approval from CI.
-- Do not claim deployment success from `npm run verify:phase9`.
+- Do not claim stakeholder approval from CI or staging health checks.
+- Do not claim production launch from staging deployment.
 - Do not claim the old app has been replaced.
-- Do not cut over the production domain in Phase 9 without explicit approval.
+- Do not cut over the production domain without explicit approval.

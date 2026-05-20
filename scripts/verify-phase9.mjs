@@ -102,9 +102,9 @@ function checkLaunchReadinessMarkers() {
     "FORBIDDEN_SCRIPT_SYNC",
     "RAILWAY_MUTATION_ALREADY_RUN",
     "NO_RAILWAY_MUTATION",
-    "Launch status: NOT READY",
-    "Railway staging: BLOCKED",
-    "RAILWAY_PROJECT_NOT_LINKED",
+    "Launch status: STAGING DEPLOYED, SOURCE APPROVAL PENDING",
+    "Railway staging: PASS",
+    "Source approval: NOT APPROVED",
     "railway up",
     "supabase db push"
   ];

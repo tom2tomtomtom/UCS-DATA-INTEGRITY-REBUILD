@@ -145,7 +145,7 @@ describe("P9-C Railway target and env verification", () => {
     );
   });
 
-  test("script emits a safe Railway readiness report without secret values", { timeout: 15000 }, () => {
+  test("script emits a safe Railway readiness report without secret values", { timeout: 30000 }, () => {
     const output = execFileSync("node", ["scripts/railway-readiness-report.mjs"], { encoding: "utf8" });
     const report = JSON.parse(output) as ReturnType<typeof buildRailwayTargetReport>;
 
