@@ -1,0 +1,89 @@
+{
+  "schema": "ucs.golden-scenarios.manifest.v1",
+  "phase": "Phase 0 scaffold",
+  "rules": [
+    "No secrets or unredacted raw client exports.",
+    "Source row identity must be preserved where source rows are represented.",
+    "Unsupported is represented as unsupported, never as zero.",
+    "Manifests are slots until source rows, parsed facts, display contracts, and UI scenarios exist."
+  ],
+  "slots": [
+    {
+      "id": "ldn-q1-design",
+      "name": "LDN Q1 Design",
+      "protects": ["Law 3", "Law 4", "Gate 5"],
+      "expected_fixture_families": ["source-rows", "parsed-facts", "display-contracts", "ui-scenarios"],
+      "status": "slot-only"
+    },
+    {
+      "id": "ucs04787",
+      "name": "UCS04787",
+      "protects": ["Law 7", "Gate 5"],
+      "expected_fixture_families": ["source-rows", "parsed-facts", "display-contracts", "ui-scenarios"],
+      "status": "slot-only"
+    },
+    {
+      "id": "ucs05186",
+      "name": "UCS05186",
+      "protects": ["Law 2", "Law 7", "Gate 5"],
+      "expected_fixture_families": ["source-rows", "parsed-facts", "display-contracts"],
+      "status": "slot-only"
+    },
+    {
+      "id": "ucs04154",
+      "name": "UCS04154",
+      "protects": ["Law 2", "Law 4", "Gate 5"],
+      "expected_fixture_families": ["source-rows", "parsed-facts", "display-contracts"],
+      "status": "slot-only"
+    },
+    {
+      "id": "pcs00250",
+      "name": "PCS00250",
+      "protects": ["Law 7", "Gate 5"],
+      "expected_fixture_families": ["source-rows", "parsed-facts", "display-contracts"],
+      "status": "slot-only"
+    },
+    {
+      "id": "usa00262",
+      "name": "USA00262",
+      "protects": ["Law 5", "Law 9", "Gate 5"],
+      "expected_fixture_families": ["source-rows", "parsed-facts", "display-contracts"],
+      "status": "slot-only"
+    },
+    {
+      "id": "usa00323",
+      "name": "USA00323",
+      "protects": ["Law 5", "Law 9", "Gate 5"],
+      "expected_fixture_families": ["source-rows", "parsed-facts", "display-contracts"],
+      "status": "slot-only"
+    },
+    {
+      "id": "bt-raw-without-cache",
+      "name": "BT raw-without-cache",
+      "protects": ["Law 7", "Gate 5"],
+      "expected_fixture_families": ["source-rows", "parsed-facts", "display-contracts"],
+      "status": "slot-only"
+    },
+    {
+      "id": "tbc-pipeline-identity",
+      "name": "TBC pipeline identity",
+      "protects": ["Law 1", "Law 4", "Gate 5"],
+      "expected_fixture_families": ["source-rows", "parsed-facts", "display-contracts", "ui-scenarios"],
+      "status": "slot-only"
+    },
+    {
+      "id": "archived-production-revenue",
+      "name": "Archived production revenue",
+      "protects": ["Law 1", "Law 8", "Gate 5"],
+      "expected_fixture_families": ["source-rows", "parsed-facts", "display-contracts", "ui-scenarios"],
+      "status": "slot-only"
+    },
+    {
+      "id": "exact-client-drilldown",
+      "name": "Exact client drilldown",
+      "protects": ["Law 4", "Gate 5", "Gate 6"],
+      "expected_fixture_families": ["display-contracts", "ui-scenarios"],
+      "status": "slot-only"
+    }
+  ]
+}

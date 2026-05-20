@@ -141,3 +141,106 @@ Next action:
 
 - commit and push red room docs,
 - spawn bounded Phase 0 agents only after disjoint write sets are restated.
+
+### Checkpoint: Phase 0 Build Started
+
+Phase: 0
+
+Ticket: `#1`
+
+Status: in progress
+
+Worker split:
+
+- `#11` P0-A owns package, TypeScript, Vitest, and CI files.
+- `#12` P0-B owns `fixtures/**`.
+- `#13` P0-C owns canon and display contract types under `src/lib/canon/**` and `src/lib/display/**`.
+- `#14` P0-D owns pending law and scenario tests under `tests/**`.
+- Controller owns `scripts/verify-phase0.mjs` and build-log checkpoints.
+
+Verification target:
+
+- `npm test`,
+- `npm run typecheck`,
+- `npm run verify:phase0`,
+- no product UI,
+- no remote migrations,
+- no committed secrets.
+
+Open blockers:
+
+- Phase 0 workers have not returned yet.
+
+### Checkpoint: Phase 0 Scaffold Integrated
+
+Phase: 0
+
+Tickets: `#1`, `#11`, `#12`, `#13`, `#14`, `#15`
+
+Status: integrated, awaiting Doctrine Steward acceptance
+
+What changed:
+
+- added package, TypeScript, Vitest, lockfile, and CI scaffold,
+- added fixture and golden scenario scaffold,
+- added canon source types, `DashboardScope`, unsupported metric state, source trace types, and display contract interface,
+- added Phase 0 `buildDashboardDisplayContract` stub that returns unsupported totals rather than invented data,
+- added 17 pending test files with 85 todo tests,
+- added `scripts/verify-phase0.mjs`,
+- wired `npm run verify:phase0` and Phase 0 `npm run build` to the verifier.
+
+Verification:
+
+- `npm ci` passed,
+- `npm run verify:phase0` passed,
+- `npm run build` passed as the Phase 0 verifier,
+- `npm audit --omit=dev` found 0 vulnerabilities,
+- no product UI directories exist,
+- no Supabase migrations exist,
+- no committed secret patterns were found.
+
+Process warnings:
+
+- full `npm audit` still reports 2 moderate dev-dependency vulnerabilities through the current Next/PostCSS dependency chain,
+- Next and React are dev-only in Phase 0 because there is no runtime UI or deployment yet,
+- before UI or Railway work begins, the Next/PostCSS advisory must be rechecked and resolved or explicitly accepted.
+
+Next action:
+
+- get Doctrine Steward acceptance,
+- commit and push Phase 0 scaffold if accepted.
+
+### Checkpoint: Doctrine Steward Accepted Phase 0 Scaffold
+
+Phase: 0
+
+Tickets: `#1`, `#11`, `#12`, `#13`, `#14`, `#15`, `#16`
+
+Status: `PROCESS_WARN`, commit allowed
+
+Doctrine Steward result:
+
+- blocking findings: none,
+- Phase 0 criteria satisfied,
+- phase order clean,
+- `npm run verify:phase0` passed,
+- `npm run build` passed as the Phase 0 verifier,
+- `npm audit --omit=dev` found 0 vulnerabilities,
+- no product UI directories,
+- no live sync implementation,
+- no chat implementation,
+- no remote migration files,
+- no source-system mutation code.
+
+Accepted process warnings:
+
+- `src/lib/index.ts` is accepted as part of P0-C because it is only a shared type/export barrel for canon and display contract types.
+- full `npm audit` reports 2 moderate dev-dependency advisories through the current Next/PostCSS chain. This is not a Phase 0 blocker because there is no runtime UI or deployment and production audit is clean. It must be rechecked before UI or Railway work.
+- all tests are `todo` by design. Placeholder graduation remains mandatory before any covered behaviour ships.
+- fixture slots do not yet prove real Sian/Yunni/Jade scenarios.
+
+Next action:
+
+- commit and push Phase 0 scaffold,
+- update GitHub issues with verification evidence,
+- then plan Phase 1 implementation tickets only after Phase 0 is closed.
