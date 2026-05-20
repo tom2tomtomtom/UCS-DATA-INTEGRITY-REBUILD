@@ -72,6 +72,7 @@ function checkRequiredShellFiles() {
     "app/dashboard/glossary/page.tsx",
     "app/dashboard/chat-demo/page.tsx",
     "app/globals.css",
+    "src/lib/ui/scope-params.ts",
     "src/components/dashboard/chrome/dashboard-chrome.ts",
     "src/components/dashboard/rollups/dashboard-home.ts",
     "src/components/dashboard/projects/projects-table.ts",
@@ -90,7 +91,8 @@ function checkRequiredShellFiles() {
     "tests/ui/float-diagnostics.test.ts",
     "tests/ui/data-quality.test.ts",
     "tests/ui/approval.test.ts",
-    "tests/ui/chat-shell.test.ts"
+    "tests/ui/chat-shell.test.ts",
+    "tests/ui/scope-params.test.ts"
   ];
 
   for (const file of requiredFiles) {
@@ -154,6 +156,7 @@ function checkShellMarkers() {
     read("src/components/dashboard/approval/approval-dashboard.ts"),
     read("src/components/dashboard/chat/chat-shell.ts"),
     read("src/components/dashboard/export/csv-export.ts"),
+    read("src/lib/ui/scope-params.ts"),
     read("src/lib/ui/fixture-contract.ts"),
     read("tests/ui/app-shell.test.ts"),
     read("tests/ui/dashboard-home.test.ts"),
@@ -164,6 +167,7 @@ function checkShellMarkers() {
     read("tests/ui/data-quality.test.ts"),
     read("tests/ui/approval.test.ts"),
     read("tests/ui/chat-shell.test.ts"),
+    read("tests/ui/scope-params.test.ts"),
     read("app/dashboard/projects/page.tsx"),
     read("app/dashboard/projects/[jobNumber]/page.tsx"),
     read("app/dashboard/float/page.tsx"),
@@ -227,7 +231,11 @@ function checkShellMarkers() {
     "working",
     "repo inspection",
     "browser testing",
-    "deployment"
+    "deployment",
+    "scopeFromSearchParams",
+    "searchParams",
+    "floatProjectId",
+    "jobNumber"
   ];
 
   for (const marker of requiredMarkers) {

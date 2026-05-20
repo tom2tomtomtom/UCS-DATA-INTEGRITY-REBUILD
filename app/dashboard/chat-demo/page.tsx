@@ -1,14 +1,14 @@
 import { ChatShell } from "../../../src/components/dashboard/chat/chat-shell";
 import { DashboardChrome } from "../../../src/components/dashboard/chrome/dashboard-chrome";
 import { getFixtureDashboardContract } from "../../../src/lib/ui/fixture-contract";
+import { scopeFromSearchParams, type UiSearchParams } from "../../../src/lib/ui/scope-params";
 
-export default function ChatDemoPage() {
-  const contract = getFixtureDashboardContract({
-    office: "LDN",
-    from: "2026-01-01",
-    to: "2026-03-31",
-    department: "Design"
-  });
+export default async function ChatDemoPage({
+  searchParams
+}: {
+  searchParams?: Promise<UiSearchParams>;
+}) {
+  const contract = getFixtureDashboardContract(scopeFromSearchParams((await searchParams) ?? {}));
 
   return (
     <DashboardChrome contract={contract} activePath="/dashboard">

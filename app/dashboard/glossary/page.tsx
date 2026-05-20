@@ -1,5 +1,6 @@
 import { DashboardChrome } from "../../../src/components/dashboard/chrome/dashboard-chrome";
 import { getFixtureDashboardContract } from "../../../src/lib/ui/fixture-contract";
+import { scopeFromSearchParams, type UiSearchParams } from "../../../src/lib/ui/scope-params";
 
 const glossaryItems = [
   ["Unsupported is not zero", "Zero is a source-supported value. Unsupported means the source cannot prove that cut."],
@@ -9,8 +10,12 @@ const glossaryItems = [
   ["Needs Codex", "Use Codex for code changes, browser testing, source mutation, sync, deployment, or stakeholder communication."]
 ] as const;
 
-export default function GlossaryPage() {
-  const contract = getFixtureDashboardContract();
+export default async function GlossaryPage({
+  searchParams
+}: {
+  searchParams?: Promise<UiSearchParams>;
+}) {
+  const contract = getFixtureDashboardContract(scopeFromSearchParams((await searchParams) ?? {}));
 
   return (
     <DashboardChrome contract={contract} activePath="/dashboard/glossary">

@@ -1441,3 +1441,43 @@ Next action:
 - run full `npm run build`, audit, diff, and punctuation checks,
 - commit and push P6-F,
 - close GitHub `#61`.
+
+### Checkpoint: P6-H Scope Blocker Fix
+
+Phase: 6
+
+Tickets: `#60`, `#62`
+
+Status: blocker fixed locally, final verification pending
+
+Doctrine Steward blocker:
+
+- P6-H review found that `/dashboard/float`, `/dashboard/float/[floatProjectId]`, `/dashboard/chat-demo`, `/dashboard/data-quality`, `/dashboard/approval`, and `/dashboard/glossary` dropped query scope back to default fixture scope.
+
+What changed:
+
+- added shared `scopeFromSearchParams` helper,
+- added scope preservation tests for destination page query params and route identity overrides,
+- rewired Projects, project detail, Float, Float trace, Data Quality, Approval, Glossary, and chat demo routes to use the shared scope parser,
+- expanded `scripts/verify-phase6.mjs` with scope parser and route scope markers.
+
+TDD evidence:
+
+- red came from P6-H Doctrine Steward review rather than a unit failure,
+- added regression tests for scope parser,
+- focused scope, chat, Float, Data Quality, and Approval tests passed,
+- Next build passed and now marks destination pages dynamic because they preserve search params.
+
+Boundary kept:
+
+- scope is parsed from URL params only,
+- no live source pulls,
+- no database calls,
+- no old dashboard selectors,
+- no source-system mutation.
+
+Next action:
+
+- run full `npm run build`, audit, diff, and punctuation checks,
+- commit and push the blocker fix,
+- rerun P6-H Doctrine Steward review.

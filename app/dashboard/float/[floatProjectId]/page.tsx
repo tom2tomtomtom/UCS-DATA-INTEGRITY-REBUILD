@@ -1,20 +1,17 @@
 import { DashboardChrome } from "../../../../src/components/dashboard/chrome/dashboard-chrome";
 import { FloatDiagnostics } from "../../../../src/components/dashboard/float/float-diagnostics";
-import type { DashboardScope } from "../../../../src/lib";
 import { getFixtureDashboardContract } from "../../../../src/lib/ui/fixture-contract";
+import { scopeFromSearchParams, type UiSearchParams } from "../../../../src/lib/ui/scope-params";
 
 export default async function FloatTracePage({
-  params
+  params,
+  searchParams
 }: {
   params: Promise<{ floatProjectId: string }>;
+  searchParams?: Promise<UiSearchParams>;
 }) {
   const { floatProjectId } = await params;
-  const scope: DashboardScope = {
-    office: "LDN",
-    from: "2026-01-01",
-    to: "2026-03-31",
-    floatProjectId
-  };
+  const scope = scopeFromSearchParams((await searchParams) ?? {}, { floatProjectId });
   const contract = getFixtureDashboardContract(scope);
 
   return (
