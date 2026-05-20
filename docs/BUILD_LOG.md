@@ -722,3 +722,41 @@ Next action:
 - commit and push the parser integration checkpoint,
 - close GitHub `#34`, `#35`, `#36`, `#37`, and `#39`,
 - then implement parser fixture manifest ticket `#38`.
+
+### Checkpoint: P3-F Parser Fixture Manifest
+
+Phase: 3
+
+Ticket: `#38`
+
+Status: implemented locally, push-blocking verification passed, awaiting commit
+
+What changed:
+
+- added `fixtures/parsed-facts/manifest.json`,
+- added manifest documentation to `fixtures/parsed-facts/README.md`,
+- added parser fixture manifest tests,
+- extended the Phase 3 verifier to require the manifest and manifest tests.
+
+TDD evidence:
+
+- red: `npm test -- tests/parsers/parser-fixture-manifest.test.ts` failed because `fixtures/parsed-facts/manifest.json` did not exist,
+- green: added the manifest and README notes,
+- focused manifest test passed with 3 active tests,
+- `npm run build` passed with 11 passed test files, 49 active tests, typecheck, and Phase 3 verification,
+- `npm audit --omit=dev` found 0 vulnerabilities,
+- `git diff --check` passed,
+- em dash/en dash scan returned no matches.
+
+Boundary kept:
+
+- manifest lists parsed fact JSON only, not screenshots,
+- every existing parser source fixture and expected parsed fact fixture is declared,
+- named regressions are either covered by a parser fixture or explicitly deferred with a `PROCESS_WARN` reason,
+- USA template named fixtures, PCS cache-without-raw, BT raw-cache, and LDN Q1 Design display-scope checks are marked as later-phase work instead of false coverage.
+
+Next action:
+
+- commit and push P3-F,
+- close GitHub `#38`,
+- start P3-H Doctrine Steward review for parsers.

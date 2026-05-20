@@ -68,6 +68,8 @@ function checkRequiredFiles() {
     "tests/parsers/pipeline-parser.test.ts",
     "tests/parsers/production-revenue-parser.test.ts",
     "tests/parsers/float-parser.test.ts",
+    "tests/parsers/parser-fixture-manifest.test.ts",
+    "fixtures/parsed-facts/manifest.json",
     "fixtures/source-rows/fee-sheets/p3-b-basic.json",
     "fixtures/source-rows/pipeline/mixed-rows.json",
     "fixtures/source-rows/production-revenue/p3-d-production-revenue-rows.json",

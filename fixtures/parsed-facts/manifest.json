@@ -1,0 +1,136 @@
+{
+  "version": 1,
+  "reviewStatus": "reviewed",
+  "fixtures": [
+    {
+      "id": "p3-b-fee-sheet-uc-04154",
+      "source": "fee_sheet",
+      "sourceRowsPath": "fixtures/source-rows/fee-sheets/p3-b-basic.json",
+      "expectedFactsPath": "fixtures/parsed-facts/fee-sheets/p3-b-basic.json",
+      "expectedOutputKind": "parsed_facts_json",
+      "redactionStatus": "synthetic_redacted",
+      "lawsProtected": [
+        "first-tab Float ID is preserved as evidence",
+        "CLIENT SUMMARY rows and V-tab rows are not silently merged",
+        "zero-fee nonzero-hour rows are not dropped",
+        "source summary rows are non-additive unless explicitly marked additive"
+      ],
+      "namedRegressions": [
+        "UCS04154"
+      ]
+    },
+    {
+      "id": "p3-c-pipeline-tbc",
+      "source": "pipeline",
+      "sourceRowsPath": "fixtures/source-rows/pipeline/mixed-rows.json",
+      "expectedFactsPath": "fixtures/parsed-facts/pipeline/mixed-rows.expected.json",
+      "expectedOutputKind": "parsed_facts_json",
+      "redactionStatus": "synthetic_redacted",
+      "lawsProtected": [
+        "TBC rows keep per-source-row identity",
+        "non-empty no-job rows are preserved with warnings",
+        "pipeline has no department, role, or person attribution"
+      ],
+      "namedRegressions": [
+        "TBC_PIPELINE"
+      ]
+    },
+    {
+      "id": "p3-d-production-archived-revenue",
+      "source": "production_revenue",
+      "sourceRowsPath": "fixtures/source-rows/production-revenue/p3-d-production-revenue-rows.json",
+      "expectedFactsPath": "fixtures/parsed-facts/production-revenue/p3-d-production-revenue-facts.json",
+      "expectedOutputKind": "parsed_facts_json",
+      "redactionStatus": "synthetic_redacted",
+      "lawsProtected": [
+        "archived production revenue remains source evidence",
+        "blank production status becomes UNKNOWN instead of being dropped",
+        "status collisions preserve every row",
+        "unsupported department and role attribution becomes warnings"
+      ],
+      "namedRegressions": [
+        "ARCHIVED_PRODUCTION_REVENUE"
+      ]
+    },
+    {
+      "id": "p3-e-float-raw-allocations",
+      "source": "float",
+      "sourceRowsPath": "fixtures/source-rows/float/p3-e-basic.json",
+      "expectedFactsPath": "fixtures/parsed-facts/float/p3-e-basic.json",
+      "expectedOutputKind": "parsed_facts_json",
+      "redactionStatus": "synthetic_redacted",
+      "lawsProtected": [
+        "Float raw task evidence keeps project, task, person, date, hours, and state",
+        "inactive and archived Float hours are preserved with warnings",
+        "duplicate and manual Float candidates are surfaced without canonical correction",
+        "multi-person task splits are marked ambiguous"
+      ],
+      "namedRegressions": [
+        "UCS04787",
+        "UCS05186"
+      ]
+    }
+  ],
+  "namedRegressions": [
+    {
+      "id": "LDN_Q1_DESIGN",
+      "label": "Sian Q1 London Design rollup to Projects drilldown",
+      "coverage": "PROCESS_WARN",
+      "reason": "Parser fixtures include Q1 and Design evidence, but the exact parent-to-project scoped display reconciliation belongs to the display contract and UI phases.",
+      "deferredToPhase": "Phase 5 and Phase 6"
+    },
+    {
+      "id": "UCS04787",
+      "label": "British Airways Float allocated hour evidence",
+      "coverage": "covered"
+    },
+    {
+      "id": "UCS05186",
+      "label": "Boldbean duplicated Float-only/manual allocation evidence",
+      "coverage": "covered"
+    },
+    {
+      "id": "UCS04154",
+      "label": "Fee-sheet first-tab Float ID join key",
+      "coverage": "covered"
+    },
+    {
+      "id": "PCS00250",
+      "label": "Cache has hours but raw Float canon has no task rows",
+      "coverage": "PROCESS_WARN",
+      "reason": "Phase 3 parses source rows only. Cache-vs-raw reconciliation is a canon query and display-contract check, not a parser fact.",
+      "deferredToPhase": "Phase 4 and Phase 5"
+    },
+    {
+      "id": "USA00262",
+      "label": "USA fee-sheet sold hours must not become false zero",
+      "coverage": "PROCESS_WARN",
+      "reason": "The generic fee-sheet parser preserves sold hours, but a redacted USA template fixture is still needed before claiming named USA coverage.",
+      "deferredToPhase": "Phase 8 real data dual run"
+    },
+    {
+      "id": "USA00323",
+      "label": "USA Chobani sold hours must not become false zero",
+      "coverage": "PROCESS_WARN",
+      "reason": "The generic fee-sheet parser preserves sold hours, but a redacted USA template fixture is still needed before claiming named USA coverage.",
+      "deferredToPhase": "Phase 8 real data dual run"
+    },
+    {
+      "id": "BT_RAW_CACHE",
+      "label": "BT Float raw rows without allocation cache rows",
+      "coverage": "PROCESS_WARN",
+      "reason": "Float raw rows are parsed in Phase 3, but cache comparison requires cache facts and reconciliation checks in later phases.",
+      "deferredToPhase": "Phase 4 and Phase 5"
+    },
+    {
+      "id": "TBC_PIPELINE",
+      "label": "Pipeline TBC rows keep source-row identity",
+      "coverage": "covered"
+    },
+    {
+      "id": "ARCHIVED_PRODUCTION_REVENUE",
+      "label": "Archived production revenue remains visible as source evidence",
+      "coverage": "covered"
+    }
+  ]
+}
