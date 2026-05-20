@@ -46,6 +46,13 @@ This file is the local mirror of the GitHub issue board. GitHub issues are the o
 | `#38` | P3-F: Parser Fixture Manifest and Golden Parsed Fact Checks |
 | `#39` | P3-G: Phase 3 Verification Gate |
 | `#40` | P3-H: Doctrine Review Gate for Parsers |
+| `#41` | P4-A: Canon Query Result Contracts and Scope Predicate |
+| `#42` | P4-B: Sold Fee Sheet Source Fact Selector |
+| `#43` | P4-C: Pipeline and Production Revenue Source Fact Selectors |
+| `#44` | P4-D: Float Source Fact Selector and Raw Cache Warning Shell |
+| `#45` | P4-E: Source Fact Set Assembly and Capability Index |
+| `#46` | P4-F: Phase 4 Verification Gate |
+| `#47` | P4-G: Doctrine Review Gate for Canon Queries |
 
 ## Implementation Ticket Rule
 
@@ -66,7 +73,9 @@ Phase 1 screenshot recapture tickets `#23`, `#24`, and `#25` are follow-up evide
 
 Phase 2 currently has bounded implementation tickets `#26` through `#32`. It must preserve raw source evidence only. It must not introduce parsers, display rows, product UI, live source pulls, applied migrations, deploys, sync, or source-system mutation.
 
-Phase 3 currently has bounded implementation tickets `#33` through `#40`. It may parse archived raw rows into parser facts, but it must not create canon queries, display rows, product UI, live source pulls, applied migrations, deploys, sync, or source-system mutation.
+Phase 3 has bounded implementation tickets `#33` through `#40`. It may parse archived raw rows into parser facts, but it must not create canon queries, display rows, product UI, live source pulls, applied migrations, deploys, sync, or source-system mutation.
+
+Phase 4 currently has bounded implementation tickets `#41` through `#47`. It may expose scoped parser facts and source capability metadata, but it must not create display rows, totals, CSV rows, product UI, live source pulls, applied migrations, deploys, sync, source-system mutation, or old dashboard selector truth.
 
 ## Phase Tickets
 
@@ -712,3 +721,147 @@ Must prove:
 - Float active/archive/manual/duplicate/placeholder/pencil evidence survives,
 - parsers do not create display rows or dashboard totals,
 - no source-system mutation, sync, deploy, migration application, live source pull, or old selector truth happened.
+
+## Phase 4 Work Tickets
+
+Phase 4 exposes scoped source facts and capability metadata. It must not construct UI rows, display totals, CSV rows, product pages, live source pulls, applied migrations, deploys, sync, source-system mutation, or old selector truth.
+
+### P4-A: Canon Query Result Contracts And Scope Predicate
+
+Issue: `#41`
+
+Owns:
+
+- `src/lib/canon-queries/types.ts`,
+- `src/lib/canon-queries/scope.ts`,
+- `src/lib/canon-queries/index.ts`,
+- `tests/canon-queries/query-contracts.test.ts`,
+- `tests/canon-queries/scope-predicate.test.ts`,
+- `src/lib/index.ts` only for exports.
+
+Must prove:
+
+- canon query results contain source facts, source capabilities, unsupported metadata, warnings, and scope,
+- exact client filtering is distinct from search,
+- office and date filtering is explicit,
+- unsupported source capability returns unsupported metadata, not zero,
+- no selector contract can return display rows, visible rows, CSV rows, dashboard rows, or totals.
+
+### P4-B: Sold Fee Sheet Source Fact Selector
+
+Issue: `#42`
+
+Owns:
+
+- `src/lib/canon-queries/sold.ts`,
+- `tests/canon-queries/sold-facts.test.ts`,
+- `fixtures/parsed-facts/fee-sheets/*` only if a new redacted fixture is required.
+
+Must prove:
+
+- `selectSoldFacts` returns scoped sold source facts,
+- zero-fee nonzero-hour rows survive,
+- CLIENT SUMMARY and V-tab facts both remain inspectable,
+- row-level office wins in scoped filtering,
+- exact client filtering does not use fuzzy search,
+- non-additive summary rows remain evidence and are not summed.
+
+### P4-C: Pipeline And Production Revenue Source Fact Selectors
+
+Issue: `#43`
+
+Owns:
+
+- `src/lib/canon-queries/pipeline.ts`,
+- `src/lib/canon-queries/production-revenue.ts`,
+- `tests/canon-queries/pipeline-facts.test.ts`,
+- `tests/canon-queries/production-revenue-facts.test.ts`,
+- `fixtures/parsed-facts/pipeline/*` and `fixtures/parsed-facts/production-revenue/*` only if a new redacted fixture is required.
+
+Must prove:
+
+- `selectPipelineFacts` and `selectProductionRevenueFacts` return scoped source facts,
+- TBC Pipeline rows keep per-row identity,
+- Pipeline department or role scope returns unsupported metadata instead of zero,
+- archived production revenue survives,
+- blank status `UNKNOWN` and status collisions survive,
+- Production Revenue department or role scope returns unsupported metadata instead of zero.
+
+### P4-D: Float Source Fact Selector And Raw Cache Warning Shell
+
+Issue: `#44`
+
+Owns:
+
+- `src/lib/canon-queries/float.ts`,
+- `tests/canon-queries/float-facts.test.ts`,
+- `fixtures/parsed-facts/float/*` only if a new redacted fixture is required.
+
+Must prove:
+
+- `selectFloatFacts` returns scoped Float source facts,
+- inactive and archived Float hours survive,
+- duplicate and manual candidates survive without choosing a canonical row,
+- placeholder, pencil, orphan, allocated, and unallocated classes survive,
+- multi-person split ambiguity remains visible,
+- cache-vs-raw named regressions are marked unresolved unless cache facts exist,
+- no visible dashboard hours or corrected Float joins are created.
+
+### P4-E: Source Fact Set Assembly And Capability Index
+
+Issue: `#45`
+
+Owns:
+
+- `src/lib/canon-queries/source-fact-set.ts`,
+- `src/lib/canon-queries/capabilities.ts`,
+- `tests/canon-queries/source-fact-set.test.ts`,
+- `tests/canon-queries/capabilities.test.ts`,
+- `src/lib/canon/types.ts` only if a minimal query metadata type is needed.
+
+Must prove:
+
+- parser results can be assembled into a `SourceFactSet`,
+- parser warnings survive into query evidence,
+- source capabilities stay attached to the source,
+- unsupported fields remain unsupported metadata,
+- archive and active state are preserved as overlays, not hide rules,
+- no monetary or hour totals are calculated.
+
+### P4-F: Phase 4 Verification Gate
+
+Issue: `#46`
+
+Owns:
+
+- `scripts/verify-phase4.mjs`,
+- `package.json`,
+- `docs/BUILD_LOG.md`,
+- `docs/EXECUTION_TICKETS.md`.
+
+Must prove:
+
+- `npm run verify:phase4` exists,
+- build runs Phase 4 verification,
+- canon query code does not build display rows, product UI, CSV rows, dashboard totals, or visible rows,
+- canon query code does not run live source pulls, database calls, mutations, or old selectors,
+- `npm test`, `npm run typecheck`, `npm run verify:phase4`, `npm run build`, `npm audit --omit=dev`, `git diff --check`, and em dash/en dash scan pass.
+
+### P4-G: Doctrine Review Gate For Canon Queries
+
+Issue: `#47`
+
+Owns:
+
+- read-only review only.
+
+Must prove:
+
+- canon queries consume parser facts or source fact sets only,
+- source-only rows remain visible as facts,
+- archive state is overlay, not hide rule,
+- unsupported fields stay unsupported,
+- exact client filtering is distinct from search,
+- raw/cache/visible Float issues are not falsely marked solved,
+- all process warnings are either resolved or carried forward explicitly,
+- no source-system mutation, sync, deploy, migration application, live source pull, database call, product UI, display row, dashboard total, CSV row, or old selector truth happened.

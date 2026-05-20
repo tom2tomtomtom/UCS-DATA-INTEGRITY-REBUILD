@@ -796,3 +796,46 @@ Next action:
 - commit and push the Phase 3 acceptance log,
 - close GitHub `#40` and parent `#4`,
 - create bounded Phase 4 implementation tickets before starting canon query code.
+
+### Checkpoint: Phase 4 Ticketing Started
+
+Phase: 4
+
+Ticket: `#5`
+
+Status: ticketed, implementation not started
+
+What changed:
+
+- created bounded Phase 4 implementation tickets `#41` through `#47`,
+- mirrored Phase 4 implementation tickets into `docs/EXECUTION_TICKETS.md`.
+
+Worker split:
+
+- `#41` P4-A owns canon query contracts and scope predicate,
+- `#42` P4-B owns sold fee-sheet source fact selector,
+- `#43` P4-C owns Pipeline and Production Revenue source fact selectors,
+- `#44` P4-D owns Float source fact selector and raw/cache warning shell,
+- `#45` P4-E owns source fact set assembly and capability index,
+- `#46` P4-F owns Phase 4 verification gate,
+- `#47` P4-G is read-only Doctrine Steward review.
+
+Phase boundary:
+
+- Phase 4 may expose scoped parser facts and source capability metadata,
+- no display rows,
+- no product UI,
+- no CSV rows,
+- no dashboard totals,
+- no live source pulls,
+- no database calls,
+- no migrations applied,
+- no deploys,
+- no sync,
+- no source-system mutation,
+- no old dashboard selector truth.
+
+Next action:
+
+- commit and push Phase 4 ticketing,
+- start P4-A before source-specific canon query selectors.
