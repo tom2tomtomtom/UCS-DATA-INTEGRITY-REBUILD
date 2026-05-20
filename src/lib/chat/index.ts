@@ -4,6 +4,7 @@ export {
   needsCodexForTriggers,
   recordToolError
 } from "./evidence";
+export { getPlaybook, routePlaybook } from "./playbooks";
 export type {
   ChatConfidence,
   ChatStreamEvent,
@@ -18,3 +19,4 @@ export type {
   NeedsCodexTrigger,
   UnresolvedCheck
 } from "./types";
+export type { ChatPlaybook, ChatPlaybookId } from "./playbooks";

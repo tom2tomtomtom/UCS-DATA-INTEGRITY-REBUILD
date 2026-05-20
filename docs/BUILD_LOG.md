@@ -1599,3 +1599,41 @@ Next action:
 - run full `npm run test`,
 - commit and push P7-A,
 - close `#63` after CI.
+
+### Checkpoint: P7-B Playbook Router
+
+Phase: 7
+
+Ticket: `#64`
+
+Status: implemented locally, push-blocking verification pending
+
+What changed:
+
+- added deterministic chat playbook definitions,
+- added `routePlaybook` and `getPlaybook`,
+- mapped named trap prompts to fixed evidence plans,
+- mapped archive, sync-now, deploy, browser, code, and stakeholder requests to `Needs Codex`,
+- activated chat law tests for false zero-hours traps and mutation handoff.
+
+TDD evidence:
+
+- red: `npm run test -- tests/chat/playbooks.test.ts` failed because `routePlaybook` and `getPlaybook` did not exist,
+- first green attempt exposed a real routing bug where `sync Float now` was swallowed by the Float mismatch route,
+- green: focused playbook and chat-law tests passed after the handoff trigger checked sync requests that include `now` or `run`,
+- typecheck passed.
+
+Boundary kept:
+
+- routing is deterministic keyword logic,
+- no model-only classification,
+- no tool execution yet,
+- no live source pull,
+- no database call,
+- no mutation path.
+
+Next action:
+
+- run full `npm run test`,
+- commit and push P7-B,
+- close `#64` after CI.
