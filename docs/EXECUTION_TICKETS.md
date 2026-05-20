@@ -60,6 +60,13 @@ This file is the local mirror of the GitHub issue board. GitHub issues are the o
 | `#52` | P5-E: CSV Rows, Trace Rows, and Approval Contract Outputs |
 | `#53` | P5-F: Phase 5 Verification Gate |
 | `#54` | P5-G: Doctrine Review Gate for Display Contract |
+| `#63` | P7-A: Evidence Pack, Stream Events, And Needs Codex Types |
+| `#64` | P7-B: Playbook Router And Required Evidence Plans |
+| `#65` | P7-C: Read-only Tactical Tools And Investigation Orchestrator |
+| `#66` | P7-D: Claim Guard And Evidence-only Reporter |
+| `#67` | P7-E: Chat API Route, Progress Events, And UI Evidence Trace |
+| `#68` | P7-F: Phase 7 Verification Gate And Trap Prompt Suite |
+| `#69` | P7-G: Doctrine Review Gate For Chat Evidence Agent |
 
 ## Implementation Ticket Rule
 
@@ -85,6 +92,8 @@ Phase 3 has bounded implementation tickets `#33` through `#40`. It may parse arc
 Phase 4 has bounded implementation tickets `#41` through `#47`. It may expose scoped parser facts and source capability metadata, but it must not create display rows, totals, CSV rows, product UI, live source pulls, applied migrations, deploys, sync, source-system mutation, or old dashboard selector truth.
 
 Phase 5 currently has bounded implementation tickets `#48` through `#54`. It may build the pure display contract, visible rows, rollups, CSV rows, traces, approval outputs, unsupported flags, and reconciliation checks. It must not create product UI pages, live source pulls, database calls, applied migrations, deploys, sync, source-system mutation, or old dashboard selector truth.
+
+Phase 7 currently has bounded implementation tickets `#63` through `#69`. It may build the read-only chat evidence agent, progress events, API route, UI evidence trace, claim guard, and trap prompt tests. It must not introduce mutation tools, live source pulls, database calls, applied migrations, deploys, sync, source-system writes, old dashboard selector truth, or model-only claims.
 
 ## Phase Tickets
 

@@ -1524,3 +1524,40 @@ Next action:
 - commit and push the root dashboard scope fix,
 - close `#60`, `#62`, and parent `#7`,
 - move into Phase 7 chat evidence agent work.
+
+### Checkpoint: Phase 6 Closed And Phase 7 Ticketed
+
+Phase: 7
+
+Tickets: parent `#8`, child tickets `#63` through `#69`
+
+Status: ticketed, implementation starting
+
+Phase 6 closure evidence:
+
+- commit `6990837` pushed to `origin/main`,
+- GitHub CI run `26174344575` passed,
+- `#60`, `#62`, and parent `#7` were closed with evidence comments.
+
+Phase 7 child tickets:
+
+- `#63` Evidence Pack, Stream Events, And Needs Codex Types,
+- `#64` Playbook Router And Required Evidence Plans,
+- `#65` Read-only Tactical Tools And Investigation Orchestrator,
+- `#66` Claim Guard And Evidence-only Reporter,
+- `#67` Chat API Route, Progress Events, And UI Evidence Trace,
+- `#68` Phase 7 Verification Gate And Trap Prompt Suite,
+- `#69` Doctrine Review Gate For Chat Evidence Agent.
+
+Boundary for Phase 7:
+
+- chat can investigate only by building an `EvidencePack`,
+- chat tools are read-only,
+- reporter prose can use only the evidence pack,
+- source conflicts become unresolved checks,
+- tool failures become evidence warnings,
+- Needs Codex is required for repo, browser, mutation, sync, deploy, stakeholder, or incomplete-evidence work.
+
+Next action:
+
+- implement `#63` with tests first.
