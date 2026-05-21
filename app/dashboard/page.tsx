@@ -14,7 +14,7 @@ export default async function DashboardPage({
   const view = rollupViewFromSearchParams(params);
 
   return (
-    <DashboardChrome contract={contract} activePath="/dashboard">
+    <DashboardChrome contract={contract} activePath="/dashboard" extraScopeParams={{ view }}>
       <DashboardHome contract={contract} view={view} />
     </DashboardChrome>
   );

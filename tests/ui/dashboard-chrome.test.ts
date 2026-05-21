@@ -61,6 +61,23 @@ describe("Phase 9.5 dashboard chrome parity", () => {
     expect(html).toContain("aria-disabled=\"true\">Clear all filters");
   });
 
+  test("preserves page presentation params on office and clear-filter links", () => {
+    const contract = getFixtureDashboardContract({
+      office: "LDN",
+      from: "2026-01-01",
+      to: "2026-03-31",
+      department: "Design"
+    });
+    const html = renderChrome(contract, { pview: "calendar", view: "role" });
+
+    expect(html).toContain(
+      "href=\"/dashboard/projects?office=USA&amp;from=2026-01-01&amp;to=2026-03-31&amp;department=Design&amp;pview=calendar&amp;view=role\""
+    );
+    expect(html).toContain(
+      "href=\"/dashboard/projects?office=ALL&amp;from=2026-01-01&amp;to=2026-03-31&amp;pview=calendar&amp;view=role\">Clear all filters"
+    );
+  });
+
   test("labels sync as read-only/no-cutover and exposes a scoped Ask AI affordance", () => {
     const contract = getFixtureDashboardContract({
       office: "LDN",
@@ -139,13 +156,17 @@ describe("Phase 9.5 dashboard chrome parity", () => {
   });
 });
 
-function renderChrome(contract: ReturnType<typeof getFixtureDashboardContract>): string {
+function renderChrome(
+  contract: ReturnType<typeof getFixtureDashboardContract>,
+  extraScopeParams: Record<string, string | undefined> = {}
+): string {
   return renderToStaticMarkup(
     React.createElement(
       DashboardChrome,
       {
         contract,
-        activePath: "/dashboard/projects"
+        activePath: "/dashboard/projects",
+        extraScopeParams
       },
       React.createElement("section", null, "Contract-backed page")
     )

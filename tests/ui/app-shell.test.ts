@@ -64,4 +64,21 @@ describe("P6-A dashboard app shell", () => {
       "href=\"/dashboard/projects?office=LDN&amp;from=2026-01-01&amp;to=2026-12-31&amp;department=Design&amp;role=Motion+Designer&amp;client=British+Airways&amp;search=BA&amp;jobNumber=UCS04787\""
     );
   });
+
+  test("dashboard route preserves rollup view through office controls", async () => {
+    const element = await DashboardPage({
+      searchParams: Promise.resolve({
+        office: "LDN",
+        from: "2026-01-01",
+        to: "2026-03-31",
+        view: "client"
+      })
+    });
+
+    const html = renderToStaticMarkup(element);
+
+    expect(html).toContain(
+      "href=\"/dashboard?office=USA&amp;from=2026-01-01&amp;to=2026-03-31&amp;view=client\""
+    );
+  });
 });

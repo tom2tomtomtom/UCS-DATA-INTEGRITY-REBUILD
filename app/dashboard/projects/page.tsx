@@ -15,7 +15,7 @@ export default async function ProjectsPage({
   const contract = getFixtureDashboardContract(scope);
 
   return (
-    <DashboardChrome contract={contract} activePath="/dashboard/projects">
+    <DashboardChrome contract={contract} activePath="/dashboard/projects" extraScopeParams={projectsChromeParams(params)}>
       <ProjectsTable contract={contract} params={params} viewState={viewState} />
     </DashboardChrome>
   );
@@ -23,4 +23,15 @@ export default async function ProjectsPage({
 
 function scopeFromParams(params: UiSearchParams) {
   return scopeFromSearchParams(params);
+}
+
+function projectsChromeParams(params: UiSearchParams): Record<string, string | undefined> {
+  return {
+    pview: scalarParam(params.pview),
+    view: scalarParam(params.view)
+  };
+}
+
+function scalarParam(value: string | string[] | undefined): string | undefined {
+  return Array.isArray(value) ? value[0] : value;
 }

@@ -30,10 +30,12 @@ const officeOptions = [
 export function DashboardChrome({
   contract,
   activePath,
+  extraScopeParams = {},
   children
 }: {
   contract: DashboardDisplayContract;
   activePath: string;
+  extraScopeParams?: Readonly<Record<string, string | undefined>>;
   children?: React.ReactNode;
 }) {
   const scope = contract.scope;
@@ -68,10 +70,14 @@ export function DashboardChrome({
           React.createElement(
             "div",
             { className: "office-pill-row" },
-            officeOptions.map((option) => officePill(activePath, scope, option))
+            officeOptions.map((option) => officePill(activePath, scope, option, extraScopeParams))
           ),
           activeFilterCount > 0
-            ? React.createElement("a", { className: "clear-filters", href: clearFiltersHref(activePath, scope) }, "Clear all filters")
+            ? React.createElement(
+                "a",
+                { className: "clear-filters", href: clearFiltersHref(activePath, scope, extraScopeParams) },
+                "Clear all filters"
+              )
             : React.createElement(
                 "span",
                 { className: "clear-filters disabled", "aria-disabled": "true" },
@@ -179,7 +185,8 @@ export function DashboardChrome({
 function officePill(
   activePath: string,
   scope: DashboardScope,
-  option: (typeof officeOptions)[number]
+  option: (typeof officeOptions)[number],
+  extraScopeParams: Readonly<Record<string, string | undefined>>
 ) {
   const isActive = scope.office === option.office;
 
@@ -188,7 +195,7 @@ function officePill(
     {
       "aria-pressed": isActive,
       className: isActive ? "office-pill active" : "office-pill",
-      href: scopedHref(activePath, scope, { office: option.office }),
+      href: hrefWithExtraParams(scopedHref(activePath, scope, { office: option.office }), extraScopeParams),
       key: option.office,
       role: "button",
       title: option.title
@@ -197,12 +204,35 @@ function officePill(
   );
 }
 
-function clearFiltersHref(activePath: string, scope: DashboardScope): string {
-  return scopedHref(activePath, {
-    office: "ALL",
-    from: scope.from,
-    to: scope.to
-  });
+function clearFiltersHref(
+  activePath: string,
+  scope: DashboardScope,
+  extraScopeParams: Readonly<Record<string, string | undefined>>
+): string {
+  return hrefWithExtraParams(
+    scopedHref(activePath, {
+      office: "ALL",
+      from: scope.from,
+      to: scope.to
+    }),
+    extraScopeParams
+  );
+}
+
+function hrefWithExtraParams(href: string, extraParams: Readonly<Record<string, string | undefined>>): string {
+  const [path = "", query = ""] = href.split("?");
+  const params = new URLSearchParams(query);
+
+  for (const [key, value] of Object.entries(extraParams)) {
+    if (value === undefined || value.trim() === "") {
+      params.delete(key);
+    } else {
+      params.set(key, value);
+    }
+  }
+
+  const nextQuery = params.toString();
+  return nextQuery === "" ? path : `${path}?${nextQuery}`;
 }
 
 function countActiveFilters(scope: DashboardScope): number {
