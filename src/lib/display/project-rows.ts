@@ -109,6 +109,8 @@ export function buildProjectRows(input: BuildProjectRowsInput): ProjectDisplayRo
     addSourceIssueToMatchingRows(rows, warning);
   }
 
+  enrichRowsWithFeeTrackerIdentity(rows);
+
   return Array.from(rows.values()).map((row) => finalizeRow(row, unsupportedMetrics));
 }
 
@@ -328,6 +330,43 @@ function addSourceIssueToMatchingRows(rows: Map<string, MutableProjectRow>, warn
     }
 
     appendWarnings(row, [warning]);
+  }
+}
+
+function enrichRowsWithFeeTrackerIdentity(rows: Map<string, MutableProjectRow>): void {
+  const feeTrackerIdentityByJob = new Map<string, MutableProjectRow>();
+
+  for (const row of rows.values()) {
+    if (!hasFeeSheetIdentityOnly(row) || row.jobNumber === undefined) {
+      continue;
+    }
+
+    feeTrackerIdentityByJob.set(normalizeIdentity(row.jobNumber), row);
+  }
+
+  for (const row of rows.values()) {
+    if (row.jobNumber === undefined || row.sourceLabels.some((sourceLabel) => sourceLabel.source === "fee_sheet")) {
+      continue;
+    }
+
+    const feeTrackerIdentity = feeTrackerIdentityByJob.get(normalizeIdentity(row.jobNumber));
+    if (feeTrackerIdentity === undefined) {
+      continue;
+    }
+
+    if (row.sourceClient === undefined && feeTrackerIdentity.sourceClient !== undefined) {
+      row.sourceClient = feeTrackerIdentity.sourceClient;
+    }
+    if (row.canonicalClient === undefined && feeTrackerIdentity.canonicalClient !== undefined) {
+      row.canonicalClient = feeTrackerIdentity.canonicalClient;
+    }
+    if (row.sourceProjectName === undefined && feeTrackerIdentity.sourceProjectName !== undefined) {
+      row.sourceProjectName = feeTrackerIdentity.sourceProjectName;
+    }
+    if (row.canonicalProjectName === undefined && feeTrackerIdentity.canonicalProjectName !== undefined) {
+      row.canonicalProjectName = feeTrackerIdentity.canonicalProjectName;
+    }
+    appendTrace(row, feeTrackerIdentity.sourceTrace);
   }
 }
 

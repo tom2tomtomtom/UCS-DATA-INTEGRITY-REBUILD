@@ -246,6 +246,7 @@ function floatFact(input: {
   readonly hoursValue: number;
   readonly activeState?: FloatFact["activeState"];
   readonly warnings?: SourceWarning[];
+  readonly omitClient?: boolean;
 }): FloatFact {
   const fact: FloatFact = {
     id: input.id,
@@ -254,9 +255,6 @@ function floatFact(input: {
     rawRowIds: [input.rawRowId],
     batchId: "float:batch",
     floatProjectId: input.floatProjectId,
-    client: "Acme Studios",
-    sourceClient: "Acme Studios Ltd",
-    canonicalClient: "Acme Studios",
     projectName: input.projectName,
     sourceProjectName: input.projectName,
     office: "LDN",
@@ -269,6 +267,12 @@ function floatFact(input: {
     warnings: input.warnings ?? [],
     trace: trace("float", input.rawRowId)
   };
+
+  if (input.omitClient !== true) {
+    fact.client = "Acme Studios";
+    fact.sourceClient = "Acme Studios Ltd";
+    fact.canonicalClient = "Acme Studios";
+  }
 
   if (input.jobNumber !== undefined) {
     fact.jobNumber = input.jobNumber;
@@ -562,7 +566,8 @@ describe("P5-B project row builder", () => {
           floatProjectId: "manual-copy",
           jobNumber: "UCS04787",
           projectName: "UCS04787 - BA_FEE_MARCH MADNESS Manual Copy",
-          hoursValue: 12
+          hoursValue: 12,
+          omitClient: true
         })
       ],
       sourceIssues: []
@@ -583,6 +588,7 @@ describe("P5-B project row builder", () => {
     expect(floatRow).toMatchObject({
       rowType: "float_only",
       jobNumber: "UCS04787",
+      canonicalClient: "British Airways",
       totals: {
         floatHours: {
           kind: "hours",
