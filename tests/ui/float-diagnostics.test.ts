@@ -73,4 +73,20 @@ describe("P6-D Float diagnostics", () => {
     expect(html).toContain("Delta");
     expect(html).toContain("Compare export");
   });
+
+  test("preserves combined office scope through the export compare form", () => {
+    const contract = getFixtureDashboardContract({
+      office: "ALL",
+      offices: ["LDN", "UCX"],
+      from: "2026-01-01",
+      to: "2026-03-31"
+    });
+    const html = renderToStaticMarkup(React.createElement(FloatDiagnostics, { contract }));
+
+    expect(html).toContain("type=\"hidden\" name=\"office\" value=\"ALL\"");
+    expect(html).toContain("type=\"hidden\" name=\"offices\" value=\"LDN,UCX\"");
+    expect(html).toContain(
+      "/dashboard/projects/UCS04787?office=ALL&amp;from=2026-01-01&amp;to=2026-03-31&amp;offices=LDN%2CUCX&amp;jobNumber=UCS04787#float-trace"
+    );
+  });
 });

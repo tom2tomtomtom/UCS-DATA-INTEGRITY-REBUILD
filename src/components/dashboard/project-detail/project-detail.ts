@@ -114,6 +114,7 @@ function projectsBackHref(contract: DashboardDisplayContract): string {
 
   return scopedHref("/dashboard/projects", {
     office: scope.office,
+    ...(scope.offices !== undefined && scope.offices.length > 0 ? { offices: scope.offices } : {}),
     from: scope.from,
     to: scope.to,
     ...(scope.department !== undefined ? { department: scope.department } : {}),

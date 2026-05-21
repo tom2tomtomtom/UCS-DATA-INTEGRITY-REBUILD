@@ -79,4 +79,23 @@ describe("P6-D project detail", () => {
     expect(html).toContain("fixture-float-visible-ucs05186-canonical");
     expect(html).toContain("fixture-float-visible-ucs05186-manual");
   });
+
+  test("preserves combined office scope in project-detail back links", () => {
+    const contract = getFixtureDashboardContract({
+      office: "ALL",
+      offices: ["LDN", "UCX"],
+      from: "2026-01-01",
+      to: "2026-03-31",
+      department: "Design",
+      jobNumber: "UCS04787"
+    });
+    const html = renderToStaticMarkup(React.createElement(ProjectDetail, { contract, jobNumber: "UCS04787" }));
+
+    expect(html).toContain(
+      "<a href=\"/dashboard/projects?office=ALL&amp;from=2026-01-01&amp;to=2026-03-31&amp;offices=LDN%2CUCX&amp;department=Design\">Back to Projects</a>"
+    );
+    expect(html).toContain(
+      "href=\"/dashboard/projects/UCS04787?office=ALL&amp;from=2026-04-01&amp;to=2026-06-30&amp;offices=LDN%2CUCX&amp;department=Design&amp;jobNumber=UCS04787\">Q2"
+    );
+  });
 });

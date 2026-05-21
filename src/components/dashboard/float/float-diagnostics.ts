@@ -219,6 +219,7 @@ function scopeHiddenInputs(contract: DashboardDisplayContract) {
   const scope = contract.scope;
   const values = {
     office: scope.office,
+    offices: scope.offices?.join(","),
     from: scope.from,
     to: scope.to,
     department: scope.department,
