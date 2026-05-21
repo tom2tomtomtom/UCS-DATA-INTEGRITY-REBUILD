@@ -23,6 +23,8 @@ describe("P6-C Projects table", () => {
     expect(html).toContain("Variance (hrs)");
     expect(html).toContain("Last sync");
     expect(html).toContain("Actions");
+    expect(html).toContain("Sold (fee sheet) ▼");
+    expect(html).toContain("href=\"/dashboard/projects?sort=client&amp;dir=asc\"");
     expect(html).toContain("British Airways");
     expect(html).toContain("UCS04787");
     expect(html).toContain("pipeline_only");
@@ -42,5 +44,31 @@ describe("P6-C Projects table", () => {
     expect(html).toContain("disabled=\"\"");
     expect(html).not.toContain("<td>£0</td>");
     expect(html).not.toContain("<td>0h</td>");
+  });
+
+  test("sort links change row order only and preserve contract totals", () => {
+    const contract = getFixtureDashboardContract({
+      office: "LDN",
+      from: "2026-01-01",
+      to: "2026-03-31"
+    });
+    const html = renderToStaticMarkup(
+      React.createElement(ProjectsTable, {
+        contract,
+        params: {
+          office: "LDN",
+          from: "2026-01-01",
+          to: "2026-03-31",
+          pview: "list",
+          sort: "client",
+          dir: "asc"
+        }
+      })
+    );
+
+    expect(html).toContain("Client ▲");
+    expect(html).toContain("href=\"/dashboard/projects?office=LDN&amp;from=2026-01-01&amp;to=2026-03-31&amp;pview=list&amp;sort=client&amp;dir=desc\"");
+    expect(html).toContain("Total");
+    expect(html).toContain("£275,947");
   });
 });

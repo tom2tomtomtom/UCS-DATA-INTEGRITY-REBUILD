@@ -8,6 +8,21 @@ import type { UiSearchParams } from "../../../lib/ui/scope-params";
 import { buildCsvDataUriFromContract } from "../export/csv-export";
 import { ProjectsBreakdownControls, ProjectsControls } from "./projects-controls";
 
+type ProjectSortKey =
+  | "jobNumber"
+  | "client"
+  | "project"
+  | "office"
+  | "soldFee"
+  | "pipelineFee"
+  | "soldHours"
+  | "allocated"
+  | "unallocated"
+  | "floatValue"
+  | "variance"
+  | "confidence"
+  | "lastSync";
+
 export function ProjectsTable({
   contract,
   params = {},
@@ -48,11 +63,13 @@ export function ProjectsTable({
     ),
     viewState.presentationView === "calendar"
       ? calendarEmptyState(params, viewState)
-      : projectsListTable(contract)
+      : projectsListTable(contract, params)
   );
 }
 
-function projectsListTable(contract: DashboardDisplayContract) {
+function projectsListTable(contract: DashboardDisplayContract, params: UiSearchParams) {
+  const sortedRows = sortedProjectRows(contract.visibleRows, params);
+
   return React.createElement(
     "table",
     { className: "projects-table" },
@@ -62,28 +79,41 @@ function projectsListTable(contract: DashboardDisplayContract) {
       React.createElement(
         "tr",
         null,
-        React.createElement("th", null, "Job #"),
-        React.createElement("th", null, "Client"),
-        React.createElement("th", null, "Project"),
-        React.createElement("th", null, "Office"),
-        React.createElement("th", null, "Sold (fee sheet)"),
-        React.createElement("th", null, "Pipeline"),
-        React.createElement("th", null, "Sold (hrs)"),
-        React.createElement("th", null, "Allocated"),
-        React.createElement("th", null, "Unallocated"),
-        React.createElement("th", null, "Float value (£)"),
-        React.createElement("th", null, "Variance (hrs)"),
-        React.createElement("th", null, "Confidence"),
-        React.createElement("th", null, "Last sync"),
+        sortHeader("Job #", "jobNumber", params),
+        sortHeader("Client", "client", params),
+        sortHeader("Project", "project", params),
+        sortHeader("Office", "office", params),
+        sortHeader("Sold (fee sheet)", "soldFee", params),
+        sortHeader("Pipeline", "pipelineFee", params),
+        sortHeader("Sold (hrs)", "soldHours", params),
+        sortHeader("Allocated", "allocated", params),
+        sortHeader("Unallocated", "unallocated", params),
+        sortHeader("Float value (£)", "floatValue", params),
+        sortHeader("Variance (hrs)", "variance", params),
+        sortHeader("Confidence", "confidence", params),
+        sortHeader("Last sync", "lastSync", params),
         React.createElement("th", null, "Actions")
       )
     ),
     React.createElement(
       "tbody",
       null,
-      contract.visibleRows.map((row) => projectRow(row)),
+      sortedRows.map((row) => projectRow(row)),
       footerRow(contract)
     )
+  );
+}
+
+function sortHeader(label: string, sortKey: ProjectSortKey, params: UiSearchParams) {
+  const activeSort = projectSortFromParams(params);
+  const active = activeSort.key === sortKey;
+  const nextDir = active && activeSort.dir === "asc" ? "desc" : "asc";
+  const marker = active ? (activeSort.dir === "asc" ? " ▲" : " ▼") : "";
+
+  return React.createElement(
+    "th",
+    null,
+    React.createElement("a", { href: hrefWithParams(params, { sort: sortKey, dir: nextDir }) }, `${label}${marker}`)
   );
 }
 
@@ -154,6 +184,94 @@ function footerRow(contract: DashboardDisplayContract) {
     React.createElement("td", null, contract.confidence),
     React.createElement("td", null, "Display contract"),
     React.createElement("td", null, "Read-only")
+  );
+}
+
+function sortedProjectRows(rows: readonly DashboardProjectRow[], params: UiSearchParams): DashboardProjectRow[] {
+  const sort = projectSortFromParams(params);
+
+  return [...rows].sort((left, right) => {
+    const result = compareProjectRows(left, right, sort.key);
+    return sort.dir === "asc" ? result : -result;
+  });
+}
+
+function projectSortFromParams(params: UiSearchParams): { key: ProjectSortKey; dir: "asc" | "desc" } {
+  const rawKey = scalarParam(params.sort);
+  const rawDir = scalarParam(params.dir);
+
+  return {
+    key: isProjectSortKey(rawKey) ? rawKey : "soldFee",
+    dir: rawDir === "asc" ? "asc" : "desc"
+  };
+}
+
+function compareProjectRows(left: DashboardProjectRow, right: DashboardProjectRow, sortKey: ProjectSortKey): number {
+  if (sortKey === "jobNumber") return compareStrings(left.jobNumber, right.jobNumber);
+  if (sortKey === "client") return compareStrings(left.canonicalClient ?? left.sourceClient, right.canonicalClient ?? right.sourceClient);
+  if (sortKey === "project") {
+    return compareStrings(
+      left.canonicalProjectName ?? left.sourceProjectName,
+      right.canonicalProjectName ?? right.sourceProjectName
+    );
+  }
+  if (sortKey === "office") return compareStrings(left.scope.office, right.scope.office);
+  if (sortKey === "soldFee") return metricNumber(left.totals.soldFee) - metricNumber(right.totals.soldFee);
+  if (sortKey === "pipelineFee") return metricNumber(left.totals.pipelineFee) - metricNumber(right.totals.pipelineFee);
+  if (sortKey === "soldHours") return metricNumber(left.totals.soldHours) - metricNumber(right.totals.soldHours);
+  if (sortKey === "allocated") return metricNumber(left.totals.floatHours) - metricNumber(right.totals.floatHours);
+  if (sortKey === "unallocated") return compareStrings(unallocatedLabel(left), unallocatedLabel(right));
+  if (sortKey === "floatValue") return compareStrings(floatValueLabel(left), floatValueLabel(right));
+  if (sortKey === "variance") return varianceHoursNumber(left) - varianceHoursNumber(right);
+  if (sortKey === "confidence") return compareStrings(projectRowTraceabilityLabel(left), projectRowTraceabilityLabel(right));
+  return compareStrings(lastSyncLabel(left), lastSyncLabel(right));
+}
+
+function varianceHoursNumber(row: DashboardProjectRow): number {
+  return metricNumber(row.totals.soldHours) - metricNumber(row.totals.floatHours);
+}
+
+function compareStrings(left: string | undefined, right: string | undefined): number {
+  return (left ?? "").localeCompare(right ?? "");
+}
+
+function hrefWithParams(params: UiSearchParams, overrides: Record<string, string>): string {
+  const nextParams = new URLSearchParams();
+
+  for (const [key, value] of Object.entries(params)) {
+    const scalar = scalarParam(value);
+    if (scalar !== undefined && scalar.trim() !== "") {
+      nextParams.set(key, scalar);
+    }
+  }
+
+  for (const [key, value] of Object.entries(overrides)) {
+    nextParams.set(key, value);
+  }
+
+  const query = nextParams.toString();
+  return query === "" ? "/dashboard/projects" : `/dashboard/projects?${query}`;
+}
+
+function scalarParam(value: string | string[] | undefined): string | undefined {
+  return Array.isArray(value) ? value[0] : value;
+}
+
+function isProjectSortKey(value: string | undefined): value is ProjectSortKey {
+  return (
+    value === "jobNumber" ||
+    value === "client" ||
+    value === "project" ||
+    value === "office" ||
+    value === "soldFee" ||
+    value === "pipelineFee" ||
+    value === "soldHours" ||
+    value === "allocated" ||
+    value === "unallocated" ||
+    value === "floatValue" ||
+    value === "variance" ||
+    value === "confidence" ||
+    value === "lastSync"
   );
 }
 
