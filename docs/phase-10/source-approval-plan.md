@@ -56,6 +56,14 @@ railway run --service ucs-data-integrity-rebuild --environment staging npm run s
 
 The snapshot output path is ignored by git. The command writes source data locally and prints only a row-count summary.
 
+To create the stakeholder/no-cutover pack from that artifact:
+
+```bash
+SOURCE_SNAPSHOT_FILE=test-results/source-snapshots/phase10-source-snapshot.json npm run stakeholder:approval:pack
+```
+
+This pack is allowed to be `blocked`. It must stay blocked while named scenario warnings or missing stakeholder approvals remain.
+
 ## Named Scenario Evidence
 
 Each named scenario must include:

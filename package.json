@@ -20,7 +20,8 @@
     "verify:phase8": "npm run test && npm run typecheck && next build && node scripts/verify-phase8.mjs",
     "verify:phase9": "npm run build && node scripts/verify-phase9.mjs",
     "source:approval:readiness": "node scripts/source-approval-readiness-report.mjs",
-    "source:snapshot:create": "node scripts/create-source-snapshot.mjs"
+    "source:snapshot:create": "node scripts/create-source-snapshot.mjs",
+    "stakeholder:approval:pack": "node scripts/stakeholder-approval-pack.mjs"
   },
   "devDependencies": {
     "@types/node": "^24.10.1",
