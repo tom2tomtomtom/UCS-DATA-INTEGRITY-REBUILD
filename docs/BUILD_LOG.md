@@ -2729,6 +2729,35 @@ Boundary kept:
 - no source snapshot committed to git,
 - no stakeholder approval language.
 
+### Checkpoint: Project Detail Uses Display-Layer View Model And Named Scenario TODOs Are Tests
+
+Phase: 9.5 and 10
+
+Tickets: `#83`, `#85`, `#88`, `#89`
+
+Status: implemented, local verification passed
+
+What changed:
+
+- moved duplicate project detail aggregation out of the React page and into `buildProjectDetailViewModel`,
+- Project Detail now renders display-layer evidence instead of owning row-combine maths,
+- activated the single-display-contract law tests for hero totals, Projects footer totals, CSV rows, and project detail values,
+- replaced Gate 5 named scenario TODOs with concrete Sian/Yunni/Jade regression tests.
+
+Verification:
+
+- `npm test -- tests/scenarios/named-regressions.test.ts tests/laws/single-display-contract.test.ts tests/ui/project-detail.test.ts` passed,
+- `npm run verify:phase9` passed with 79 test files, 328 tests, typecheck, Next build, Phase 8 verifier, and Phase 9 verifier.
+
+Boundary kept:
+
+- no production cutover,
+- no source-system mutation,
+- no scheduled sync,
+- no Supabase migration,
+- no source snapshot committed to git,
+- no stakeholder approval language.
+
 ### Checkpoint: Named Scenario Warnings No Longer Borrow Fixture Evidence
 
 Phase: 10
