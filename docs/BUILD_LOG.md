@@ -2728,3 +2728,34 @@ Boundary kept:
 - no Supabase migration,
 - no source snapshot committed to git,
 - no stakeholder approval language.
+
+### Checkpoint: Source Readiness Now Gates Named Scenario Warnings
+
+Phase: 10
+
+Tickets: `#85`, `#88`, `#89`
+
+Status: implemented and pushed, CI/Railway pending at checkpoint time
+
+What changed:
+
+- tightened `source:approval:readiness` so it reads the current source snapshot through the named Sian/Yunni/Jade scenario report,
+- added `NAMED_SCENARIOS_READY`, `NAMED_SCENARIOS_NOT_READY`, and `NAMED_SCENARIOS_NOT_CHECKED` checks,
+- made source approval readiness fail when named scenario warnings remain, even if all four source streams and the source snapshot are present,
+- kept the pure report capable of passing only when source snapshots, UI spec, named scenarios, stakeholder approval, mutation guard, and production cutover state are all safe.
+
+Verification:
+
+- `npm test -- tests/launch/source-approval-readiness-report.test.ts` passed with 10 tests,
+- `SOURCE_SNAPSHOT_FILE=test-results/source-snapshots/phase10-source-snapshot.json UI_PARITY_SPEC_STATUS=ready node scripts/source-approval-readiness-report.mjs` returned blockers `NAMED_SCENARIOS_NOT_READY` and `STAKEHOLDER_APPROVAL_COMPLETE_BLOCKED`,
+- the same report listed named scenario warnings `ucs04787`, `ucs05186`, `pcs00250`, and `bt-raw-without-cache`,
+- `npm run verify:phase9` passed with 78 test files, 311 tests, typecheck, Next build, Phase 8 verifier, and Phase 9 verifier.
+
+Boundary kept:
+
+- no production cutover,
+- no source-system mutation,
+- no scheduled sync,
+- no Supabase migration,
+- no source snapshot committed to git,
+- no stakeholder approval language.
