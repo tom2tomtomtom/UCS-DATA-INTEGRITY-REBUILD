@@ -55,6 +55,32 @@ export function fixtureFactSet(): SourceFactSet {
     hoursValue: 120,
     month: "2026-03"
   });
+  const usaWhiteCaseSold = soldFact({
+    id: "fixture:sold:usa00262",
+    rawRowId: "fixture-fee-usa00262-sold",
+    jobNumber: "USA00262",
+    client: "White & Case",
+    projectName: "Campaign and brand development",
+    department: "Unmapped",
+    role: "USA source role detail",
+    amountGbp: 1_863_186,
+    hoursValue: 14_333,
+    office: "USA",
+    month: "2026-02"
+  });
+  const usaChobaniSold = soldFact({
+    id: "fixture:sold:usa00323",
+    rawRowId: "fixture-fee-usa00323-sold",
+    jobNumber: "USA00323",
+    client: "Chobani",
+    projectName: "Chobani Soccer",
+    department: "Unmapped",
+    role: "USA source role detail",
+    amountGbp: 1_632_680,
+    hoursValue: 13_660.96,
+    office: "USA",
+    month: "2026-02"
+  });
   const floatWarning = sourceWarning({
     id: "fixture:warning:pcs00250",
     sourceLayer: "float_cache",
@@ -64,7 +90,7 @@ export function fixtureFactSet(): SourceFactSet {
   });
 
   return {
-    soldFacts: [designSold, strategySold],
+    soldFacts: [designSold, strategySold, usaWhiteCaseSold, usaChobaniSold],
     pipelineFacts: [
       pipelineFact({
         id: "fixture:pipeline:tbc",
@@ -183,29 +209,28 @@ function soldFact(input: {
   id: string;
   rawRowId: string;
   jobNumber: string;
-  floatProjectId: string;
+  floatProjectId?: string;
   client: string;
   projectName: string;
   department: string;
   role: string;
   amountGbp: number;
   hoursValue: number;
+  office?: SoldFact["office"];
   month: string;
 }): SoldFact {
-  return {
+  const fact: SoldFact = {
     id: input.id,
     source: "fee_sheet",
     sourceLayer: "sold",
     rawRowIds: [input.rawRowId],
     batchId: "fixture-fee-sheet",
     jobNumber: input.jobNumber,
-    floatProjectId: input.floatProjectId,
-    feeSheetFloatId: input.floatProjectId,
     client: input.client,
     canonicalClient: input.client,
     projectName: input.projectName,
     sourceProjectName: input.projectName,
-    office: "LDN",
+    office: input.office ?? "LDN",
     month: input.month,
     department: input.department,
     role: input.role,
@@ -216,6 +241,13 @@ function soldFact(input: {
     warnings: [],
     trace: trace("fee_sheet", "sold", input.rawRowId, "sold")
   };
+
+  if (input.floatProjectId !== undefined) {
+    fact.floatProjectId = input.floatProjectId;
+    fact.feeSheetFloatId = input.floatProjectId;
+  }
+
+  return fact;
 }
 
 function pipelineFact(input: {

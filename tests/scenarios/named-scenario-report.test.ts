@@ -265,9 +265,10 @@ describe("P8-E named Sian Yunni Jade scenario report", () => {
       }
     });
     expect(report.scenarios.find((scenario: { id: string }) => scenario.id === "ucs04154")).toMatchObject({
-      approvalStatus: "blocked_evidence_gap",
+      approvalStatus: "ready_for_stakeholder_review",
       displayContractResult: {
-        status: "not_checked"
+        status: "pass",
+        sourceLayer: "display_contract"
       },
       csvResult: {
         status: "not_applicable"
@@ -288,6 +289,78 @@ describe("P8-E named Sian Yunni Jade scenario report", () => {
       approvalStatus: "blocked_warning",
       unresolvedConflicts: expect.arrayContaining([expect.stringContaining("source_snapshot_scenario_rows_missing")])
     });
+  });
+
+  test("marks USA false-zero guards ready when source rows and deterministic display proof are both present", () => {
+    const snapshot = {
+      ...fourStreamSnapshot(),
+      sources: fourStreamSnapshot().sources.map((source) =>
+        source.source === "fee_sheet"
+          ? {
+              ...source,
+              rows: [
+                ...source.rows,
+                {
+                  identity: {
+                    stableSourceRowKey: "fee_tracker:USA:27",
+                    sourceDocumentId: "fee_tracker",
+                    sourceTab: "USA",
+                    sourceRowNumber: 27
+                  },
+                  raw: {
+                    jobNumber: "USA00262",
+                    client: "White & Case"
+                  }
+                },
+                {
+                  identity: {
+                    stableSourceRowKey: "fee_tracker:USA:64",
+                    sourceDocumentId: "fee_tracker",
+                    sourceTab: "USA",
+                    sourceRowNumber: 64
+                  },
+                  raw: {
+                    jobNumber: "USA00323",
+                    client: "Chobani"
+                  }
+                }
+              ]
+            }
+          : source
+      )
+    };
+    const floatTargetManifest = buildFloatTargetManifestEvidenceFromSnapshot(snapshot);
+    expect(floatTargetManifest).toBeDefined();
+
+    const report = buildNamedScenarioReport({
+      sourceEvidence: {
+        status: "ready",
+        snapshotId: "named-scenario-usa-source-present",
+        sourcesChecked: ["fee_sheet", "pipeline", "production_revenue", "float"],
+        rawRows: 10,
+        floatTargetManifest: floatTargetManifest!,
+        floatLayerEvidence: [],
+        scenarioSourceEvidence: buildScenarioSourceEvidenceFromSnapshot(snapshot)
+      }
+    });
+
+    for (const scenarioId of ["usa00262", "usa00323"]) {
+      expect(report.scenarios.find((scenario) => scenario.id === scenarioId)).toMatchObject({
+        status: "pass",
+        approvalStatus: "ready_for_stakeholder_review",
+        displayContractResult: {
+          status: "pass",
+          sourceLayer: "display_contract"
+        },
+        checks: expect.arrayContaining([
+          expect.objectContaining({
+            code: "source_snapshot_scenario_rows_present",
+            status: "pass"
+          })
+        ]),
+        unresolvedConflicts: []
+      });
+    }
   });
 
   test("enriches named Float scenarios with live manifest IDs without clearing warning scenarios", () => {

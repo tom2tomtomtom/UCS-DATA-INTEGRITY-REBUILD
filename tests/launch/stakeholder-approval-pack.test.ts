@@ -100,12 +100,12 @@ describe("Phase 10 stakeholder approval pack", () => {
             sourceLayer: "data_quality_ui"
           }),
           displayContractResult: expect.objectContaining({
-            status: "not_checked"
+            status: "pass"
           }),
           csvResult: expect.objectContaining({
             status: "not_applicable"
           }),
-          approvalStatus: "blocked_evidence_gap"
+          approvalStatus: "ready_for_stakeholder_review"
         }),
         expect.objectContaining({
           id: "usa00262",

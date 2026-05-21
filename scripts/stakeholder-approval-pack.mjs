@@ -85,7 +85,7 @@ function buildBlockers({ scenarioReport, lifecycleEvidence, uiParitySpecStatus, 
     blockers.push("named_scenarios_not_fully_passed");
   }
 
-  if (scenarioReport.scenarios.some((scenario) => scenario.approvalStatus !== "ready_for_stakeholder_review")) {
+  if (scenarioReport.scenarios.some((scenario) => scenario.status === "pass" && scenario.approvalStatus !== "ready_for_stakeholder_review")) {
     blockers.push("scenario_evidence_incomplete");
   }
 
