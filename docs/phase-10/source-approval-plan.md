@@ -24,10 +24,11 @@ Phase 10 proves staging against source evidence before anyone calls the rebuild 
 
 ## Current Blockers
 
-- `PIPELINE_SHEET_ID` was empty during Phase 9 env upload.
-- `PRODUCTION_REVENUE_SHEET_ID` was empty during Phase 9 env upload.
-- UI UX design spec is pending, which blocks UI approval but does not block source readiness.
+- Source stream env is configured in staging for Sold, Pipeline, Production Revenue, and Float.
+- UI UX parity spec is locked for implementation guidance.
 - Source snapshots and stakeholder approvals are not complete.
+- `SOURCE_SNAPSHOT_FILE` must point at an importable read-only snapshot file with non-empty rows for all four truth streams before `SOURCE_SNAPSHOTS_READY` can pass.
+- `SOURCE_SNAPSHOT_STATUS=ready` is not accepted as a bypass. Snapshot readiness must be artifact-backed.
 
 ## Readiness Command
 
@@ -38,6 +39,14 @@ npm run source:approval:readiness
 ```
 
 The command prints a safe JSON report. It must not print secret values. It can return `status: "fail"` while Phase 10 is blocked.
+
+For artifact-backed snapshot approval, run it with:
+
+```bash
+SOURCE_SNAPSHOT_FILE=/path/to/source-snapshot.json npm run source:approval:readiness
+```
+
+The snapshot file must use the existing read-only source snapshot import shape. The gate only checks that the evidence exists and can be imported safely. It does not claim stakeholder approval or source accuracy by itself.
 
 ## Named Scenario Evidence
 

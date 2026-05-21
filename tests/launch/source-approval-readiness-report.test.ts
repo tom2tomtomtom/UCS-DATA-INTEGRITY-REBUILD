@@ -49,7 +49,7 @@ describe("Phase 10 source approval readiness report", () => {
   test("passes when all source streams, snapshots, UI spec, and stakeholder approval are ready", () => {
     const output = runReport({
       SOURCE_APPROVAL_ENV_TEXT: fullEnv,
-      SOURCE_SNAPSHOT_STATUS: "ready",
+      SOURCE_SNAPSHOT_FILE: writeSnapshotFile(fourStreamSnapshot()),
       UI_PARITY_SPEC_STATUS: "ready",
       STAKEHOLDER_APPROVAL_STATUS: "approved"
     });
@@ -69,7 +69,7 @@ describe("Phase 10 source approval readiness report", () => {
   test("blocks production cutover before approval", () => {
     const output = runReport({
       SOURCE_APPROVAL_ENV_TEXT: fullEnv,
-      SOURCE_SNAPSHOT_STATUS: "ready",
+      SOURCE_SNAPSHOT_FILE: writeSnapshotFile(fourStreamSnapshot()),
       UI_PARITY_SPEC_STATUS: "ready",
       PRODUCTION_CUTOVER_STATUS: "cut_over"
     });
@@ -79,6 +79,22 @@ describe("Phase 10 source approval readiness report", () => {
     expect(report.blockers).toEqual(
       expect.arrayContaining([expect.objectContaining({ code: "PRODUCTION_CUTOVER_BEFORE_APPROVAL" })])
     );
+  });
+
+  test("does not allow SOURCE_SNAPSHOT_STATUS ready to bypass snapshot evidence", () => {
+    const output = runReport({
+      SOURCE_APPROVAL_ENV_TEXT: fullEnv,
+      SOURCE_SNAPSHOT_STATUS: "ready",
+      UI_PARITY_SPEC_STATUS: "ready",
+      STAKEHOLDER_APPROVAL_STATUS: "approved"
+    });
+    const report = JSON.parse(output);
+
+    expect(report.status).toBe("fail");
+    expect(report.blockers).toEqual(
+      expect.arrayContaining([expect.objectContaining({ code: "SOURCE_SNAPSHOTS_READY_BLOCKED" })])
+    );
+    expect(report.summary.sourceSnapshotStatus).toBe("missing");
   });
 
   test("uses Railway-injected env instead of stale local env text", () => {
@@ -96,7 +112,7 @@ describe("Phase 10 source approval readiness report", () => {
       SOURCE_APPROVAL_ENV_FILE: envFile,
       RAILWAY_PROJECT_ID: "railway_project",
       RAILWAY_ENVIRONMENT_ID: "railway_environment",
-      SOURCE_SNAPSHOT_STATUS: "ready",
+      SOURCE_SNAPSHOT_FILE: writeSnapshotFile(fourStreamSnapshot()),
       UI_PARITY_SPEC_STATUS: "ready",
       STAKEHOLDER_APPROVAL_STATUS: "approved"
     });
@@ -108,6 +124,42 @@ describe("Phase 10 source approval readiness report", () => {
         expect.objectContaining({ name: "pipeline", status: "pass" }),
         expect.objectContaining({ name: "production_revenue", status: "pass" })
       ])
+    );
+  });
+
+  test("treats an importable four-stream source snapshot file as snapshot-ready", () => {
+    const snapshotFile = writeSnapshotFile(fourStreamSnapshot());
+    const output = runReport({
+      SOURCE_APPROVAL_ENV_TEXT: fullEnv,
+      SOURCE_SNAPSHOT_FILE: snapshotFile,
+      UI_PARITY_SPEC_STATUS: "ready",
+      STAKEHOLDER_APPROVAL_STATUS: "approved"
+    });
+    const report = JSON.parse(output);
+
+    expect(report.status).toBe("pass");
+    expect(report.checks).toEqual(
+      expect.arrayContaining([expect.objectContaining({ code: "SOURCE_SNAPSHOTS_READY", status: "pass" })])
+    );
+    expect(report.summary.sourceSnapshotStatus).toBe("ready");
+  });
+
+  test("does not mark incomplete source snapshots as ready", () => {
+    const snapshotFile = writeSnapshotFile({
+      ...fourStreamSnapshot(),
+      sources: fourStreamSnapshot().sources.filter((source) => source.source !== "production_revenue")
+    });
+    const output = runReport({
+      SOURCE_APPROVAL_ENV_TEXT: fullEnv,
+      SOURCE_SNAPSHOT_FILE: snapshotFile,
+      UI_PARITY_SPEC_STATUS: "ready",
+      STAKEHOLDER_APPROVAL_STATUS: "approved"
+    });
+    const report = JSON.parse(output);
+
+    expect(report.status).toBe("fail");
+    expect(report.blockers).toEqual(
+      expect.arrayContaining([expect.objectContaining({ code: "SOURCE_SNAPSHOTS_READY_BLOCKED" })])
     );
   });
 });
@@ -129,4 +181,65 @@ function envObjectFromText(text: string): Record<string, string> {
       return [key, value.join("=")];
     })
   );
+}
+
+function writeSnapshotFile(snapshot: unknown): string {
+  const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), "source-snapshot-"));
+  const filePath = path.join(tempDir, "snapshot.json");
+  fs.writeFileSync(filePath, JSON.stringify(snapshot, null, 2));
+  return filePath;
+}
+
+function fourStreamSnapshot() {
+  return {
+    snapshotId: "phase-10-four-stream-test",
+    capturedAt: "2026-05-21T00:00:00.000Z",
+    readOnly: true,
+    sources: [
+      sheetSource("fee_sheet", "Fee Tracker", "fee_tracker", "CLIENT SUMMARY"),
+      sheetSource("pipeline", "Pipeline", "pipeline_sheet", "Pipeline"),
+      sheetSource("production_revenue", "Production Revenue", "production_revenue_sheet", "PRODUCTION ONLY"),
+      {
+        source: "float",
+        mode: "manual_snapshot",
+        sourceLabel: "Float API",
+        rows: [
+          {
+            identity: {
+              stableSourceRowKey: "float:project:10480262",
+              sourceObjectId: "10480262"
+            },
+            raw: {
+              projectId: 10480262,
+              jobNumber: "UCS04154",
+              hours: 1
+            }
+          }
+        ]
+      }
+    ]
+  };
+}
+
+function sheetSource(source: string, sourceLabel: string, sourceDocumentId: string, sourceTab: string) {
+  return {
+    source,
+    mode: "manual_snapshot",
+    sourceLabel,
+    rows: [
+      {
+        identity: {
+          stableSourceRowKey: `${sourceDocumentId}:${sourceTab}:1`,
+          sourceDocumentId,
+          sourceTab,
+          sourceRowNumber: 1
+        },
+        raw: {
+          jobNumber: source === "pipeline" ? "TBC" : "UCS04154",
+          client: "Uncommon New Biz",
+          amount: 1
+        }
+      }
+    ]
+  };
 }

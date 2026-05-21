@@ -3,6 +3,7 @@
 import fs from "node:fs";
 
 import { buildSourceApprovalReadinessReport } from "./lib/source-approval-readiness-report.mjs";
+import { buildSourceSnapshotImportPlan } from "./lib/source-import-report.mjs";
 
 const envText = readEnvText();
 
@@ -12,7 +13,7 @@ const report = buildSourceApprovalReadinessReport({
     rebuildSupabaseRef: "nxrzhwqsswhjgeouxsyr"
   },
   uiSpecStatus: process.env.UI_PARITY_SPEC_STATUS ?? "pending",
-  sourceSnapshotStatus: process.env.SOURCE_SNAPSHOT_STATUS ?? "missing",
+  sourceSnapshotStatus: resolveSourceSnapshotStatus(),
   stakeholderApprovalStatus: process.env.STAKEHOLDER_APPROVAL_STATUS ?? "not_approved",
   productionCutoverStatus: process.env.PRODUCTION_CUTOVER_STATUS ?? "not_cut_over"
 });
@@ -50,4 +51,23 @@ function readEnvText() {
   }
 
   return keys.map((key) => `${key}=${process.env[key] ?? ""}`).join("\n");
+}
+
+function resolveSourceSnapshotStatus() {
+  if (process.env.SOURCE_SNAPSHOT_FILE !== undefined && process.env.SOURCE_SNAPSHOT_FILE.trim() !== "") {
+    try {
+      const snapshot = JSON.parse(fs.readFileSync(process.env.SOURCE_SNAPSHOT_FILE, "utf8"));
+      const plan = buildSourceSnapshotImportPlan(snapshot);
+      const requiredSources = ["fee_sheet", "pipeline", "production_revenue", "float"];
+      const hasAllStreams = requiredSources.every((source) => (plan.report.bySource[source]?.rawRows ?? 0) > 0);
+
+      return hasAllStreams ? "ready" : "missing";
+    } catch {
+      return "missing";
+    }
+  }
+
+  return process.env.SOURCE_SNAPSHOT_STATUS === undefined || process.env.SOURCE_SNAPSHOT_STATUS === "ready"
+    ? "missing"
+    : process.env.SOURCE_SNAPSHOT_STATUS;
 }
