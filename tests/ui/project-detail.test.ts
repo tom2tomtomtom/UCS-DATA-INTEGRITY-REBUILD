@@ -18,6 +18,10 @@ describe("P6-D project detail", () => {
 
     expect(html).toContain("British Airways / UCS04787");
     expect(html).toContain("Design");
+    expect(html).toContain("Generated 20 May 2026");
+    expect(html).toContain("Project evidence checklist");
+    expect(html).toContain("Visible contract rows");
+    expect(html).toContain("Source trace refs");
     expect(html).toContain("£183,947");
     expect(html).toContain("420h");
     expect(html).toContain("861h");
@@ -31,6 +35,11 @@ describe("P6-D project detail", () => {
     expect(html).toContain("Profitability by Role");
     expect(html).toContain("Senior Designer");
     expect(html).toContain("Float Trace");
+    expect(html).toContain("Float trace reconciliation");
+    expect(html).toContain("Dashboard visible Float");
+    expect(html).toContain("Trace visible rows");
+    expect(html).toContain("Raw diagnostic rows");
+    expect(html).toContain("1,597.5h");
     expect(html).toContain("Float project");
     expect(html).toContain("Task");
     expect(html).toContain("Person");

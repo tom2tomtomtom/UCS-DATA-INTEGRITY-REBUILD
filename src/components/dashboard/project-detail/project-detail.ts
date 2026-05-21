@@ -49,10 +49,17 @@ export function ProjectDetail({
     React.createElement(
       "div",
       { className: "detail-heading" },
-      React.createElement("div", null, React.createElement("h2", null, `${row.canonicalClient ?? row.sourceClient ?? "Unknown"} / ${jobNumber}`), scopeLine(contract)),
+      React.createElement(
+        "div",
+        null,
+        React.createElement("h2", null, `${row.canonicalClient ?? row.sourceClient ?? "Unknown"} / ${jobNumber}`),
+        scopeLine(contract),
+        React.createElement("span", { className: "status-pill" }, `Generated ${formatGeneratedAt(contract.generatedAt)}`)
+      ),
       React.createElement("a", { href: projectsBackHref(contract) }, "Back to Projects")
     ),
     React.createElement(TimeFilterControls, { basePath: `/dashboard/projects/${jobNumber}`, scope: contract.scope }),
+    detailChecklist(row, matchingRows, checks),
     matchingRows.length > 1 ? duplicateRowsPanel(matchingRows) : null,
     React.createElement(
       "div",
@@ -79,6 +86,7 @@ export function ProjectDetail({
       : roleTable(detail.roleRows),
     React.createElement("h3", { id: "float-trace" }, "Float Trace"),
     React.createElement("p", { className: "detail-scope" }, "Trace rows come from display-contract Float evidence. Raw, cache, and visible rows stay labelled by source layer."),
+    floatTraceSummary(row, detail.floatTraceRows),
     detail.floatTraceRows.length === 0
       ? React.createElement("p", null, "No Float trace rows available for this project in the active scope.")
       : floatTraceTable(detail.floatTraceRows),
@@ -134,6 +142,44 @@ function duplicateRowsPanel(rows: readonly DashboardProjectRow[]) {
   );
 }
 
+function detailChecklist(
+  row: DashboardProjectRow,
+  matchingRows: readonly DashboardProjectRow[],
+  checks: readonly ReconciliationCheck[]
+) {
+  return React.createElement(
+    "section",
+    { className: "detail-checklist", "aria-label": "Project evidence checklist" },
+    checklistItem("Visible contract rows", String(matchingRows.length)),
+    checklistItem("Source trace refs", String(row.sourceTrace.length)),
+    checklistItem("Float trace rows", String(row.detail?.floatTraceRows.length ?? 0)),
+    checklistItem("Warnings", String(row.warnings.length + checks.length))
+  );
+}
+
+function checklistItem(label: string, value: string) {
+  return React.createElement(
+    "article",
+    { className: "metric-card", key: label },
+    React.createElement("span", null, label),
+    React.createElement("strong", null, value)
+  );
+}
+
+function floatTraceSummary(row: DashboardProjectRow, traceRows: readonly ProjectFloatTraceRow[]) {
+  const visibleTraceHours = sumTraceHours(traceRows.filter((traceRow) => traceRow.flags.includes("float_visible")));
+  const rawTraceHours = sumTraceHours(traceRows.filter((traceRow) => traceRow.flags.includes("float_raw")));
+  const dashboardVisibleHours = row.totals.floatHours;
+
+  return React.createElement(
+    "div",
+    { className: "float-trace-summary", "aria-label": "Float trace reconciliation" },
+    checklistItem("Dashboard visible Float", formatMetricValue(dashboardVisibleHours)),
+    checklistItem("Trace visible rows", formatMetricValue(visibleTraceHours)),
+    checklistItem("Raw diagnostic rows", formatMetricValue(rawTraceHours))
+  );
+}
+
 function combineProjectRows(rows: readonly DashboardProjectRow[]): DashboardProjectRow {
   const firstRow = rows[0];
   if (firstRow === undefined) {
@@ -148,6 +194,17 @@ function combineProjectRows(rows: readonly DashboardProjectRow[]): DashboardProj
     sourceTrace: rows.flatMap((row) => row.sourceTrace.map((sourceRef) => ({ ...sourceRef }))),
     detail: mergeDetail(rows.map((row) => row.detail ?? emptyDetail()))
   };
+}
+
+function formatGeneratedAt(value: string): string {
+  return new Intl.DateTimeFormat("en-GB", {
+    day: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+    month: "short",
+    timeZone: "UTC",
+    year: "numeric"
+  }).format(new Date(value));
 }
 
 function cloneTotals(totals: DashboardTotals): DashboardTotals {
