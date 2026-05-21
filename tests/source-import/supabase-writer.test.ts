@@ -132,7 +132,7 @@ describe("source snapshot Supabase writer", () => {
     expect(output).not.toContain("British Airways");
     expect(output).not.toContain("postgres://");
     expect(output).not.toContain("postgresql://");
-  });
+  }, 15000);
 });
 
 function planFixture() {

@@ -3,6 +3,8 @@ export function buildSourceApprovalReadinessReport({
   expected,
   uiSpecStatus = "pending",
   sourceSnapshotStatus = "missing",
+  displayFactStatus = "not_checked",
+  displayFactWarnings = [],
   namedScenarioStatus = "not_checked",
   namedScenarioWarnings = [],
   stakeholderApprovalStatus = "not_approved",
@@ -67,6 +69,8 @@ export function buildSourceApprovalReadinessReport({
     failMessage: "Source snapshots are not ready. Do not ask stakeholders to approve source accuracy yet."
   }));
 
+  checks.push(displayFactCheck(displayFactStatus, displayFactWarnings));
+
   checks.push(namedScenarioCheck(namedScenarioStatus, namedScenarioWarnings));
 
   checks.push(
@@ -106,12 +110,33 @@ export function buildSourceApprovalReadinessReport({
       sourceStreamsBlocked: sourceStreams.filter((stream) => stream.check.status === "fail").map((stream) => stream.name),
       uiSpecStatus,
       sourceSnapshotStatus,
+      displayFactStatus,
+      displayFactWarnings,
       namedScenarioStatus,
       namedScenarioWarnings,
       stakeholderApprovalStatus,
       productionCutoverStatus
     }
   };
+}
+
+function displayFactCheck(status, warnings) {
+  if (status === "ready") {
+    return pass("DISPLAY_FACTS_READY", "Imported source rows are parser-ready for dashboard display facts.");
+  }
+
+  if (status === "blocked") {
+    const warningList = Array.isArray(warnings) && warnings.length > 0 ? warnings.join(", ") : "unknown parser blockers";
+    return fail(
+      "DISPLAY_FACTS_NOT_READY",
+      `Imported source rows are archived but not yet parser-ready for dashboard display facts: ${warningList}.`
+    );
+  }
+
+  return warn(
+    "DISPLAY_FACTS_NOT_CHECKED",
+    "Imported source rows have not been checked for parser readiness."
+  );
 }
 
 function parseEnv(envText) {

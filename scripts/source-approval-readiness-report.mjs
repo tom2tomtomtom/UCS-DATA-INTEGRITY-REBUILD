@@ -14,6 +14,7 @@ import {
 const envText = readEnvText();
 const sourceSnapshot = readSourceSnapshot();
 const sourceSnapshotStatus = resolveSourceSnapshotStatus(sourceSnapshot);
+const displayFactReadiness = resolveDisplayFactReadiness(sourceSnapshot, sourceSnapshotStatus);
 const namedScenarioReadiness = resolveNamedScenarioReadiness(sourceSnapshot, sourceSnapshotStatus);
 
 const report = buildSourceApprovalReadinessReport({
@@ -23,6 +24,8 @@ const report = buildSourceApprovalReadinessReport({
   },
   uiSpecStatus: process.env.UI_PARITY_SPEC_STATUS ?? "pending",
   sourceSnapshotStatus,
+  displayFactStatus: displayFactReadiness.status,
+  displayFactWarnings: displayFactReadiness.warnings,
   namedScenarioStatus: namedScenarioReadiness.status,
   namedScenarioWarnings: namedScenarioReadiness.warnings,
   stakeholderApprovalStatus: process.env.STAKEHOLDER_APPROVAL_STATUS ?? "not_approved",
@@ -130,4 +133,76 @@ function resolveNamedScenarioReadiness(snapshot, sourceSnapshotStatus) {
   } catch {
     return { status: "not_checked", warnings: [] };
   }
+}
+
+function resolveDisplayFactReadiness(snapshot, sourceSnapshotStatus) {
+  if (snapshot === undefined || sourceSnapshotStatus !== "ready") {
+    return { status: "not_checked", warnings: [] };
+  }
+
+  const warnings = parserReadinessWarnings(snapshot);
+
+  return warnings.length === 0
+    ? { status: "ready", warnings: [] }
+    : { status: "blocked", warnings };
+}
+
+function parserReadinessWarnings(snapshot) {
+  const sources = new Map((snapshot.sources ?? []).map((source) => [source.source, source]));
+  const warnings = [];
+
+  if (!hasFeeSheetDisplayRows(sources.get("fee_sheet"))) {
+    warnings.push("fee_sheet rows are archived but linked fee-sheet CLIENT SUMMARY or V-tab display rows are not parser-ready");
+  }
+
+  if (!hasPipelineDisplayRows(sources.get("pipeline"))) {
+    warnings.push("pipeline rows are archived but monthly pipeline cells are not normalised into parser-ready month facts");
+  }
+
+  if (!hasProductionRevenueDisplayRows(sources.get("production_revenue"))) {
+    warnings.push("production revenue rows are archived but monthly revenue cells are not normalised into parser-ready month facts");
+  }
+
+  if (!hasFloatDisplayRows(sources.get("float"))) {
+    warnings.push("Float rows are archived but live API task/project/person rows are not shaped into parser-ready expanded Float facts");
+  }
+
+  return warnings;
+}
+
+function hasFeeSheetDisplayRows(source) {
+  return hasRow(source, (raw) =>
+    ["client_summary", "v_tab", "source_summary"].includes(raw.rowKind) &&
+    (raw.soldFee !== undefined || raw.soldHours !== undefined)
+  );
+}
+
+function hasPipelineDisplayRows(source) {
+  return hasRow(source, (raw) => raw.month !== undefined && raw.amountGbp !== undefined);
+}
+
+function hasProductionRevenueDisplayRows(source) {
+  return hasRow(source, (raw) =>
+    raw.month !== undefined &&
+    (raw.amount !== undefined || raw.revenue !== undefined || raw.productionRevenue !== undefined)
+  );
+}
+
+function hasFloatDisplayRows(source) {
+  return hasRow(source, (raw) =>
+    raw.objectType === "task" &&
+    raw.floatProjectId !== undefined &&
+    raw.startDate !== undefined &&
+    raw.endDate !== undefined &&
+    raw.month !== undefined &&
+    raw.hours !== undefined
+  );
+}
+
+function hasRow(source, predicate) {
+  return Array.isArray(source?.rows) && source.rows.some((row) => isRecord(row.raw) && predicate(row.raw));
+}
+
+function isRecord(value) {
+  return value !== null && typeof value === "object" && !Array.isArray(value);
 }

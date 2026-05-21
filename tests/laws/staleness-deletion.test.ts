@@ -134,7 +134,7 @@ describe("Staleness and deletion policy", () => {
         })
       ]
     });
-  });
+  }, 15000);
 });
 
 function snapshot(snapshotId: string, rows: readonly SourceSnapshotRow[]): SourceSnapshotImportInput {

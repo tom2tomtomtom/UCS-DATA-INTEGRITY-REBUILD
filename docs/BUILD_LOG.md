@@ -25,6 +25,12 @@ Verification:
 - `npm test -- tests/runtime/dashboard-contract-provider.test.ts tests/laws/single-display-contract.test.ts tests/chat/orchestrator.test.ts` passed,
 - `npm run typecheck` passed.
 
+Additional approval guard:
+
+- added `DISPLAY_FACTS_NOT_READY` to the source approval readiness report,
+- real full snapshot now reports source streams as ready but display facts as blocked,
+- this prevents archive counts from being mistaken for a source-backed rendered dashboard.
+
 Current blockers:
 
 - parsed facts and the display contract are still not generated from the imported source archive,

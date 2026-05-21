@@ -58,10 +58,14 @@ describe("Phase 10 source approval readiness report", { timeout: 15000 }, () => 
 
     expect(report.status).toBe("fail");
     expect(report.blockers).toEqual(
-      expect.arrayContaining([expect.objectContaining({ code: "NAMED_SCENARIOS_NOT_READY" })])
+      expect.arrayContaining([
+        expect.objectContaining({ code: "DISPLAY_FACTS_NOT_READY" }),
+        expect.objectContaining({ code: "NAMED_SCENARIOS_NOT_READY" })
+      ])
     );
     expect(report.summary).toMatchObject({
       sourceSnapshotStatus: "ready",
+      displayFactStatus: "blocked",
       namedScenarioStatus: "warn"
     });
     expect(report.sources).toEqual(
@@ -85,7 +89,10 @@ describe("Phase 10 source approval readiness report", { timeout: 15000 }, () => 
 
     expect(report.status).toBe("fail");
     expect(report.blockers).toEqual(
-      expect.arrayContaining([expect.objectContaining({ code: "PRODUCTION_CUTOVER_BEFORE_APPROVAL" })])
+      expect.arrayContaining([
+        expect.objectContaining({ code: "DISPLAY_FACTS_NOT_READY" }),
+        expect.objectContaining({ code: "PRODUCTION_CUTOVER_BEFORE_APPROVAL" })
+      ])
     );
   });
 
@@ -128,7 +135,10 @@ describe("Phase 10 source approval readiness report", { timeout: 15000 }, () => 
 
     expect(report.status).toBe("fail");
     expect(report.blockers).toEqual(
-      expect.arrayContaining([expect.objectContaining({ code: "NAMED_SCENARIOS_NOT_READY" })])
+      expect.arrayContaining([
+        expect.objectContaining({ code: "DISPLAY_FACTS_NOT_READY" }),
+        expect.objectContaining({ code: "NAMED_SCENARIOS_NOT_READY" })
+      ])
     );
     expect(report.sources).toEqual(
       expect.arrayContaining([
@@ -152,10 +162,12 @@ describe("Phase 10 source approval readiness report", { timeout: 15000 }, () => 
     expect(report.checks).toEqual(
       expect.arrayContaining([
         expect.objectContaining({ code: "SOURCE_SNAPSHOTS_READY", status: "pass" }),
+        expect.objectContaining({ code: "DISPLAY_FACTS_NOT_READY", status: "fail" }),
         expect.objectContaining({ code: "NAMED_SCENARIOS_NOT_READY", status: "fail" })
       ])
     );
     expect(report.summary.sourceSnapshotStatus).toBe("ready");
+    expect(report.summary.displayFactStatus).toBe("blocked");
     expect(report.summary.namedScenarioStatus).toBe("warn");
   });
 
@@ -171,6 +183,7 @@ describe("Phase 10 source approval readiness report", { timeout: 15000 }, () => 
       },
       uiSpecStatus: "ready",
       sourceSnapshotStatus: "ready",
+      displayFactStatus: "ready",
       namedScenarioStatus: "pass",
       stakeholderApprovalStatus: "approved",
       productionCutoverStatus: "not_cut_over"
@@ -178,7 +191,32 @@ describe("Phase 10 source approval readiness report", { timeout: 15000 }, () => 
 
     expect(report.status).toBe("pass");
     expect(report.checks).toEqual(
-      expect.arrayContaining([expect.objectContaining({ code: "NAMED_SCENARIOS_READY", status: "pass" })])
+      expect.arrayContaining([
+        expect.objectContaining({ code: "DISPLAY_FACTS_READY", status: "pass" }),
+        expect.objectContaining({ code: "NAMED_SCENARIOS_READY", status: "pass" })
+      ])
+    );
+  });
+
+  test("blocks source approval when archived rows are not parser-ready display facts", () => {
+    const output = runReport({
+      SOURCE_APPROVAL_ENV_TEXT: fullEnv,
+      SOURCE_SNAPSHOT_FILE: writeSnapshotFile(fourStreamSnapshotWithLiveFloatManifest()),
+      UI_PARITY_SPEC_STATUS: "ready",
+      STAKEHOLDER_APPROVAL_STATUS: "approved"
+    });
+    const report = JSON.parse(output);
+
+    expect(report.blockers).toEqual(
+      expect.arrayContaining([expect.objectContaining({ code: "DISPLAY_FACTS_NOT_READY" })])
+    );
+    expect(report.summary.displayFactWarnings).toEqual(
+      expect.arrayContaining([
+        expect.stringContaining("fee_sheet rows are archived"),
+        expect.stringContaining("pipeline rows are archived"),
+        expect.stringContaining("production revenue rows are archived"),
+        expect.stringContaining("Float rows are archived")
+      ])
     );
   });
 

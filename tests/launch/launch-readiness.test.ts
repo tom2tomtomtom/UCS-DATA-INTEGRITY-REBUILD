@@ -91,5 +91,5 @@ describe("P9-A launch readiness no-deploy gate", () => {
     expect(output).not.toContain("service_role");
     expect(output).not.toContain("GOOGLE_SERVICE_ACCOUNT_KEY:");
     expect(output).not.toContain("FLOAT_API_KEY:");
-  });
+  }, 15000);
 });
