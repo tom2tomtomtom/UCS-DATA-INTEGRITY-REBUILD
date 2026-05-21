@@ -2,6 +2,7 @@ import React from "react";
 
 import type { DashboardDisplayContract, DashboardTotals, MetricValue, RollupRow } from "../../../lib";
 import { scopedHref } from "../../../lib";
+import { TimeFilterControls } from "../time-filter-controls";
 
 const heroMetrics = [
   ["Total sold", "soldFee"],
@@ -138,7 +139,8 @@ function soldAllocatedHeader(contract: DashboardDisplayContract) {
       viewToggle("By Month", "month", contract),
       viewToggle("By Role", "role", contract),
       viewToggle("By Client", "client", contract)
-    )
+    ),
+    React.createElement(TimeFilterControls, { basePath: "/dashboard", scope: contract.scope })
   );
 }
 

@@ -56,6 +56,11 @@ describe("P6-B dashboard home rollups", () => {
     expect(html).toContain("Sheet health - 8 source checks need attention");
     expect(html).toContain("Sold vs Allocated");
     expect(html).toContain("By Department");
+    expect(html).toContain("Quick");
+    expect(html).toContain("Full year");
+    expect(html).toContain("Q1");
+    expect(html).toContain("Month");
+    expect(html).toContain("Custom");
     expect(html).toContain("Data coverage");
     expect(html).toContain("Float sync warnings");
     expect(html).toContain("Why is this lower than Float?");

@@ -496,6 +496,40 @@ select {
   color: white;
 }
 
+.time-filter-controls {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 5px;
+}
+
+.time-filter-label {
+  margin-left: 8px;
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.time-filter-controls a,
+.time-filter-controls input {
+  min-height: 32px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: var(--panel);
+  padding: 6px 8px;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.time-filter-controls a.active,
+.time-filter-controls a[aria-current="page"] {
+  border-color: var(--ink);
+  background: var(--ink);
+  color: white;
+}
+
 .approval-state-card strong {
   font-size: 18px;
   letter-spacing: 0;

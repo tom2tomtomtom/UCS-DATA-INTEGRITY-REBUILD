@@ -1,8 +1,9 @@
 import React from "react";
 
-import type { UiSearchParams } from "../../../lib/ui/scope-params";
+import { scopeFromSearchParams, type UiSearchParams } from "../../../lib/ui/scope-params";
 import type { ProjectsBreakdownView, ProjectsViewState } from "../../../lib/ui/projects-view-state";
 import { projectsHref } from "../../../lib/ui/projects-view-state";
+import { TimeFilterControls } from "../time-filter-controls";
 
 export const PROJECTS_SEARCH_PLACEHOLDER = "Search by job number or client name...";
 
@@ -64,6 +65,7 @@ export function ProjectsControls({
         )
       )
     ),
+    React.createElement(TimeFilterControls, { basePath: "/dashboard/projects", scope: scopeFromParams(params) }),
     React.createElement(
       "div",
       { className: "projects-mutation-bars", "aria-label": "Read-only mutation handoff" },
@@ -102,6 +104,10 @@ export function ProjectsBreakdownControls({
       )
     )
   );
+}
+
+function scopeFromParams(params: UiSearchParams) {
+  return scopeFromSearchParams(params);
 }
 
 function presentationLink(
