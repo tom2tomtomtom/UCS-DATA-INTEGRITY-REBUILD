@@ -2,6 +2,7 @@ import type {
   CanonFact,
   DashboardScope,
   MetricValue,
+  FloatFact,
   PipelineFact,
   ProductionRevenueFact,
   SoldFact,
@@ -18,6 +19,7 @@ export type RollupDimension = "department" | "role" | "client" | "month";
 export type BuildRollupsInput = {
   readonly scope: DashboardScope;
   readonly soldFacts: readonly SoldFact[];
+  readonly floatFacts?: readonly FloatFact[];
   readonly pipelineFacts?: readonly PipelineFact[];
   readonly productionRevenueFacts?: readonly ProductionRevenueFact[];
 };
@@ -141,39 +143,67 @@ export function scopedHref(
 
 function buildRollupsForDimension(input: BuildRollupsInput, dimension: RollupDimension): RollupRow[] {
   const scopedSoldFacts = filterFactsByScope(input.soldFacts, input.scope).filter((fact) => fact.isAdditive);
-  const grouped = groupSoldFactsByDimension(scopedSoldFacts, dimension);
+  const scopedFloatFacts = filterFactsByScope(input.floatFacts ?? [], input.scope).filter(
+    (fact) => fact.isAdditive && fact.sourceLayer === "float_visible"
+  );
+  const scopedPipelineFacts = filterFactsByScope(input.pipelineFacts ?? [], input.scope).filter((fact) => fact.isAdditive);
+  const scopedProductionRevenueFacts = filterFactsByScope(input.productionRevenueFacts ?? [], input.scope).filter(
+    (fact) => fact.isAdditive
+  );
+  const grouped = groupLabelsByDimension(
+    dimension,
+    scopedSoldFacts,
+    scopedFloatFacts,
+    dimensionSupportsPipelineAndProduction(dimension) ? scopedPipelineFacts : [],
+    dimensionSupportsPipelineAndProduction(dimension) ? scopedProductionRevenueFacts : []
+  );
 
-  return [...grouped.entries()]
-    .sort(([left], [right]) => left.localeCompare(right))
-    .map(([label, soldFacts]) => buildRollupRow(input, dimension, label, soldFacts));
+  return [...grouped]
+    .sort((left, right) => left.localeCompare(right))
+    .map((label) =>
+      buildRollupRow(
+        input,
+        dimension,
+        label,
+        factsForDimensionLabel(scopedSoldFacts, dimension, label),
+        factsForDimensionLabel(scopedFloatFacts, dimension, label)
+      )
+    );
 }
 
-function groupSoldFactsByDimension(
-  soldFacts: readonly SoldFact[],
-  dimension: RollupDimension
-): Map<string, SoldFact[]> {
-  const grouped = new Map<string, SoldFact[]>();
+function groupLabelsByDimension(
+  dimension: RollupDimension,
+  ...factGroups: readonly (readonly CanonFact[])[]
+): Set<string> {
+  const grouped = new Set<string>();
 
-  for (const fact of soldFacts) {
+  for (const fact of factGroups.flat()) {
     const label = labelForDimension(fact, dimension);
 
     if (label === undefined || label.trim() === "") {
       continue;
     }
 
-    const facts = grouped.get(label) ?? [];
-    facts.push(fact);
-    grouped.set(label, facts);
+    grouped.add(label);
   }
 
   return grouped;
+}
+
+function factsForDimensionLabel<TFact extends CanonFact>(
+  facts: readonly TFact[],
+  dimension: RollupDimension,
+  label: string
+): TFact[] {
+  return facts.filter((fact) => labelForDimension(fact, dimension) === label);
 }
 
 function buildRollupRow(
   input: BuildRollupsInput,
   dimension: RollupDimension,
   label: string,
-  soldFacts: readonly SoldFact[]
+  soldFacts: readonly SoldFact[],
+  floatFacts: readonly FloatFact[]
 ): RollupRow {
   const scope = scopeForRollupDrilldown(input.scope, dimension, label);
   const pipelineFacts = dimensionSupportsPipelineAndProduction(dimension)
@@ -187,12 +217,7 @@ function buildRollupRow(
     soldHours: sumHoursMetric(soldFacts, "hours"),
     pipelineFee: pipelineTotalFor(dimension, scope, pipelineFacts),
     productionRevenue: productionRevenueTotalFor(dimension, scope, productionRevenueFacts),
-    floatHours: unsupportedTotal(
-      "floatHours",
-      scope,
-      "float",
-      "Float rollup totals are not part of the P5-C rollup helper contract."
-    )
+    floatHours: sumHoursMetric(floatFacts, "hours")
   };
 
   return {
@@ -201,8 +226,8 @@ function buildRollupRow(
     label,
     totals,
     unsupported: unsupportedFromTotals(totals),
-    warnings: collectWarnings(soldFacts, pipelineFacts, productionRevenueFacts),
-    sourceTrace: collectTrace(soldFacts, pipelineFacts, productionRevenueFacts)
+    warnings: collectWarnings(soldFacts, floatFacts, pipelineFacts, productionRevenueFacts),
+    sourceTrace: collectTrace(soldFacts, floatFacts, pipelineFacts, productionRevenueFacts)
   };
 }
 
@@ -244,9 +269,9 @@ function dimensionSupportsPipelineAndProduction(dimension: RollupDimension): boo
   return dimension === "client" || dimension === "month";
 }
 
-function labelForDimension(fact: SoldFact, dimension: RollupDimension): string | undefined {
-  if (dimension === "department") return fact.department;
-  if (dimension === "role") return fact.role;
+function labelForDimension(fact: CanonFact, dimension: RollupDimension): string | undefined {
+  if (dimension === "department") return fact.department ?? "_unmapped";
+  if (dimension === "role") return fact.role ?? fact.department ?? "_unmapped";
   if (dimension === "client") return fact.canonicalClient ?? fact.client ?? fact.sourceClient;
   return fact.month ?? fact.from?.slice(0, 7) ?? fact.to?.slice(0, 7);
 }

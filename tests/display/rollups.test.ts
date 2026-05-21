@@ -2,6 +2,7 @@ import { describe, expect, test } from "vitest";
 
 import type {
   DashboardScope,
+  FloatFact,
   PipelineFact,
   ProductionRevenueFact,
   SoldFact
@@ -136,6 +137,50 @@ function productionRevenueFact(): ProductionRevenueFact {
   };
 }
 
+function floatFact(input: {
+  readonly id: string;
+  readonly rawRowId: string;
+  readonly jobNumber: string;
+  readonly client: string;
+  readonly floatHours: number;
+  readonly office?: "LDN" | "USA" | "UCX" | "UNKNOWN";
+  readonly month?: string;
+  readonly department?: string;
+  readonly role?: string;
+  readonly sourceLayer?: FloatFact["sourceLayer"];
+}): FloatFact {
+  return {
+    id: input.id,
+    source: "float",
+    sourceLayer: input.sourceLayer ?? "float_visible",
+    rawRowIds: [input.rawRowId],
+    batchId: "batch",
+    jobNumber: input.jobNumber,
+    floatProjectId: `float-${input.jobNumber}`,
+    client: input.client,
+    canonicalClient: input.client,
+    projectName: `${input.client} Float project`,
+    office: input.office ?? "LDN",
+    month: input.month ?? "2026-02",
+    ...(input.department !== undefined ? { department: input.department } : {}),
+    ...(input.role !== undefined ? { role: input.role } : {}),
+    hours: hours(input.floatHours),
+    activeState: "active",
+    allocationClass: "allocated",
+    isAdditive: true,
+    confidence: "high",
+    warnings: [],
+    trace: [
+      {
+        source: "float",
+        sourceLayer: input.sourceLayer ?? "float_visible",
+        batchId: "batch",
+        rawRowId: input.rawRowId
+      }
+    ]
+  };
+}
+
 describe("P5-C display rollups", () => {
   test("keeps the LDN Q1 Design rollup and Projects drilldown on one contract scope", () => {
     const rollups = buildDepartmentRollups({
@@ -205,6 +250,64 @@ describe("P5-C display rollups", () => {
     expect(designRollup?.sourceTrace.map((ref) => ref.rawRowId)).toEqual(["design-a", "design-b"]);
   });
 
+  test("carries visible Float hours into department and role rollups", () => {
+    const sold = soldFact({
+      id: "sold:design",
+      rawRowId: "design",
+      jobNumber: "UCS04787",
+      client: "Acme Studios",
+      amountGbp: 100,
+      soldHours: 10,
+      department: "Design",
+      role: "Senior Designer"
+    });
+    const visibleFloat = floatFact({
+      id: "float:visible",
+      rawRowId: "float-visible",
+      jobNumber: "UCS04787",
+      client: "Acme Studios",
+      floatHours: 32,
+      department: "Design",
+      role: "Senior Designer"
+    });
+    const rawFloat = floatFact({
+      id: "float:raw",
+      rawRowId: "float-raw",
+      jobNumber: "UCS04787",
+      client: "Acme Studios",
+      floatHours: 200,
+      department: "Design",
+      role: "Senior Designer",
+      sourceLayer: "float_raw"
+    });
+
+    const departmentRollup = buildDepartmentRollups({
+      scope: q1LdnScope,
+      soldFacts: [sold],
+      floatFacts: [visibleFloat, rawFloat]
+    })[0];
+    const roleRollup = buildRoleRollups({
+      scope: q1LdnScope,
+      soldFacts: [sold],
+      floatFacts: [visibleFloat, rawFloat]
+    })[0];
+
+    expect(departmentRollup?.totals.floatHours).toMatchObject({
+      kind: "hours",
+      value: 32
+    });
+    expect(roleRollup?.totals.floatHours).toMatchObject({
+      kind: "hours",
+      value: 32
+    });
+    expect(departmentRollup?.unsupported.map((metric) => metric.metric).sort()).toEqual([
+      "pipelineFee",
+      "productionRevenue"
+    ]);
+    expect(departmentRollup?.sourceTrace.map((ref) => ref.rawRowId)).toContain("float-visible");
+    expect(departmentRollup?.sourceTrace.map((ref) => ref.rawRowId)).not.toContain("float-raw");
+  });
+
   test("keeps pipeline and production revenue unsupported for department and role slices", () => {
     const sold = soldFact({
       id: "sold:design",
@@ -244,7 +347,6 @@ describe("P5-C display rollups", () => {
         displayLabel: "Unsupported"
       });
       expect(rollup?.unsupported.map((metric) => metric.metric).sort()).toEqual([
-        "floatHours",
         "pipelineFee",
         "productionRevenue"
       ]);

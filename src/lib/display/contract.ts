@@ -206,6 +206,7 @@ export function buildDashboardDisplayContract(
   const rollups = buildDisplayRollups({
     scope: input.scope,
     soldFacts,
+    floatFacts,
     pipelineFacts,
     productionRevenueFacts
   });
