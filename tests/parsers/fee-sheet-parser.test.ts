@@ -172,6 +172,113 @@ describe("P3-B fee sheet parser", () => {
       "raw_linked_first_tab_float_id"
     ]);
   });
+
+  test("parses only main linked V-tab subtotal rows into additive sold facts", () => {
+    const result = parseArchivedFeeSheetRows([
+      linkedFirstTabFloatIdRow(),
+      linkedVTabRow("raw_v1_title", "V1", 3, ["V1 FEE CALCULATOR", "", "", "MAIN FEE SHEET"]),
+      linkedVTabRow("raw_v1_group", "V1", 9, [
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "SOLD",
+        "",
+        "",
+        "ALLOCATED",
+        "",
+        "",
+        "SOLD"
+      ]),
+      linkedVTabRow("raw_v1_months", "V1", 10, [
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "01-Jan-26",
+        "",
+        "",
+        "01-Jan-26",
+        "",
+        "",
+        "01-Feb-26"
+      ]),
+      linkedVTabRow("raw_v1_headers", "V1", 11, [
+        "OFFICE",
+        "ROLE",
+        "NAME(S)",
+        "DAY RATE:",
+        "PHASE",
+        "",
+        "%",
+        "FEE P/M",
+        "HOURS",
+        "%",
+        "FEE P/M",
+        "HOURS",
+        "%",
+        "FEE P/M",
+        "HOURS"
+      ]),
+      linkedVTabRow("raw_v1_strategy_subtotal", "V1", 64, [
+        "SUB-TOTAL 01 STRATEGY",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "50%",
+        "1,000",
+        "12",
+        "99%",
+        "999",
+        "999",
+        "25%",
+        "250",
+        "3"
+      ]),
+      linkedVTabRow("raw_v2_title", "V2", 3, ["V2 FEE CALCULATOR", "", "", "ASSIGN AS MAIN FEE SHEET"]),
+      linkedVTabRow("raw_v2_group", "V2", 9, ["", "", "", "", "", "", "SOLD"]),
+      linkedVTabRow("raw_v2_months", "V2", 10, ["", "", "", "", "", "", "01-Jan-26"]),
+      linkedVTabRow("raw_v2_headers", "V2", 11, ["OFFICE", "ROLE", "NAME(S)", "DAY RATE:", "PHASE", "", "%", "FEE P/M", "HOURS"]),
+      linkedVTabRow("raw_v2_strategy_subtotal", "V2", 64, ["SUB-TOTAL 01 STRATEGY", "", "", "", "", "", "50%", "9999", "99"])
+    ]);
+
+    expect(result.facts.map((fact) => ({
+      sourceTab: fact.trace.find((sourceRef) => sourceRef.rawRowId === "raw_v1_strategy_subtotal")?.sourceTab,
+      month: fact.month,
+      department: fact.department,
+      soldFee: moneyAmount(fact),
+      soldHours: hoursValue(fact),
+      isAdditive: fact.isAdditive
+    }))).toEqual([
+      {
+        sourceTab: "V1",
+        month: "2026-01",
+        department: "Strategy",
+        soldFee: 1000,
+        soldHours: 12,
+        isAdditive: true
+      },
+      {
+        sourceTab: "V1",
+        month: "2026-02",
+        department: "Strategy",
+        soldFee: 250,
+        soldHours: 3,
+        isAdditive: true
+      }
+    ]);
+    expect(result.facts.every((fact) => fact.feeSheetFloatId === "10480262")).toBe(true);
+    expect(result.facts.map((fact) => fact.rawRowIds)).toEqual([
+      ["raw_linked_first_tab_float_id", "raw_v1_strategy_subtotal"],
+      ["raw_linked_first_tab_float_id", "raw_v1_strategy_subtotal"]
+    ]);
+  });
 });
 
 function feeTrackerMasterRow(id: string, sourceRowNumber: number, cells: readonly string[]): ArchivedRawSourceRow {
@@ -249,6 +356,46 @@ function linkedFirstTabFloatIdRow(): ArchivedRawSourceRow {
         sourceDocumentId: "linked-fee-sheet-id",
         sourceTab: "*ALWAYS START HERE*",
         sourceRowNumber: 15
+      }
+    ]
+  };
+}
+
+function linkedVTabRow(id: string, tab: string, sourceRowNumber: number, cells: readonly string[]): ArchivedRawSourceRow {
+  return {
+    ...feeTrackerMasterRow(id, sourceRowNumber, cells),
+    identity: {
+      stableSourceRowKey: `linked-fee-sheet:${tab}:${sourceRowNumber}`,
+      sourceDocumentId: "linked-fee-sheet-id",
+      sourceTab: tab,
+      sourceRowNumber
+    },
+    raw: {
+      source: "fee_sheet",
+      rowNumber: sourceRowNumber,
+      cells,
+      linkedFeeSheet: {
+        feeTrackerStableSourceRowKey: "fee-tracker:LDN:12",
+        feeTrackerSourceDocumentId: "fee_tracker",
+        feeTrackerSourceTab: "LDN",
+        feeTrackerSourceRowNumber: 12,
+        feeTrackerOffice: "LDN",
+        feeTrackerClient: "British Airways",
+        feeTrackerJobNumber: "UCS04787",
+        feeTrackerProjectName: "UCS04787 - BA_FEE_MARCH MADNESS",
+        feeSheetSpreadsheetId: "linked-fee-sheet-id",
+        feeSheetUrl: "https://docs.google.com/spreadsheets/d/linked-fee-sheet-id/edit"
+      }
+    },
+    sourceRefs: [
+      {
+        source: "fee_sheet",
+        sourceLayer: "sold",
+        batchId: "batch_fee_tracker_master",
+        rawRowId: id,
+        sourceDocumentId: "linked-fee-sheet-id",
+        sourceTab: tab,
+        sourceRowNumber
       }
     ]
   };

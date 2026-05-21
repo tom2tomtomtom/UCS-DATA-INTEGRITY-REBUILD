@@ -17,6 +17,7 @@ export type FeeSheetRowKind = "project_header" | "client_summary" | "v_tab" | "s
 
 export type FeeSheetArchivedRowPayload = {
   readonly rowKind: FeeSheetRowKind;
+  readonly sourceFactSuffix?: string;
   readonly jobNumber?: string;
   readonly client?: string;
   readonly projectName?: string;
@@ -87,6 +88,7 @@ export function parseArchivedFeeSheetRows(
       parsedRows.push({ row, payload });
     }
   }
+  parsedRows.push(...parseLinkedMainVTabSubtotalRows(feeSheetRows));
 
   const facts = parsedRows.map(({ row, payload }) => {
     const header = payload.jobNumber ? headersByJob.get(payload.jobNumber) : undefined;
@@ -196,7 +198,7 @@ function createSoldFact(
   const fee = payload.soldFee ?? 0;
 
   const fact: FeeSheetSoldFact = {
-    id: `${FEE_SHEET_SOURCE}:${row.batchId}:${row.id}`,
+    id: `${FEE_SHEET_SOURCE}:${row.batchId}:${row.id}${payload.sourceFactSuffix ? `:${payload.sourceFactSuffix}` : ""}`,
     source: FEE_SHEET_SOURCE,
     sourceLayer,
     rawRowIds,
@@ -260,6 +262,206 @@ function createSoldFact(
   }
 
   return fact;
+}
+
+function parseLinkedMainVTabSubtotalRows(sourceRows: readonly ArchivedRawSourceRow[]): ParsedRow[] {
+  const linkedRows = sourceRows.filter(isLinkedFeeSheetCellRow);
+  const rowsByDocumentAndTab = new Map<string, ArchivedRawSourceRow[]>();
+  const parsedRows: ParsedRow[] = [];
+
+  for (const row of linkedRows) {
+    const documentId = row.identity.sourceDocumentId;
+    const tab = row.identity.sourceTab;
+    if (!documentId || !tab || !/^V\d+/i.test(tab)) {
+      continue;
+    }
+
+    const key = `${documentId}::${tab}`;
+    rowsByDocumentAndTab.set(key, [...(rowsByDocumentAndTab.get(key) ?? []), row]);
+  }
+
+  for (const rows of rowsByDocumentAndTab.values()) {
+    const sortedRows = [...rows].sort((left, right) => (left.identity.sourceRowNumber ?? 0) - (right.identity.sourceRowNumber ?? 0));
+    if (!isMainVTab(sortedRows)) {
+      continue;
+    }
+
+    const groupRow = cellsForSourceRow(sortedRows, 9);
+    const monthRow = cellsForSourceRow(sortedRows, 10);
+    const headerRow = cellsForSourceRow(sortedRows, 11);
+    if (!groupRow || !monthRow || !headerRow) {
+      continue;
+    }
+
+    const soldMonthColumns = soldVTabMonthColumns(groupRow, monthRow, headerRow);
+    for (const row of sortedRows) {
+      const cells = cellsForRow(row);
+      const department = departmentFromSubtotalLabel(cells[0]);
+      const linkedFeeSheet = linkedFeeSheetMeta(row);
+      const jobNumber = asString(linkedFeeSheet?.feeTrackerJobNumber);
+      const client = asString(linkedFeeSheet?.feeTrackerClient);
+      const projectName = asString(linkedFeeSheet?.feeTrackerProjectName);
+      const office = asOffice(linkedFeeSheet?.feeTrackerOffice);
+
+      if (!department || !linkedFeeSheet || !jobNumber) {
+        continue;
+      }
+
+      for (const monthColumn of soldMonthColumns) {
+        const soldFee = numericCell(row, monthColumn.feeColumnIndex);
+        const soldHours = numericCell(row, monthColumn.hoursColumnIndex);
+
+        if (soldFee === undefined && soldHours === undefined) {
+          continue;
+        }
+
+        parsedRows.push({
+          row,
+          payload: {
+            rowKind: "v_tab",
+            sourceFactSuffix: `${monthColumn.month}:${department}`,
+            jobNumber,
+            ...(client ? { client } : {}),
+            ...(projectName ? { projectName } : {}),
+            ...(office ? { office } : {}),
+            month: monthColumn.month,
+            department,
+            ...(soldFee !== undefined ? { soldFee } : {}),
+            ...(soldHours !== undefined ? { soldHours } : {})
+          }
+        });
+      }
+    }
+  }
+
+  return parsedRows;
+}
+
+function isLinkedFeeSheetCellRow(row: ArchivedRawSourceRow): boolean {
+  return isRecord(row.raw) && isRecord(row.raw.linkedFeeSheet) && Array.isArray(row.raw.cells);
+}
+
+function isMainVTab(rows: readonly ArchivedRawSourceRow[]): boolean {
+  const titleRow = cellsForSourceRow(rows, 3)?.join(" ").toUpperCase() ?? "";
+
+  return titleRow.includes("MAIN FEE SHEET") && !titleRow.includes("ASSIGN AS MAIN FEE SHEET");
+}
+
+function soldVTabMonthColumns(
+  groupRow: readonly string[],
+  monthRow: readonly string[],
+  headerRow: readonly string[]
+): Array<{ month: string; feeColumnIndex: number; hoursColumnIndex: number }> {
+  const columns: Array<{ month: string; feeColumnIndex: number; hoursColumnIndex: number }> = [];
+
+  for (let index = 0; index < headerRow.length; index += 1) {
+    if (normaliseLabel(groupRow[index] ?? "") !== "SOLD") {
+      continue;
+    }
+
+    const month = parseFeeSheetMonth(monthRow[index]);
+    if (!month) {
+      continue;
+    }
+
+    const feeColumnIndex = findHeaderColumn(headerRow, index, "FEE P/M");
+    const hoursColumnIndex = findHeaderColumn(headerRow, index, "HOURS");
+    if (feeColumnIndex === undefined && hoursColumnIndex === undefined) {
+      continue;
+    }
+
+    columns.push({
+      month,
+      feeColumnIndex: feeColumnIndex ?? index,
+      hoursColumnIndex: hoursColumnIndex ?? index
+    });
+  }
+
+  return columns;
+}
+
+function findHeaderColumn(headerRow: readonly string[], startIndex: number, label: string): number | undefined {
+  const wanted = normaliseLabel(label);
+  for (let index = startIndex; index < Math.min(headerRow.length, startIndex + 3); index += 1) {
+    if (normaliseLabel(headerRow[index] ?? "") === wanted) {
+      return index;
+    }
+  }
+
+  return undefined;
+}
+
+function cellsForSourceRow(rows: readonly ArchivedRawSourceRow[], sourceRowNumber: number): readonly string[] | undefined {
+  const row = rows.find((candidate) => candidate.identity.sourceRowNumber === sourceRowNumber);
+  return row ? cellsForRow(row) : undefined;
+}
+
+function cellsForRow(row: ArchivedRawSourceRow): readonly string[] {
+  return isRecord(row.raw) && Array.isArray(row.raw.cells)
+    ? row.raw.cells.map((cell) => String(cell ?? ""))
+    : [];
+}
+
+function linkedFeeSheetMeta(row: ArchivedRawSourceRow): Readonly<Record<string, unknown>> | undefined {
+  return isRecord(row.raw) && isRecord(row.raw.linkedFeeSheet) ? row.raw.linkedFeeSheet : undefined;
+}
+
+function departmentFromSubtotalLabel(value: unknown): string | undefined {
+  const text = normaliseLabel(String(value ?? ""));
+  if (!text.startsWith("SUB-TOTAL")) {
+    return undefined;
+  }
+
+  const stripped = text.replace(/^SUB-TOTAL\s+\d+\s+/, "");
+  const departments: Record<string, string> = {
+    "STRATEGY": "Strategy",
+    "AC MGT": "Account Management",
+    "CREATIVE": "Creative",
+    "DESIGN": "Design",
+    "PRODUCTION": "Production",
+    "MAKERS": "Makers",
+    "PR": "PR",
+    "UX": "UX",
+    "DATA": "Data",
+    "BUSINESS AFFAIRS": "Business Affairs"
+  };
+
+  return departments[stripped] ?? titleCase(stripped);
+}
+
+function numericCell(row: ArchivedRawSourceRow, zeroBasedColumnIndex: number): number | undefined {
+  const raw = isRecord(row.raw) ? row.raw : {};
+  const cellData = Array.isArray(raw.cellData) ? raw.cellData.map((cell) => isRecord(cell) ? cell : {}) : [];
+  const columnCell = cellData.find((cell) => cell.columnIndex === zeroBasedColumnIndex + 1);
+  const value = columnCell?.effectiveValue ?? cellsForRow(row)[zeroBasedColumnIndex];
+
+  return asNumber(value);
+}
+
+function parseFeeSheetMonth(value: unknown): string | undefined {
+  const text = String(value ?? "").trim();
+  const match = text.match(/^(?:\d{1,2}[-/ ])?([A-Za-z]{3,})[-/ ](\d{2}|\d{4})$/);
+  if (!match) {
+    return undefined;
+  }
+
+  const monthName = match[1];
+  if (!monthName) {
+    return undefined;
+  }
+
+  const month = monthNumber(monthName);
+  if (!month) {
+    return undefined;
+  }
+
+  const rawYear = match[2] ?? "";
+  const year = rawYear.length === 2 ? 2000 + Number(rawYear) : Number(rawYear);
+  if (!Number.isInteger(year)) {
+    return undefined;
+  }
+
+  return `${year}-${String(month).padStart(2, "0")}`;
 }
 
 function duplicateFeeTrackerJobWarnings(parsedRows: readonly ParsedRow[]): ParserWarning[] {
@@ -511,9 +713,54 @@ function asString(value: unknown): string | undefined {
 }
 
 function asNumber(value: unknown): number | undefined {
-  return typeof value === "number" && Number.isFinite(value) ? value : undefined;
+  if (typeof value === "number" && Number.isFinite(value)) {
+    return value;
+  }
+
+  if (typeof value !== "string") {
+    return undefined;
+  }
+
+  const trimmed = value.trim();
+  if (trimmed === "" || trimmed.startsWith("=") || trimmed.startsWith("#")) {
+    return undefined;
+  }
+
+  const negative = /^\(.*\)$/.test(trimmed);
+  const normalised = trimmed.replace(/[£$€,]/g, "").replace(/[()]/g, "").replace(/%$/, "");
+  const parsed = Number(normalised);
+
+  if (!Number.isFinite(parsed)) {
+    return undefined;
+  }
+
+  return negative ? -parsed : parsed;
 }
 
 function isRecord(value: unknown): value is Readonly<Record<string, unknown>> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
+}
+
+function monthNumber(value: string): number | undefined {
+  const month = value.slice(0, 3).toLowerCase();
+  return {
+    jan: 1,
+    feb: 2,
+    mar: 3,
+    apr: 4,
+    may: 5,
+    jun: 6,
+    jul: 7,
+    aug: 8,
+    sep: 9,
+    oct: 10,
+    nov: 11,
+    dec: 12
+  }[month];
+}
+
+function titleCase(value: string): string {
+  return value
+    .toLowerCase()
+    .replace(/\b\w/g, (letter) => letter.toUpperCase());
 }

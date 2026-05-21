@@ -2882,6 +2882,37 @@ Boundary kept:
 - no stakeholder approval language,
 - Float API raw task rows still do not become additive dashboard hours until expansion laws are proven.
 
+### Checkpoint: Main V-Tab Subtotal Sold Facts
+
+Phase: 10
+
+Tickets: `#85`, `#88`, `#89`
+
+Status: implemented locally, full verification pending at checkpoint time
+
+What changed:
+
+- added a cautious parser path for linked fee-sheet `V*` tabs,
+- only tabs explicitly marked `MAIN FEE SHEET` are parsed,
+- tabs marked `ASSIGN AS MAIN FEE SHEET` are ignored,
+- only `SOLD` month groups are parsed, `ALLOCATED` formula blocks are not used as sold evidence,
+- `SUB-TOTAL NN DEPARTMENT` rows become additive sold facts by month and department,
+- first-tab `FLOAT PROJECT ID` project headers still propagate the fee-sheet Float join key into those facts,
+- formula-only cells remain non-numeric and do not become sold amounts.
+
+Verification:
+
+- `npm test -- tests/parsers/fee-sheet-parser.test.ts` passed,
+- `npm run typecheck` passed.
+
+Boundary kept:
+
+- `CLIENT SUMMARY` mode-toggle rows are still not treated as additive sold facts,
+- Float raw task rows still do not become additive dashboard hours,
+- no source-system mutation,
+- no production cutover,
+- no stakeholder approval language.
+
 ### Checkpoint: Rollup Footer And Slow Test Timeouts
 
 Phase: 9.5
