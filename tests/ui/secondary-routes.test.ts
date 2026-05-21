@@ -19,7 +19,11 @@ describe("Phase 9.5 secondary route parity", () => {
 
     expect(html).toContain("Sync Audit");
     expect(html).toContain("Read-only sync evidence");
-    expect(html).toContain("Issue details");
+    expect(html).toContain("Latest display contract");
+    expect(html).toContain("current contract issues");
+    expect(html).toContain("Issue summary is generated from source warnings and reconciliation checks.");
+    expect(html).toContain("FLOAT_RAW_CACHE_MISSING_CACHE");
+    expect(html).toContain("href=\"/dashboard/admin/sync-warnings?office=LDN&amp;from=2026-01-01&amp;to=2026-03-31&amp;department=Design\"");
     expect(html).toContain("Office: LDN");
     expect(html).toContain("Department: Design");
     expect(html).toContain("aria-current=\"page\"");
