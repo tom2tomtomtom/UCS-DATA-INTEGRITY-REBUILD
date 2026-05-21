@@ -2604,3 +2604,41 @@ Boundary kept:
 - no source-system mutation,
 - no production environment or custom domain cutover,
 - no claim that source approval is complete.
+
+### Checkpoint: Phase 9.5 Contract-Led UI Parity Hardening
+
+Phase: 9.5 and 10
+
+Tickets: `#83`, `#85`, `#88`, `#89`
+
+Status: implemented and pushed in guarded slices, source approval still pending
+
+What changed:
+
+- restored the global dashboard chrome toward the legacy two-row header, nav badges, alert banners, read-only sync handoff, and Ask AI entry,
+- carried visible Float hours into the shared department and role rollup contract so rollups, Projects, CSV, and detail do not drift,
+- rebuilt the Department Rollup surface around the legacy-recognisable order: approval state, freshness, sheet health, Sold vs Allocated, KPI cards, Float warnings, explainer, chart, and rollup table,
+- restored the Projects table legacy column shape while keeping unsupported unallocated splits honest instead of inventing values,
+- kept duplicate/manual Float rows visible in Project Detail, including the UCS05186 duplicate regression,
+- fixed a browser-discovered duplicate React key issue by aggregating duplicate month/role detail rows before rendering,
+- promoted Data Quality into an issue hub with named checks, Float issues, affected dashboard rows, and Needs Codex handoff,
+- added raw/cache/visible state columns to the Float diagnostics table,
+- added a Law 3 chat regression proving chat evidence uses the same display contract rows and does not collapse duplicate job rows,
+- normalised legacy `office=Agency` URLs to the internal agency scope.
+
+Verification:
+
+- `npm run verify:phase9` passed after each pushed implementation slice,
+- focused UI tests were added or updated for chrome, rollups, dashboard home, Projects, Project Detail, Data Quality, Float diagnostics, chat/display-contract law, and scope params,
+- browser smoke covered `/dashboard`, `/dashboard/projects`, `/dashboard/projects/UCS05186`, and `/dashboard/data-quality`,
+- local browser smoke caught the duplicate detail key warning, which was fixed and re-verified,
+- GitHub CI passed through commit `2c1c879`.
+
+Boundary kept:
+
+- no production cutover,
+- no source sync,
+- no source-system mutation,
+- no Supabase migrations,
+- no archive action from the UI,
+- chat remains read-only and must hand off to Codex for repo, browser, sync, deployment, mutation, or stakeholder work.
