@@ -22,6 +22,7 @@
     "smoke:projects-console": "node scripts/projects-console-smoke.mjs",
     "source:approval:readiness": "node scripts/source-approval-readiness-report.mjs",
     "source:snapshot:create": "node scripts/create-source-snapshot.mjs",
+    "source:snapshot:import": "node scripts/import-source-snapshot.mjs",
     "stakeholder:approval:pack": "node scripts/stakeholder-approval-pack.mjs"
   },
   "devDependencies": {

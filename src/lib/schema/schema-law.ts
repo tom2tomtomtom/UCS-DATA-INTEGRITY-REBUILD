@@ -1,6 +1,7 @@
 export const CORE_SCHEMA_TABLES = [
   "source_batches",
   "raw_source_rows",
+  "skipped_source_rows",
   "parsed_facts",
   "source_conflicts",
   "display_contract_snapshots",
@@ -38,6 +39,22 @@ export const REQUIRED_SCHEMA_TABLE_COLUMNS = {
     "raw",
     "content_hash",
     "observed_at",
+    "source_refs",
+    "created_at"
+  ],
+  skipped_source_rows: [
+    "id",
+    "batch_id",
+    "source",
+    "stable_source_row_key",
+    "source_document_id",
+    "source_tab",
+    "source_row_number",
+    "source_object_id",
+    "raw",
+    "content_hash",
+    "observed_at",
+    "skip",
     "source_refs",
     "created_at"
   ],
@@ -218,6 +235,12 @@ export function validateSchemaLawSql(sql: string): SchemaLawValidationResult {
   );
 
   findings.push(
+    hasSkippedRowsImmutableGuard(normalised)
+      ? pass("SKIPPED_ROWS_IMMUTABLE", "skipped_source_rows are protected from direct updates and deletes by database triggers.")
+      : fail("SKIPPED_ROWS_MUTABLE", "skipped_source_rows need database-level update and delete guards.")
+  );
+
+  findings.push(
     hasDefaultPrivilegeRevoke(normalised)
       ? pass("DEFAULT_TABLE_PRIVILEGES_REVOKED", "Default table privileges are revoked from anon and authenticated.")
       : fail("DEFAULT_TABLE_PRIVILEGES_NOT_REVOKED", "Default table privileges must be revoked from anon and authenticated.")
@@ -297,6 +320,13 @@ function hasRawRowsImmutableGuard(normalisedSql: string): boolean {
   return (
     normalisedSql.includes("create trigger raw_source_rows_no_update") &&
     normalisedSql.includes("create trigger raw_source_rows_no_delete")
+  );
+}
+
+function hasSkippedRowsImmutableGuard(normalisedSql: string): boolean {
+  return (
+    normalisedSql.includes("create trigger skipped_source_rows_no_update") &&
+    normalisedSql.includes("create trigger skipped_source_rows_no_delete")
   );
 }
 

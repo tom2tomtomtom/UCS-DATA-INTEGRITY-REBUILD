@@ -36,6 +36,24 @@ create table public.raw_source_rows (
   unique (batch_id, stable_source_row_key)
 );
 
+create table public.skipped_source_rows (
+  id uuid primary key default gen_random_uuid(),
+  batch_id uuid not null references public.source_batches(id) on delete restrict,
+  source text not null check (source in ('fee_sheet', 'pipeline', 'production_revenue', 'float', 'read_only_sql', 'sync_log')),
+  stable_source_row_key text not null,
+  source_document_id text,
+  source_tab text,
+  source_row_number integer check (source_row_number is null or source_row_number > 0),
+  source_object_id text,
+  raw jsonb,
+  content_hash text,
+  observed_at timestamptz not null default now(),
+  skip jsonb not null check (jsonb_typeof(skip) = 'object'),
+  source_refs jsonb not null default '[]'::jsonb check (jsonb_typeof(source_refs) = 'array'),
+  created_at timestamptz not null default now(),
+  unique (batch_id, stable_source_row_key)
+);
+
 create table public.parsed_facts (
   id uuid primary key default gen_random_uuid(),
   source text not null check (source in ('fee_sheet', 'pipeline', 'production_revenue', 'float', 'read_only_sql', 'sync_log')),
@@ -154,6 +172,7 @@ create table public.audit_log (
 
 alter table public.source_batches enable row level security;
 alter table public.raw_source_rows enable row level security;
+alter table public.skipped_source_rows enable row level security;
 alter table public.parsed_facts enable row level security;
 alter table public.source_conflicts enable row level security;
 alter table public.display_contract_snapshots enable row level security;
@@ -169,9 +188,28 @@ create trigger raw_source_rows_no_delete
 before delete on public.raw_source_rows
 for each row execute function app_private.reject_raw_source_rows_mutation();
 
+create function app_private.reject_skipped_source_rows_mutation()
+returns trigger
+language plpgsql
+set search_path = pg_catalog
+as $$
+begin
+  raise exception 'skipped_source_rows are immutable; append a new source batch instead';
+end;
+$$;
+
+create trigger skipped_source_rows_no_update
+before update on public.skipped_source_rows
+for each row execute function app_private.reject_skipped_source_rows_mutation();
+
+create trigger skipped_source_rows_no_delete
+before delete on public.skipped_source_rows
+for each row execute function app_private.reject_skipped_source_rows_mutation();
+
 revoke all on table
   public.source_batches,
   public.raw_source_rows,
+  public.skipped_source_rows,
   public.parsed_facts,
   public.source_conflicts,
   public.display_contract_snapshots,
@@ -183,6 +221,8 @@ from anon, authenticated;
 create index source_batches_source_status_idx on public.source_batches (source, status, started_at desc);
 create index raw_source_rows_batch_source_idx on public.raw_source_rows (batch_id, source);
 create index raw_source_rows_source_identity_idx on public.raw_source_rows (source, stable_source_row_key);
+create index skipped_source_rows_batch_source_idx on public.skipped_source_rows (batch_id, source);
+create index skipped_source_rows_source_identity_idx on public.skipped_source_rows (source, stable_source_row_key);
 create index parsed_facts_scope_source_idx on public.parsed_facts (source, source_layer, lifecycle_state);
 create index parsed_facts_job_number_idx on public.parsed_facts (job_number) where job_number is not null;
 create index parsed_facts_float_project_id_idx on public.parsed_facts (float_project_id) where float_project_id is not null;

@@ -14,6 +14,7 @@ describe("P8-B schema law gate", () => {
     expect(CORE_SCHEMA_TABLES).toEqual([
       "source_batches",
       "raw_source_rows",
+      "skipped_source_rows",
       "parsed_facts",
       "source_conflicts",
       "display_contract_snapshots",
@@ -30,6 +31,16 @@ describe("P8-B schema law gate", () => {
         "stable_source_row_key",
         "raw",
         "content_hash",
+        "source_refs"
+      ])
+    );
+    expect(REQUIRED_SCHEMA_TABLE_COLUMNS.skipped_source_rows).toEqual(
+      expect.arrayContaining([
+        "batch_id",
+        "stable_source_row_key",
+        "raw",
+        "content_hash",
+        "skip",
         "source_refs"
       ])
     );
@@ -85,7 +96,8 @@ describe("P8-B schema law gate", () => {
         expect.objectContaining({ code: "RLS_MISSING_raw_source_rows", severity: "fail" }),
         expect.objectContaining({ code: "FORBIDDEN_TABLE_float_allocations", severity: "fail" }),
         expect.objectContaining({ code: "READ_ONLY_SQL_NOT_DIAGNOSTIC_ONLY", severity: "fail" }),
-        expect.objectContaining({ code: "RAW_ROWS_MUTABLE", severity: "fail" })
+        expect.objectContaining({ code: "RAW_ROWS_MUTABLE", severity: "fail" }),
+        expect.objectContaining({ code: "SKIPPED_ROWS_MUTABLE", severity: "fail" })
       ])
     );
   });
