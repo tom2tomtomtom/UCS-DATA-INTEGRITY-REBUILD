@@ -7,7 +7,7 @@ export function scopeFromSearchParams(
   overrides: Partial<DashboardScope> = {}
 ): DashboardScope {
   const scope: DashboardScope = {
-    office: (overrides.office ?? valueFor(params.office, "LDN")) as DashboardScope["office"],
+    office: normalizeOffice(overrides.office ?? valueFor(params.office, "LDN")),
     from: overrides.from ?? valueFor(params.from, "2026-01-01"),
     to: overrides.to ?? valueFor(params.to, "2026-03-31")
   };
@@ -20,6 +20,14 @@ export function scopeFromSearchParams(
   assignOptional(scope, "floatProjectId", overrides.floatProjectId ?? optionalValueFor(params.floatProjectId));
 
   return scope;
+}
+
+function normalizeOffice(value: string): DashboardScope["office"] {
+  const normalized = value.trim().toUpperCase();
+
+  if (normalized === "AGENCY" || normalized === "ALL") return "ALL";
+  if (normalized === "LDN" || normalized === "UCX" || normalized === "USA") return normalized;
+  return "LDN";
 }
 
 function valueFor(value: string | string[] | undefined, fallback: string): string {

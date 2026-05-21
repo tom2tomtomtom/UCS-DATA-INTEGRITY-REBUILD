@@ -52,4 +52,18 @@ describe("P6-H UI scope params", () => {
       jobNumber: "UCS04787"
     });
   });
+
+  test("normalises legacy Agency office URLs to the internal agency scope", () => {
+    expect(
+      scopeFromSearchParams({
+        office: "Agency",
+        from: "2026-01-01",
+        to: "2026-12-31"
+      })
+    ).toEqual({
+      office: "ALL",
+      from: "2026-01-01",
+      to: "2026-12-31"
+    });
+  });
 });
