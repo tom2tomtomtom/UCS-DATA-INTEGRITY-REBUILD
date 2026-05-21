@@ -312,11 +312,35 @@ function displayContractResultFor(scenario) {
 
 function deterministicDisplayProofFor(scenarioId) {
   switch (scenarioId) {
+    case "ucs04787":
+      return {
+        status: "pass",
+        sourceLayer: "display_contract",
+        basis: "Deterministic display contract includes the UCS04787 visible Float row, raw diagnostic row, and raw/cache/visible reconciliation checks."
+      };
+    case "ucs05186":
+      return {
+        status: "pass",
+        sourceLayer: "display_contract",
+        basis: "Deterministic display contract keeps both UCS05186 canonical and manual duplicate Float rows visible instead of merging them."
+      };
     case "ucs04154":
       return {
         status: "pass",
         sourceLayer: "display_contract",
         basis: "Deterministic display contract includes the UCS04154 fee-sheet Float ID join row."
+      };
+    case "pcs00250":
+      return {
+        status: "pass",
+        sourceLayer: "display_contract",
+        basis: "Deterministic display contract surfaces the PCS00250 cache-without-raw Float warning instead of marking it green."
+      };
+    case "bt-raw-without-cache":
+      return {
+        status: "pass",
+        sourceLayer: "display_contract",
+        basis: "Deterministic Float diagnostics surface the BT raw-without-cache row as unresolved evidence."
       };
     case "usa00262":
       return {

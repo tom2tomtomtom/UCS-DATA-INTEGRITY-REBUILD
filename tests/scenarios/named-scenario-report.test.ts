@@ -103,6 +103,28 @@ describe("P8-E named Sian Yunni Jade scenario report", { timeout: 15000 }, () =>
     );
   });
 
+  test("ties warning scenarios to deterministic display-contract evidence instead of leaving them not checked", () => {
+    const report = buildNamedScenarioReport();
+
+    for (const scenarioId of ["ucs04787", "ucs05186", "pcs00250", "bt-raw-without-cache"]) {
+      expect(report.scenarios.find((scenario) => scenario.id === scenarioId)).toMatchObject({
+        status: "warn",
+        displayContractResult: {
+          status: "pass",
+          sourceLayer: "display_contract",
+          basis: expect.not.stringContaining("not yet been tied")
+        }
+      });
+    }
+
+    expect(report.scenarios.find((scenario) => scenario.id === "ucs05186")?.displayContractResult.basis).toContain(
+      "manual duplicate"
+    );
+    expect(report.scenarios.find((scenario) => scenario.id === "pcs00250")?.displayContractResult.basis).toContain(
+      "cache-without-raw"
+    );
+  });
+
   test("keeps richer source-warning evidence on the four remaining warnings", () => {
     const report = buildNamedScenarioReport();
 
@@ -278,6 +300,22 @@ describe("P8-E named Sian Yunni Jade scenario report", { timeout: 15000 }, () =>
         { layer: "float_manifest", ref: "float:target-manifest" },
         { layer: "source_row", ref: "fee_tracker:CLIENT SUMMARY:1" }
       ])
+    });
+    expect(report.scenarios.find((scenario: { id: string }) => scenario.id === "ucs04787")).toMatchObject({
+      status: "warn",
+      displayContractResult: {
+        status: "pass",
+        sourceLayer: "display_contract",
+        basis: expect.not.stringContaining("not yet been tied")
+      }
+    });
+    expect(report.scenarios.find((scenario: { id: string }) => scenario.id === "pcs00250")).toMatchObject({
+      status: "warn",
+      displayContractResult: {
+        status: "pass",
+        sourceLayer: "display_contract",
+        basis: expect.stringContaining("cache-without-raw")
+      }
     });
     expect(report.scenarios.find((scenario: { id: string }) => scenario.id === "ldn-q1-design")).toMatchObject({
       approvalStatus: "ready_for_stakeholder_review",
