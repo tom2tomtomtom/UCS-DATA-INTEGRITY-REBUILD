@@ -62,6 +62,11 @@ export function buildProjectRows(input: BuildProjectRowsInput): ProjectDisplayRo
   const pipelineCapabilities = capabilitiesForSource(capabilityIndex, "pipeline");
   const productionRevenueCapabilities = capabilitiesForSource(capabilityIndex, "production_revenue");
   const floatCapabilities = capabilitiesForSource(capabilityIndex, "float");
+  const feeTrackerIdentityFacts = filterFactsByScope(
+    input.soldFacts.filter(isFeeTrackerIdentityFact),
+    identityLookupScope(input.scope),
+    soldCapabilities
+  );
   const soldFacts = filterFactsByScope(input.soldFacts, input.scope, soldCapabilities);
   const pipelineFacts = filterFactsByScope(input.pipelineFacts, input.scope, pipelineCapabilities);
   const productionRevenueFacts = filterFactsByScope(input.productionRevenueFacts, input.scope, productionRevenueCapabilities);
@@ -109,9 +114,18 @@ export function buildProjectRows(input: BuildProjectRowsInput): ProjectDisplayRo
     addSourceIssueToMatchingRows(rows, warning);
   }
 
-  enrichRowsWithFeeTrackerIdentity(rows);
+  enrichRowsWithFeeTrackerIdentity(rows, feeTrackerIdentityFacts);
 
   return Array.from(rows.values()).map((row) => finalizeRow(row, unsupportedMetrics));
+}
+
+function identityLookupScope(scope: DashboardScope): DashboardScope {
+  const { department: _department, role: _role, ...identityScope } = scope;
+  return identityScope;
+}
+
+function isFeeTrackerIdentityFact(fact: SoldFact): boolean {
+  return fact.sourceLayer === "fee_sheet_parser_summary" && fact.isAdditive === false;
 }
 
 function unsupportedProjectMetricsForScopedSource(
@@ -333,15 +347,18 @@ function addSourceIssueToMatchingRows(rows: Map<string, MutableProjectRow>, warn
   }
 }
 
-function enrichRowsWithFeeTrackerIdentity(rows: Map<string, MutableProjectRow>): void {
-  const feeTrackerIdentityByJob = new Map<string, MutableProjectRow>();
+function enrichRowsWithFeeTrackerIdentity(
+  rows: Map<string, MutableProjectRow>,
+  feeTrackerIdentityFacts: readonly SoldFact[]
+): void {
+  const feeTrackerIdentityByJob = new Map<string, SoldFact>();
 
-  for (const row of rows.values()) {
-    if (!hasFeeSheetIdentityOnly(row) || row.jobNumber === undefined) {
+  for (const fact of feeTrackerIdentityFacts) {
+    if (fact.jobNumber === undefined) {
       continue;
     }
 
-    feeTrackerIdentityByJob.set(normalizeIdentity(row.jobNumber), row);
+    feeTrackerIdentityByJob.set(normalizeIdentity(fact.jobNumber), fact);
   }
 
   for (const row of rows.values()) {
@@ -349,24 +366,24 @@ function enrichRowsWithFeeTrackerIdentity(rows: Map<string, MutableProjectRow>):
       continue;
     }
 
-    const feeTrackerIdentity = feeTrackerIdentityByJob.get(normalizeIdentity(row.jobNumber));
-    if (feeTrackerIdentity === undefined) {
+    const identityFact = feeTrackerIdentityByJob.get(normalizeIdentity(row.jobNumber));
+    if (identityFact === undefined) {
       continue;
     }
 
-    if (row.sourceClient === undefined && feeTrackerIdentity.sourceClient !== undefined) {
-      row.sourceClient = feeTrackerIdentity.sourceClient;
+    if (row.sourceClient === undefined && identityFact.sourceClient !== undefined) {
+      row.sourceClient = identityFact.sourceClient;
     }
-    if (row.canonicalClient === undefined && feeTrackerIdentity.canonicalClient !== undefined) {
-      row.canonicalClient = feeTrackerIdentity.canonicalClient;
+    if (row.canonicalClient === undefined && identityFact.canonicalClient !== undefined) {
+      row.canonicalClient = identityFact.canonicalClient;
     }
-    if (row.sourceProjectName === undefined && feeTrackerIdentity.sourceProjectName !== undefined) {
-      row.sourceProjectName = feeTrackerIdentity.sourceProjectName;
+    if (row.sourceProjectName === undefined && identityFact.sourceProjectName !== undefined) {
+      row.sourceProjectName = identityFact.sourceProjectName;
     }
-    if (row.canonicalProjectName === undefined && feeTrackerIdentity.canonicalProjectName !== undefined) {
-      row.canonicalProjectName = feeTrackerIdentity.canonicalProjectName;
+    if (row.canonicalProjectName === undefined && identityFact.projectName !== undefined) {
+      row.canonicalProjectName = identityFact.projectName;
     }
-    appendTrace(row, feeTrackerIdentity.sourceTrace);
+    appendTrace(row, identityFact.trace);
   }
 }
 

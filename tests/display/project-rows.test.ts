@@ -247,6 +247,7 @@ function floatFact(input: {
   readonly activeState?: FloatFact["activeState"];
   readonly warnings?: SourceWarning[];
   readonly omitClient?: boolean;
+  readonly department?: string;
 }): FloatFact {
   const fact: FloatFact = {
     id: input.id,
@@ -259,6 +260,7 @@ function floatFact(input: {
     sourceProjectName: input.projectName,
     office: "LDN",
     month: "2026-03",
+    ...(input.department !== undefined ? { department: input.department } : {}),
     hours: hours(input.hoursValue),
     activeState: input.activeState ?? "active",
     allocationClass: "allocated",
@@ -595,6 +597,50 @@ describe("P5-B project row builder", () => {
           value: 12
         }
       }
+    });
+  });
+
+  test("uses Fee Tracker identity to label in-scope Float rows without changing Float-only status", () => {
+    const rows = buildProjectRows({
+      scope: {
+        ...scope,
+        department: "Design"
+      },
+      soldFacts: [
+        feeTrackerIdentityFact({
+          id: "fee-sheet:identity:ucs04085",
+          rawRowId: "fee-tracker-ucs04085",
+          jobNumber: "UCS04085",
+          client: "Under Armour",
+          projectName: "UCS04085 - UNDER ARMOUR GLOBAL_FEE_REBRAND_PHASE_2"
+        })
+      ],
+      pipelineFacts: [],
+      productionRevenueFacts: [],
+      floatFacts: [
+        floatFact({
+          id: "float:ucs04085",
+          rawRowId: "float-ucs04085",
+          floatProjectId: "10462790",
+          jobNumber: "UCS04085",
+          projectName: "UCS04085 - UNDER ARMOUR GLOBAL_FEE_REBRAND_PHASE_2",
+          hoursValue: 24,
+          department: "Design",
+          omitClient: true
+        })
+      ],
+      sourceIssues: []
+    });
+
+    expect(rows).toHaveLength(1);
+    expect(rows[0]).toMatchObject({
+      rowType: "float_only",
+      jobNumber: "UCS04085",
+      canonicalClient: "Under Armour",
+      sourceTrace: expect.arrayContaining([
+        expect.objectContaining({ rawRowId: "fee-tracker-ucs04085" }),
+        expect.objectContaining({ rawRowId: "float-ucs04085" })
+      ])
     });
   });
 });
