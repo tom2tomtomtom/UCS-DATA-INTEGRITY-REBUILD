@@ -2,7 +2,7 @@ import { ChatShell } from "../../../src/components/dashboard/chat/chat-shell";
 import type { ChatShellState } from "../../../src/components/dashboard/chat/chat-shell";
 import { DashboardChrome } from "../../../src/components/dashboard/chrome/dashboard-chrome";
 import { generateEvidenceReport, runInvestigation } from "../../../src/lib/chat";
-import { getFixtureDashboardContract } from "../../../src/lib/ui/fixture-contract";
+import { getDashboardContract } from "../../../src/lib/runtime/dashboard-contract";
 import { scopeFromSearchParams, type UiSearchParams } from "../../../src/lib/ui/scope-params";
 
 export default async function ChatDemoPage({
@@ -11,7 +11,7 @@ export default async function ChatDemoPage({
   searchParams?: Promise<UiSearchParams>;
 }) {
   const params = (await searchParams) ?? {};
-  const contract = getFixtureDashboardContract(scopeFromSearchParams(params));
+  const contract = await getDashboardContract(scopeFromSearchParams(params));
   const question = scalarParam(params.question);
   const pastedFloatExport = scalarParam(params.floatExport);
   const pack =

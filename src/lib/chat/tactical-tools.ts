@@ -6,7 +6,7 @@ import type {
   UnresolvedCheck
 } from "./types";
 import type { DashboardProjectRow, DashboardScope, SourceLayer, UnsupportedMetric } from "../index";
-import { getFixtureDashboardContract, fixtureFactSet } from "../ui/fixture-contract";
+import { getDashboardContractSync, getDashboardFactSetSync } from "../runtime/dashboard-contract";
 import { filterFactsByScope } from "../canon-queries/scope";
 import type { ReconciliationCheck, SourceTraceRef } from "../canon/types";
 
@@ -85,7 +85,7 @@ export function executeReadOnlyTool(input: ExecuteReadOnlyToolInput): ReadOnlyTo
 }
 
 function displayContractResult(input: ExecuteReadOnlyToolInput): ReadOnlyToolResult {
-  const contract = getFixtureDashboardContract(input.scope);
+  const contract = getDashboardContractSync(input.scope);
   const checks = contract.reconciliation.map(reconciliationToEvidenceCheck);
 
   return result({
@@ -107,7 +107,7 @@ function inspectProjectResult(input: ExecuteReadOnlyToolInput): ReadOnlyToolResu
     ...(input.jobNumber !== undefined ? { jobNumber: input.jobNumber } : {}),
     ...(input.floatProjectId !== undefined ? { floatProjectId: input.floatProjectId } : {})
   };
-  const contract = getFixtureDashboardContract(scope);
+  const contract = getDashboardContractSync(scope);
 
   return result({
     tool: input.tool,
@@ -135,7 +135,7 @@ function inspectProjectResult(input: ExecuteReadOnlyToolInput): ReadOnlyToolResu
 }
 
 function queryProjectsResult(input: ExecuteReadOnlyToolInput): ReadOnlyToolResult {
-  const contract = getFixtureDashboardContract(input.scope);
+  const contract = getDashboardContractSync(input.scope);
 
   return result({
     tool: input.tool,
@@ -151,12 +151,12 @@ function queryProjectsResult(input: ExecuteReadOnlyToolInput): ReadOnlyToolResul
 }
 
 function inspectFloatRawCacheVisibleResult(input: ExecuteReadOnlyToolInput): ReadOnlyToolResult {
-  const facts = filterFactsByScope(fixtureFactSet().floatFacts, {
+  const facts = filterFactsByScope(getDashboardFactSetSync().floatFacts, {
     ...input.scope,
     ...(input.jobNumber !== undefined ? { jobNumber: input.jobNumber } : {}),
     ...(input.floatProjectId !== undefined ? { floatProjectId: input.floatProjectId } : {})
   });
-  const contract = getFixtureDashboardContract(input.scope);
+  const contract = getDashboardContractSync(input.scope);
   const checks = contract.reconciliation.map(reconciliationToEvidenceCheck);
 
   return result({
@@ -220,7 +220,7 @@ function parsePastedFloatExportResult(input: ExecuteReadOnlyToolInput): ReadOnly
         label: "Pasted Float export supplied",
         sourceLayer: "float_export",
         sourceRefs: [{ source: "float", sourceLayer: "float_export" }],
-        note: "Pasted export parsing is deterministic fixture evidence in Phase 7."
+        note: "Pasted export parsing is deterministic evidence in the current read-only runtime."
       }
     ],
     checks: [],
@@ -236,7 +236,7 @@ function compareFloatExportResult(input: ExecuteReadOnlyToolInput): ReadOnlyTool
       label: "Compare Float export to contract",
       status: "unresolved",
       sourceLayers: ["float_export", "float_visible"],
-      contractRows: matchingRows(getFixtureDashboardContract(input.scope).visibleRows, input),
+      contractRows: matchingRows(getDashboardContractSync(input.scope).visibleRows, input),
       facts: [],
       checks: [],
       unsupported: [],
@@ -258,7 +258,7 @@ function compareFloatExportResult(input: ExecuteReadOnlyToolInput): ReadOnlyTool
     label: "Compare Float export to contract",
     status: "pass",
     sourceLayers: ["float_export", "float_visible"],
-    contractRows: matchingRows(getFixtureDashboardContract(input.scope).visibleRows, input),
+    contractRows: matchingRows(getDashboardContractSync(input.scope).visibleRows, input),
     facts: [],
     checks: [],
     unsupported: [],
@@ -267,14 +267,14 @@ function compareFloatExportResult(input: ExecuteReadOnlyToolInput): ReadOnlyTool
 }
 
 function inspectFeeSheetResult(input: ExecuteReadOnlyToolInput): ReadOnlyToolResult {
-  const facts = filterFactsByScope(fixtureFactSet().soldFacts, input.scope);
+  const facts = filterFactsByScope(getDashboardFactSetSync().soldFacts, input.scope);
 
   return result({
     tool: input.tool,
     label: "Inspect fee sheet evidence",
     status: facts.length === 0 ? "unresolved" : "pass",
     sourceLayers: ["sold", "fee_sheet_parser_summary"],
-    contractRows: matchingRows(getFixtureDashboardContract(input.scope).visibleRows, input),
+    contractRows: matchingRows(getDashboardContractSync(input.scope).visibleRows, input),
     facts: facts.flatMap((fact) =>
       fact.trace.map((sourceRef) => {
         const value = fact.hours ?? fact.amount;
@@ -308,12 +308,12 @@ function genericToolResult(input: ExecuteReadOnlyToolInput): ReadOnlyToolResult 
       {
         code: "TOOL_NOT_FIXTURE_BACKED",
         label: `Run ${input.tool}`,
-        reason: "This required tool has no fixture-backed read-only implementation in Phase 7 yet.",
+        reason: "This required tool has no read-only runtime implementation yet.",
         requiredTool: input.tool,
         sourceLayers: []
       }
     ],
-    warnings: [`${input.tool} has no fixture-backed read-only implementation yet.`]
+    warnings: [`${input.tool} has no read-only runtime implementation yet.`]
   });
 }
 

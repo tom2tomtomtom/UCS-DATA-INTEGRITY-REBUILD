@@ -1,5 +1,5 @@
 import { DashboardChrome } from "../../../src/components/dashboard/chrome/dashboard-chrome";
-import { getFixtureDashboardContract } from "../../../src/lib/ui/fixture-contract";
+import { getDashboardContract } from "../../../src/lib/runtime/dashboard-contract";
 import { scopeFromSearchParams, type UiSearchParams } from "../../../src/lib/ui/scope-params";
 
 const glossaryItems = [
@@ -15,7 +15,7 @@ export default async function GlossaryPage({
 }: {
   searchParams?: Promise<UiSearchParams>;
 }) {
-  const contract = getFixtureDashboardContract(scopeFromSearchParams((await searchParams) ?? {}));
+  const contract = await getDashboardContract(scopeFromSearchParams((await searchParams) ?? {}));
 
   return (
     <DashboardChrome contract={contract} activePath="/dashboard/glossary">

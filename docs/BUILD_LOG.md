@@ -4,6 +4,92 @@ This is the durable checkpoint log for the rebuild.
 
 The controller updates this whenever a ticket completes, an agent reports back, a gate fails, or the next action changes.
 
+## 2026-05-21
+
+### Checkpoint: Dashboard Runtime Provider Boundary Added
+
+Phase: End game display contract wiring
+
+Status: implemented locally, awaiting full verify before push
+
+What changed:
+
+- added a runtime `getDashboardContract(scope)` provider,
+- moved app routes and chat tactical tools off direct fixture imports,
+- kept fixture mode as the default until imported source rows are parsed into display facts,
+- added a hard `source_archive` mode block so raw imported rows cannot be accidentally treated as dashboard truth,
+- added a regression test that scans app routes and chat tools for fixture-provider bypasses.
+
+Verification:
+
+- `npm test -- tests/runtime/dashboard-contract-provider.test.ts tests/laws/single-display-contract.test.ts tests/chat/orchestrator.test.ts` passed,
+- `npm run typecheck` passed.
+
+Current blockers:
+
+- parsed facts and the display contract are still not generated from the imported source archive,
+- the full source snapshot currently archives Fee Tracker rows, Pipeline, Production Revenue, and raw Float API rows, but not every linked fee-sheet tab,
+- Float raw API rows still need deterministic shaping and weekday/person-split expansion before they can feed the display contract,
+- named scenarios still warn for `ucs04787`, `ucs05186`, `pcs00250`, and `bt-raw-without-cache`,
+- stakeholder approval is not recorded,
+- production cutover remains blocked.
+
+Next action:
+
+- implement the source-archive reader and row shapers underneath the runtime provider, test-first,
+- expand the Sold source pull to read linked fee-sheet tabs before calling source-backed dashboard data complete.
+
+### Checkpoint: Full Source Snapshot Imported To Rebuild Supabase Staging
+
+Phase: End game source archive
+
+Status: implemented, staging source archive write completed
+
+What changed:
+
+- added `skipped_source_rows` to the law schema so allowed dropped rows have a durable ledger instead of only a dry-run report,
+- added immutable update/delete guards for skipped source rows,
+- added `source:snapshot:import`, a guarded importer that defaults to dry-run and requires explicit `--write --target staging`,
+- added Supabase REST writer tests covering table mapping, dry-run behaviour, write ordering, and no conflict hiding,
+- added `--max-rows all` source snapshot support,
+- extended full Float snapshot mode to page through `/v3/projects`, `/v3/tasks`, and `/v3/people` for the configured Float task window.
+
+Live staging evidence:
+
+- Railway target checked as project `UCS Data Integrity Rebuild`, service `ucs-data-integrity-rebuild`, environment `staging`,
+- Supabase linked project ref checked as `nxrzhwqsswhjgeouxsyr`,
+- `supabase db push --dry-run` showed one migration, `20260520170747_initial_integrity_schema.sql`,
+- `supabase db push --yes` applied that migration to the rebuild Supabase project,
+- REST schema check passed for `source_batches`, `raw_source_rows`, `skipped_source_rows`, and `parsed_facts`,
+- full read-only source snapshot written locally to `test-results/source-snapshots/full-live-2026-05-21.json`,
+- snapshot row counts: fee sheet `1191`, pipeline `690`, production revenue `219`, Float `12182`,
+- import dry-run reported `14282` raw rows, `0` skipped rows, and no warnings,
+- staging import write completed with `sourceMutation: false`,
+- REST read-back counts matched: `source_batches=4`, `raw_source_rows=14282`, `skipped_source_rows=0`.
+
+Verification:
+
+- `npm test -- tests/schema/schema-law-gate.test.ts tests/source-import/snapshot-import.test.ts tests/source-import/supabase-writer.test.ts tests/source-import/phase8-source-import-verifier.test.ts` passed,
+- `npm test -- tests/launch/live-source-snapshot.test.ts tests/source-import/snapshot-import.test.ts tests/source-import/supabase-writer.test.ts` passed,
+- `npm run typecheck` passed,
+- `node scripts/verify-phase8.mjs` passed,
+- `npm run source:snapshot:import -- test-results/source-snapshots/full-live-2026-05-21.json --dry-run` passed,
+- `SOURCE_SNAPSHOT_FILE=test-results/source-snapshots/full-live-2026-05-21.json npm run source:approval:readiness` now passes source stream and snapshot readiness, but still blocks on named scenarios and stakeholder approval.
+
+Current blockers at the time:
+
+- runtime dashboard pages still import fixture contracts directly,
+- parsed facts and display contract are not yet generated from the imported source archive,
+- named scenarios still warn for `ucs04787`, `ucs05186`, `pcs00250`, and `bt-raw-without-cache`,
+- stakeholder approval is not recorded,
+- production cutover remains blocked.
+
+Next action at the time:
+
+- add a runtime `getDashboardContract(scope)` provider,
+- swap app routes from direct fixture imports to that provider,
+- then implement the imported-source provider underneath it without changing the signed-off UI shape.
+
 ## 2026-05-20
 
 ### Checkpoint: Phase 8 Schema Law Gate Added

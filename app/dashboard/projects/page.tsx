@@ -1,6 +1,6 @@
 import { DashboardChrome } from "../../../src/components/dashboard/chrome/dashboard-chrome";
 import { ProjectsTable } from "../../../src/components/dashboard/projects/projects-table";
-import { getFixtureDashboardContract } from "../../../src/lib/ui/fixture-contract";
+import { getDashboardContract } from "../../../src/lib/runtime/dashboard-contract";
 import { projectsViewStateFromSearchParams } from "../../../src/lib/ui/projects-view-state";
 import { scopeFromSearchParams, type UiSearchParams } from "../../../src/lib/ui/scope-params";
 
@@ -12,7 +12,7 @@ export default async function ProjectsPage({
   const params = (await searchParams) ?? {};
   const scope = scopeFromParams(params);
   const viewState = projectsViewStateFromSearchParams(params);
-  const contract = getFixtureDashboardContract(scope);
+  const contract = await getDashboardContract(scope);
 
   return (
     <DashboardChrome contract={contract} activePath="/dashboard/projects" extraScopeParams={projectsChromeParams(params)}>

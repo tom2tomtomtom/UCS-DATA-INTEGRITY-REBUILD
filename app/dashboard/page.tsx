@@ -1,7 +1,7 @@
 import { DashboardChrome } from "../../src/components/dashboard/chrome/dashboard-chrome";
 import { DashboardHome, type RollupSortKey } from "../../src/components/dashboard/rollups/dashboard-home";
 import type { RollupDimension } from "../../src/lib";
-import { getFixtureDashboardContract } from "../../src/lib/ui/fixture-contract";
+import { getDashboardContract } from "../../src/lib/runtime/dashboard-contract";
 import { scopeFromSearchParams, type UiSearchParams } from "../../src/lib/ui/scope-params";
 
 export default async function DashboardPage({
@@ -10,7 +10,7 @@ export default async function DashboardPage({
   searchParams?: Promise<UiSearchParams>;
 }) {
   const params = (await searchParams) ?? {};
-  const contract = getFixtureDashboardContract(scopeFromSearchParams(params));
+  const contract = await getDashboardContract(scopeFromSearchParams(params));
   const view = rollupViewFromSearchParams(params);
   const sortKey = rollupSortKeyFromSearchParams(params);
   const sortDir = rollupSortDirFromSearchParams(params);

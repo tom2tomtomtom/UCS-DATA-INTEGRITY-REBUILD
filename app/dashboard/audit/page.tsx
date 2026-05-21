@@ -2,7 +2,7 @@ import { ReadOnlyRouteSurface } from "../../../src/components/dashboard/admin/re
 import { DashboardChrome } from "../../../src/components/dashboard/chrome/dashboard-chrome";
 import type { ReconciliationCheck, SourceWarning } from "../../../src/lib";
 import { scopedHref } from "../../../src/lib";
-import { getFixtureDashboardContract } from "../../../src/lib/ui/fixture-contract";
+import { getDashboardContract } from "../../../src/lib/runtime/dashboard-contract";
 import { scopeFromSearchParams, type UiSearchParams } from "../../../src/lib/ui/scope-params";
 
 export default async function SyncAuditPage({
@@ -11,7 +11,7 @@ export default async function SyncAuditPage({
   searchParams?: Promise<UiSearchParams>;
 }) {
   const scope = scopeFromSearchParams((await searchParams) ?? {});
-  const contract = getFixtureDashboardContract(scope);
+  const contract = await getDashboardContract(scope);
   const warningCount = contract.warnings.length + contract.reconciliation.filter((check) => check.status !== "PASS").length;
 
   return (

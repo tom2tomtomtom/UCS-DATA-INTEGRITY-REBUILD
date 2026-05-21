@@ -1,6 +1,6 @@
 import { DashboardChrome } from "../../../../src/components/dashboard/chrome/dashboard-chrome";
 import { ProjectDetail } from "../../../../src/components/dashboard/project-detail/project-detail";
-import { getFixtureDashboardContract } from "../../../../src/lib/ui/fixture-contract";
+import { getDashboardContract } from "../../../../src/lib/runtime/dashboard-contract";
 import { scopeFromSearchParams, type UiSearchParams } from "../../../../src/lib/ui/scope-params";
 
 export default async function ProjectDetailPage({
@@ -13,7 +13,7 @@ export default async function ProjectDetailPage({
   const { jobNumber } = await params;
   const query = (await searchParams) ?? {};
   const scope = scopeFromParams(query, jobNumber);
-  const contract = getFixtureDashboardContract(scope);
+  const contract = await getDashboardContract(scope);
 
   return (
     <DashboardChrome contract={contract} activePath="/dashboard/projects">

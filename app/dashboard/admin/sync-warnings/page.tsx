@@ -2,7 +2,7 @@ import { ReadOnlyRouteSurface } from "../../../../src/components/dashboard/admin
 import { DashboardChrome } from "../../../../src/components/dashboard/chrome/dashboard-chrome";
 import type { DashboardScope, ReconciliationCheck, SourceWarning } from "../../../../src/lib";
 import { scopedHref } from "../../../../src/lib";
-import { getFixtureDashboardContract } from "../../../../src/lib/ui/fixture-contract";
+import { getDashboardContract } from "../../../../src/lib/runtime/dashboard-contract";
 import { scopeFromSearchParams, type UiSearchParams } from "../../../../src/lib/ui/scope-params";
 
 type WarningEvidenceItem = {
@@ -22,7 +22,7 @@ export default async function SyncWarningsPage({
 }) {
   const params = (await searchParams) ?? {};
   const scope = scopeFromSearchParams(params);
-  const contract = getFixtureDashboardContract(scope);
+  const contract = await getDashboardContract(scope);
   const evidenceItems = filterEvidenceItems([
     ...contract.warnings.map((warning) => warningEvidenceItem(warning)),
     ...contract.reconciliation.filter((check) => check.status !== "PASS").map((check) => checkEvidenceItem(check))

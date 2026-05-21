@@ -4,11 +4,11 @@ import { buildProjectDetailViewModel } from "../../src/lib/display/project-detai
 import { buildCsvRowsFromDisplayContract } from "../../src/lib";
 import type { DashboardProjectRow, MetricValue } from "../../src/lib";
 import { executeReadOnlyTool } from "../../src/lib/chat";
-import { getFixtureDashboardContract } from "../../src/lib/ui/fixture-contract";
+import { getDashboardContractSync } from "../../src/lib/runtime/dashboard-contract";
 
 describe("Law 3: one display contract owns all visible numbers", () => {
   test("derives hero totals from the same scoped display contract rows", () => {
-    const contract = getFixtureDashboardContract({
+    const contract = getDashboardContractSync({
       office: "LDN",
       from: "2026-01-01",
       to: "2026-03-31",
@@ -21,7 +21,7 @@ describe("Law 3: one display contract owns all visible numbers", () => {
   });
 
   test("derives Projects footer totals from display contract rows", () => {
-    const contract = getFixtureDashboardContract({
+    const contract = getDashboardContractSync({
       office: "LDN",
       from: "2026-01-01",
       to: "2026-03-31",
@@ -34,7 +34,7 @@ describe("Law 3: one display contract owns all visible numbers", () => {
   });
 
   test("derives CSV rows from the display contract rows", () => {
-    const contract = getFixtureDashboardContract({
+    const contract = getDashboardContractSync({
       office: "LDN",
       from: "2026-01-01",
       to: "2026-03-31",
@@ -46,7 +46,7 @@ describe("Law 3: one display contract owns all visible numbers", () => {
   });
 
   test("derives project detail values from the scoped display contract model", () => {
-    const contract = getFixtureDashboardContract({
+    const contract = getDashboardContractSync({
       office: "LDN",
       from: "2026-01-01",
       to: "2026-03-31",
@@ -70,7 +70,7 @@ describe("Law 3: one display contract owns all visible numbers", () => {
       to: "2026-03-31",
       jobNumber: "UCS05186"
     } as const;
-    const contract = getFixtureDashboardContract(scope);
+    const contract = getDashboardContractSync(scope);
     const result = executeReadOnlyTool({
       tool: "inspect_project",
       scope,

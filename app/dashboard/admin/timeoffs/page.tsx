@@ -1,6 +1,6 @@
 import { ReadOnlyRouteSurface } from "../../../../src/components/dashboard/admin/readonly-route";
 import { DashboardChrome } from "../../../../src/components/dashboard/chrome/dashboard-chrome";
-import { getFixtureDashboardContract } from "../../../../src/lib/ui/fixture-contract";
+import { getDashboardContract } from "../../../../src/lib/runtime/dashboard-contract";
 import { scopeFromSearchParams, type UiSearchParams } from "../../../../src/lib/ui/scope-params";
 
 export default async function CapacityReducedPage({
@@ -8,7 +8,7 @@ export default async function CapacityReducedPage({
 }: {
   searchParams?: Promise<UiSearchParams>;
 }) {
-  const contract = getFixtureDashboardContract(scopeFromSearchParams((await searchParams) ?? {}));
+  const contract = await getDashboardContract(scopeFromSearchParams((await searchParams) ?? {}));
 
   return (
     <DashboardChrome contract={contract} activePath="/dashboard/admin/timeoffs">
