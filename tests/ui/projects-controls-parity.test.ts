@@ -59,6 +59,8 @@ describe("P9.5-E Projects presentation controls parity", () => {
     expect(html).toContain("By Month");
     expect(html).toContain("By Role");
     expect(html).toContain("By Client");
+    expect(html).toContain("href=\"/dashboard/projects?office=LDN&amp;from=2026-04-01&amp;to=2026-06-30&amp;pview=calendar&amp;view=role\">Q2");
+    expect(html).toContain("href=\"/dashboard/projects?office=LDN&amp;from=2026-02-01&amp;to=2026-02-28&amp;pview=calendar&amp;view=role\">Feb");
   });
 
   test("pview changes presentation only while totals and CSV stay unchanged", () => {

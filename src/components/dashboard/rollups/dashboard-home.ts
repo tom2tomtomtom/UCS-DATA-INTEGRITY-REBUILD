@@ -158,7 +158,7 @@ function soldAllocatedHeader(contract: DashboardDisplayContract, view: RollupDim
       viewToggle("By Role", "role", contract, view),
       viewToggle("By Client", "client", contract, view)
     ),
-    React.createElement(TimeFilterControls, { basePath: "/dashboard", scope: contract.scope })
+    React.createElement(TimeFilterControls, { basePath: "/dashboard", extraParams: { view }, scope: contract.scope })
   );
 }
 

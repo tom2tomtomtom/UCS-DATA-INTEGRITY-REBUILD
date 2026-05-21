@@ -57,7 +57,11 @@ export function ProjectsControls({
         )
       )
     ),
-    React.createElement(TimeFilterControls, { basePath: "/dashboard/projects", scope: scopeFromParams(params) }),
+    React.createElement(TimeFilterControls, {
+      basePath: "/dashboard/projects",
+      extraParams: projectsTimeFilterParams(params),
+      scope: scopeFromParams(params)
+    }),
     React.createElement(
       "div",
       { className: "projects-mutation-bars", "aria-label": "Read-only mutation handoff" },
@@ -92,6 +96,13 @@ function hiddenSearchInputs(params: UiSearchParams) {
     if (value === undefined || value.trim() === "") return [];
     return React.createElement("input", { key, name: key, type: "hidden", value });
   });
+}
+
+function projectsTimeFilterParams(params: UiSearchParams): Record<string, string | undefined> {
+  return {
+    pview: scalarParam(params.pview),
+    view: scalarParam(params.view)
+  };
 }
 
 export function ProjectsBreakdownControls({

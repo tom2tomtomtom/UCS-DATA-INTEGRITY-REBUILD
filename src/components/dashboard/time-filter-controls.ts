@@ -28,18 +28,20 @@ const months = [
 
 export function TimeFilterControls({
   basePath,
+  extraParams = {},
   scope
 }: {
   readonly basePath: string;
+  readonly extraParams?: Readonly<Record<string, string | undefined>>;
   readonly scope: DashboardScope;
 }) {
   return React.createElement(
     "section",
     { className: "time-filter-controls", "aria-label": "Time filters" },
     React.createElement("span", { className: "time-filter-label" }, "Quick"),
-    ...quickRanges.map(([label, from, to]) => rangeLink(basePath, scope, label, from, to)),
+    ...quickRanges.map(([label, from, to]) => rangeLink(basePath, scope, extraParams, label, from, to)),
     React.createElement("span", { className: "time-filter-label" }, "Month"),
-    ...months.map(([label, from, to]) => rangeLink(basePath, scope, label, from, to)),
+    ...months.map(([label, from, to]) => rangeLink(basePath, scope, extraParams, label, from, to)),
     React.createElement("span", { className: "time-filter-label" }, "Custom"),
     React.createElement("input", {
       "aria-label": "Custom from date",
@@ -58,7 +60,14 @@ export function TimeFilterControls({
   );
 }
 
-function rangeLink(basePath: string, scope: DashboardScope, label: string, from: string, to: string) {
+function rangeLink(
+  basePath: string,
+  scope: DashboardScope,
+  extraParams: Readonly<Record<string, string | undefined>>,
+  label: string,
+  from: string,
+  to: string
+) {
   const active = scope.from === from && scope.to === to;
 
   return React.createElement(
@@ -66,9 +75,25 @@ function rangeLink(basePath: string, scope: DashboardScope, label: string, from:
     {
       "aria-current": active ? "page" : undefined,
       className: active ? "active" : undefined,
-      href: scopedHref(basePath, scope, { from, to }),
+      href: hrefWithExtraParams(scopedHref(basePath, scope, { from, to }), extraParams),
       key: `${label}:${from}:${to}`
     },
     label
   );
+}
+
+function hrefWithExtraParams(href: string, extraParams: Readonly<Record<string, string | undefined>>): string {
+  const [path = "", query = ""] = href.split("?");
+  const params = new URLSearchParams(query);
+
+  for (const [key, value] of Object.entries(extraParams)) {
+    if (value === undefined || value.trim() === "") {
+      params.delete(key);
+    } else {
+      params.set(key, value);
+    }
+  }
+
+  const nextQuery = params.toString();
+  return nextQuery === "" ? path : `${path}?${nextQuery}`;
 }
