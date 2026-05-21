@@ -48,6 +48,14 @@ SOURCE_SNAPSHOT_FILE=/path/to/source-snapshot.json npm run source:approval:readi
 
 The snapshot file must use the existing read-only source snapshot import shape. The gate only checks that the evidence exists and can be imported safely. It does not claim stakeholder approval or source accuracy by itself.
 
+To create a local read-only snapshot artifact from staging credentials:
+
+```bash
+railway run --service ucs-data-integrity-rebuild --environment staging npm run source:snapshot:create -- --out test-results/source-snapshots/phase10-source-snapshot.json --max-rows 100
+```
+
+The snapshot output path is ignored by git. The command writes source data locally and prints only a row-count summary.
+
 ## Named Scenario Evidence
 
 Each named scenario must include:
