@@ -196,10 +196,77 @@ function cloneMetric(metric: MetricValue): MetricValue {
 }
 
 function mergeDetail(details: readonly ProjectDetailEvidence[]): ProjectDetailEvidence {
+  const monthlyRows = new Map<string, ProjectMonthlyDetailRow>();
+  const roleRows = new Map<string, ProjectRoleDetailRow>();
+
+  for (const detail of details) {
+    for (const row of detail.monthlyRows) {
+      const existing = monthlyRows.get(row.month);
+      monthlyRows.set(row.month, existing === undefined ? cloneMonthlyRow(row) : mergeMonthlyRow(existing, row));
+    }
+
+    for (const row of detail.roleRows) {
+      const existing = roleRows.get(row.role);
+      roleRows.set(row.role, existing === undefined ? cloneRoleRow(row) : mergeRoleRow(existing, row));
+    }
+  }
+
   return {
-    monthlyRows: details.flatMap((detail) => detail.monthlyRows),
-    roleRows: details.flatMap((detail) => detail.roleRows),
+    monthlyRows: [...monthlyRows.values()],
+    roleRows: [...roleRows.values()],
     floatTraceRows: details.flatMap((detail) => detail.floatTraceRows)
+  };
+}
+
+function cloneMonthlyRow(row: ProjectMonthlyDetailRow): ProjectMonthlyDetailRow {
+  return {
+    month: row.month,
+    soldFee: cloneMetric(row.soldFee),
+    soldHours: cloneMetric(row.soldHours),
+    allocatedHours: cloneMetric(row.allocatedHours),
+    allocatedValue: cloneMetric(row.allocatedValue),
+    varianceHours: cloneMetric(row.varianceHours),
+    sourceTrace: row.sourceTrace.map((sourceRef) => ({ ...sourceRef }))
+  };
+}
+
+function mergeMonthlyRow(left: ProjectMonthlyDetailRow, right: ProjectMonthlyDetailRow): ProjectMonthlyDetailRow {
+  return {
+    month: left.month,
+    soldFee: addMetric(left.soldFee, right.soldFee),
+    soldHours: addMetric(left.soldHours, right.soldHours),
+    allocatedHours: addMetric(left.allocatedHours, right.allocatedHours),
+    allocatedValue: addMetric(left.allocatedValue, right.allocatedValue),
+    varianceHours: addMetric(left.varianceHours, right.varianceHours),
+    sourceTrace: [...left.sourceTrace, ...right.sourceTrace.map((sourceRef) => ({ ...sourceRef }))]
+  };
+}
+
+function cloneRoleRow(row: ProjectRoleDetailRow): ProjectRoleDetailRow {
+  return {
+    role: row.role,
+    soldHours: cloneMetric(row.soldHours),
+    soldFee: cloneMetric(row.soldFee),
+    ratePerHour: cloneMetric(row.ratePerHour),
+    allocatedHours: cloneMetric(row.allocatedHours),
+    allocatedValue: cloneMetric(row.allocatedValue),
+    varianceValue: cloneMetric(row.varianceValue),
+    variancePercent: cloneMetric(row.variancePercent),
+    sourceTrace: row.sourceTrace.map((sourceRef) => ({ ...sourceRef }))
+  };
+}
+
+function mergeRoleRow(left: ProjectRoleDetailRow, right: ProjectRoleDetailRow): ProjectRoleDetailRow {
+  return {
+    role: left.role,
+    soldHours: addMetric(left.soldHours, right.soldHours),
+    soldFee: addMetric(left.soldFee, right.soldFee),
+    ratePerHour: left.ratePerHour,
+    allocatedHours: addMetric(left.allocatedHours, right.allocatedHours),
+    allocatedValue: addMetric(left.allocatedValue, right.allocatedValue),
+    varianceValue: addMetric(left.varianceValue, right.varianceValue),
+    variancePercent: left.variancePercent,
+    sourceTrace: [...left.sourceTrace, ...right.sourceTrace.map((sourceRef) => ({ ...sourceRef }))]
   };
 }
 
