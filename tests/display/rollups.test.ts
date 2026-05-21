@@ -148,6 +148,7 @@ function floatFact(input: {
   readonly department?: string;
   readonly role?: string;
   readonly sourceLayer?: FloatFact["sourceLayer"];
+  readonly allocationClass?: FloatFact["allocationClass"];
 }): FloatFact {
   return {
     id: input.id,
@@ -166,7 +167,7 @@ function floatFact(input: {
     ...(input.role !== undefined ? { role: input.role } : {}),
     hours: hours(input.floatHours),
     activeState: "active",
-    allocationClass: "allocated",
+    allocationClass: input.allocationClass ?? "allocated",
     isAdditive: true,
     confidence: "high",
     warnings: [],
@@ -306,6 +307,48 @@ describe("P5-C display rollups", () => {
     ]);
     expect(departmentRollup?.sourceTrace.map((ref) => ref.rawRowId)).toContain("float-visible");
     expect(departmentRollup?.sourceTrace.map((ref) => ref.rawRowId)).not.toContain("float-raw");
+  });
+
+  test("splits visible Float rollups into allocated, unallocated, and unclassified hours", () => {
+    const rollup = buildDepartmentRollups({
+      scope: q1LdnScope,
+      soldFacts: [],
+      floatFacts: [
+        floatFact({
+          id: "float:allocated",
+          rawRowId: "float-allocated",
+          jobNumber: "UCS04787",
+          client: "Acme Studios",
+          floatHours: 32,
+          department: "Design",
+          allocationClass: "allocated"
+        }),
+        floatFact({
+          id: "float:placeholder",
+          rawRowId: "float-placeholder",
+          jobNumber: "UCS04787",
+          client: "Acme Studios",
+          floatHours: 8,
+          department: "Design",
+          allocationClass: "placeholder"
+        }),
+        floatFact({
+          id: "float:orphan",
+          rawRowId: "float-orphan",
+          jobNumber: "UCS04787",
+          client: "Acme Studios",
+          floatHours: 5,
+          department: "Design",
+          allocationClass: "orphan"
+        })
+      ]
+    })[0];
+
+    expect(rollup?.totals.floatHours).toMatchObject({ kind: "hours", value: 45 });
+    expect(rollup?.floatBreakdown?.allocatedHours).toMatchObject({ kind: "hours", value: 32 });
+    expect(rollup?.floatBreakdown?.unallocatedHours).toMatchObject({ kind: "hours", value: 8 });
+    expect(rollup?.floatBreakdown?.unclassifiedHours).toMatchObject({ kind: "hours", value: 5 });
+    expect(rollup?.floatBreakdown?.splitStatus).toBe("partial");
   });
 
   test("keeps pipeline and production revenue unsupported for department and role slices", () => {

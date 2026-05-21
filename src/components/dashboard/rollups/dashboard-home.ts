@@ -334,6 +334,9 @@ function rollupTableElement(rows: readonly RollupRow[], firstColumnLabel: string
         React.createElement("th", null, "Sold (£)"),
         React.createElement("th", null, "Sold (hrs)"),
         React.createElement("th", null, "Allocated (hrs)"),
+        React.createElement("th", null, "Unallocated (hrs)"),
+        React.createElement("th", null, "Total (hrs)"),
+        React.createElement("th", null, "Allocated (£)"),
         React.createElement("th", null, "Variance %"),
         React.createElement("th", null, "Status")
       )
@@ -342,7 +345,7 @@ function rollupTableElement(rows: readonly RollupRow[], firstColumnLabel: string
       "tbody",
       null,
       rows.length === 0
-        ? React.createElement("tr", null, React.createElement("td", { colSpan: 7 }, "No rows for this scope"))
+        ? React.createElement("tr", null, React.createElement("td", { colSpan: 10 }, "No rows for this scope"))
         : rows.map((row) => rollupRow(row))
     )
   );
@@ -350,7 +353,8 @@ function rollupTableElement(rows: readonly RollupRow[], firstColumnLabel: string
 
 function rollupRow(row: RollupRow) {
   const soldHours = metricNumber(row.totals.soldHours);
-  const allocatedHours = metricNumber(row.totals.floatHours);
+  const totalHours = metricNumber(row.totals.floatHours);
+  const allocatedHours = metricNumber(allocatedHoursMetric(row));
 
   return React.createElement(
     "tr",
@@ -363,10 +367,58 @@ function rollupRow(row: RollupRow) {
     React.createElement("td", null, formatMetric(row.totals.pipelineFee)),
     React.createElement("td", null, formatMetric(row.totals.soldFee)),
     React.createElement("td", null, formatMetric(row.totals.soldHours)),
+    React.createElement("td", null, formatMetric(allocatedHoursMetric(row))),
+    React.createElement("td", null, formatUnallocatedHours(row)),
     React.createElement("td", null, formatMetric(row.totals.floatHours)),
-    React.createElement("td", null, variancePercent(soldHours, allocatedHours)),
-    React.createElement("td", null, statusBadge(soldHours, allocatedHours, row.unsupported.length))
+    React.createElement("td", null, allocatedValueLabel(row, allocatedHours)),
+    React.createElement("td", null, variancePercent(soldHours, totalHours)),
+    React.createElement("td", null, statusBadge(soldHours, totalHours, row.unsupported.length))
   );
+}
+
+function allocatedHoursMetric(row: RollupRow): MetricValue {
+  return row.floatBreakdown?.allocatedHours ?? unsupportedMetric("allocatedHours", row);
+}
+
+function unallocatedHoursMetric(row: RollupRow): MetricValue {
+  return row.floatBreakdown?.unallocatedHours ?? unsupportedMetric("unallocatedHours", row);
+}
+
+function formatUnallocatedHours(row: RollupRow): string {
+  const label = formatMetric(unallocatedHoursMetric(row));
+
+  if (row.floatBreakdown?.splitStatus !== "partial") {
+    return label;
+  }
+
+  return `${label} + unclassified`;
+}
+
+function allocatedValueLabel(row: RollupRow, allocatedHours: number): string {
+  const soldHours = metricNumber(row.totals.soldHours);
+  const soldFee = metricNumber(row.totals.soldFee);
+
+  if (soldHours <= 0 || allocatedHours <= 0) {
+    return "Unsupported";
+  }
+
+  return new Intl.NumberFormat("en-GB", {
+    style: "currency",
+    currency: "GBP",
+    maximumFractionDigits: 0
+  }).format((soldFee / soldHours) * allocatedHours);
+}
+
+function unsupportedMetric(metric: string, row: RollupRow): MetricValue {
+  return {
+    kind: "unsupported",
+    metric,
+    scope: row.scope,
+    source: "float",
+    reason: "Float allocation split is not present on this display row.",
+    displayLabel: "Unsupported",
+    severity: "info"
+  };
 }
 
 function healthList(items: readonly string[]) {

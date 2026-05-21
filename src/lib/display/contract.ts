@@ -90,9 +90,17 @@ export type RollupRow = {
   scope: DashboardScope;
   label: string;
   totals: DashboardTotals;
+  floatBreakdown?: RollupFloatBreakdown;
   unsupported: UnsupportedMetric[];
   warnings: SourceWarning[];
   sourceTrace: SourceTraceRef[];
+};
+
+export type RollupFloatBreakdown = {
+  allocatedHours: MetricValue;
+  unallocatedHours: MetricValue;
+  unclassifiedHours: MetricValue;
+  splitStatus: "supported" | "partial";
 };
 
 export type DashboardCsvRow = {

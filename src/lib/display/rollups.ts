@@ -12,7 +12,7 @@ import type {
   UnsupportedMetric
 } from "../canon/types";
 import { filterFactsByScope } from "../canon-queries/scope";
-import type { DashboardTotals, RollupRow } from "./contract";
+import type { DashboardTotals, RollupFloatBreakdown, RollupRow } from "./contract";
 
 export type RollupDimension = "department" | "role" | "client" | "month";
 
@@ -225,9 +225,31 @@ function buildRollupRow(
     scope,
     label,
     totals,
+    floatBreakdown: buildFloatBreakdown(floatFacts),
     unsupported: unsupportedFromTotals(totals),
     warnings: collectWarnings(soldFacts, floatFacts, pipelineFacts, productionRevenueFacts),
     sourceTrace: collectTrace(soldFacts, floatFacts, pipelineFacts, productionRevenueFacts)
+  };
+}
+
+function buildFloatBreakdown(floatFacts: readonly FloatFact[]): RollupFloatBreakdown {
+  const allocatedFacts = floatFacts.filter((fact) => fact.allocationClass === "allocated");
+  const unallocatedFacts = floatFacts.filter(
+    (fact) => fact.allocationClass === "unallocated" || fact.allocationClass === "placeholder"
+  );
+  const unclassifiedFacts = floatFacts.filter(
+    (fact) =>
+      fact.allocationClass === undefined ||
+      fact.allocationClass === "orphan" ||
+      fact.allocationClass === "pencil"
+  );
+  const unclassifiedHours = sumHoursMetric(unclassifiedFacts, "hours");
+
+  return {
+    allocatedHours: sumHoursMetric(allocatedFacts, "hours"),
+    unallocatedHours: sumHoursMetric(unallocatedFacts, "hours"),
+    unclassifiedHours,
+    splitStatus: metricNumber(unclassifiedHours) > 0 ? "partial" : "supported"
   };
 }
 
@@ -343,6 +365,12 @@ function unsupportedTotal(
 
 function unsupportedFromTotals(totals: DashboardTotals): UnsupportedMetric[] {
   return Object.values(totals).filter((metric): metric is UnsupportedMetric => metric.kind === "unsupported");
+}
+
+function metricNumber(value: MetricValue): number {
+  if (value.kind === "money") return value.value.amountGbp;
+  if (value.kind === "hours" || value.kind === "count") return value.value;
+  return 0;
 }
 
 function collectWarnings(

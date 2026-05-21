@@ -65,8 +65,12 @@ describe("P6-B dashboard home rollups", () => {
     expect(html).toContain("Float sync warnings");
     expect(html).toContain("Why is this lower than Float?");
     expect(html).toContain("Sold vs Allocated Hours by Department");
+    expect(html).toContain("Unallocated (hrs)");
+    expect(html).toContain("Total (hrs)");
+    expect(html).toContain("Allocated (£)");
     expect(html).toContain("Variance %");
     expect(html).toContain("861h");
+    expect(html).toContain("1,051.4h + unclassified");
   });
 
   test("uses the URL-selected rollup view for the primary table", () => {
