@@ -2729,6 +2729,35 @@ Boundary kept:
 - no source snapshot committed to git,
 - no stakeholder approval language.
 
+### Checkpoint: Approval Page Shows Named Scenario Blockers
+
+Phase: 9.5 and 10
+
+Tickets: `#83`, `#85`, `#88`, `#89`
+
+Status: implemented, local verification passed
+
+What changed:
+
+- added a named scenario gate panel to Approval Audit,
+- shows pass, warn, and fail counts from the same named scenario report used by the source readiness gate,
+- lists the current blocking warning scenario IDs directly in the UI: `ucs04787`, `ucs05186`, `pcs00250`, and `bt-raw-without-cache`,
+- keeps approval language blocked rather than implying WARN means ready.
+
+Verification:
+
+- `npm test -- tests/ui/approval.test.ts tests/launch/source-approval-readiness-report.test.ts` passed,
+- `npm run verify:phase9` passed with 78 test files, 311 tests, typecheck, Next build, Phase 8 verifier, and Phase 9 verifier.
+
+Boundary kept:
+
+- no production cutover,
+- no source-system mutation,
+- no scheduled sync,
+- no Supabase migration,
+- no source snapshot committed to git,
+- no stakeholder approval language.
+
 ### Checkpoint: Source Readiness Now Gates Named Scenario Warnings
 
 Phase: 10

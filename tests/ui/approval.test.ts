@@ -15,6 +15,12 @@ describe("P6-E Approval", () => {
     expect(html).toContain("Source approval: NOT APPROVED");
     expect(html).toContain("Stakeholder approval: NOT APPROVED");
     expect(html).toContain("WARN is not approval");
+    expect(html).toContain("Named scenario gate:");
+    expect(html).toContain("4 named scenarios still block approval.");
+    expect(html).toContain("Pass 7");
+    expect(html).toContain("Warn 4");
+    expect(html).toContain("Fail 0");
+    expect(html).toContain("Blocking scenarios: ucs04787, ucs05186, pcs00250, bt-raw-without-cache.");
     expect(html).toContain("PASS gates");
     expect(html).toContain("WARN gates");
     expect(html).toContain("FAIL gates");

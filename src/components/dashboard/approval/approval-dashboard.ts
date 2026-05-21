@@ -15,6 +15,7 @@ export function ApprovalDashboard({
   const warnCount =
     approval.warnings.length + approval.unsupported.length + approval.reconciliation.filter((check) => check.status !== "PASS" && check.status !== "FAIL").length;
   const passCount = Math.max(0, approval.rows.length - failCount - warnCount);
+  const scenarioWarnings = scenarioReport.scenarios.filter((scenario) => scenario.status === "warn");
 
   return React.createElement(
     "section",
@@ -32,6 +33,30 @@ export function ApprovalDashboard({
         statusChip("Stakeholder approval: NOT APPROVED"),
         statusChip("WARN is not approval")
       )
+    ),
+    React.createElement(
+      "section",
+      { className: "approval-state-card", "aria-label": "Named scenario approval blockers" },
+      React.createElement("span", { className: "approval-label" }, "Named scenario gate:"),
+      React.createElement(
+        "strong",
+        null,
+        scenarioWarnings.length === 0 ? "All named scenarios are pass." : `${scenarioWarnings.length} named scenarios still block approval.`
+      ),
+      React.createElement(
+        "div",
+        { className: "source-status-chips" },
+        statusChip(`Pass ${scenarioReport.summary.pass}`),
+        statusChip(`Warn ${scenarioReport.summary.warn}`),
+        statusChip(`Fail ${scenarioReport.summary.fail}`)
+      ),
+      scenarioWarnings.length === 0
+        ? React.createElement("p", null, "No named Sian/Yunni/Jade warning scenarios remain.")
+        : React.createElement(
+            "p",
+            null,
+            `Blocking scenarios: ${scenarioWarnings.map((scenario) => scenario.id).join(", ")}.`
+          )
     ),
     React.createElement(
       "div",
