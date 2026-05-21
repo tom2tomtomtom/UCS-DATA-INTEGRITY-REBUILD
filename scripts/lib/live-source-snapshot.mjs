@@ -31,6 +31,7 @@ export async function buildLiveSourceSnapshot({
       preferredRanges: env.FEE_TRACKER_SNAPSHOT_RANGE
         ? [env.FEE_TRACKER_SNAPSHOT_RANGE]
         : ["LDN!A1:I1000", "UCX!A1:I1000", "USA!A1:I1000"],
+      collectAllRanges: true,
       maxRows
     }),
     readSheetSource({
@@ -104,6 +105,7 @@ async function readSheetSource({
   sourceLabel,
   spreadsheetId,
   preferredRanges,
+  collectAllRanges = false,
   maxRows
 }) {
   const ranges = await resolveRanges({
@@ -115,6 +117,8 @@ async function readSheetSource({
   });
 
   const errors = [];
+  const collectedRows = [];
+  const collectedRanges = [];
   for (const range of ranges) {
     try {
       const values = await fetchSheetValues({
@@ -132,6 +136,12 @@ async function readSheetSource({
       });
 
       if (rows.length > 0) {
+        if (collectAllRanges) {
+          collectedRows.push(...rows);
+          collectedRanges.push(range);
+          continue;
+        }
+
         return {
           source,
           mode: "read_only_live",
@@ -143,6 +153,16 @@ async function readSheetSource({
     } catch (error) {
       errors.push(error instanceof Error ? error.message : String(error));
     }
+  }
+
+  if (collectAllRanges && collectedRows.length > 0) {
+    return {
+      source,
+      mode: "read_only_live",
+      sourceLabel,
+      sourceVersion: `ranges:${collectedRanges.join(",")}`,
+      rows: collectedRows
+    };
   }
 
   throw new Error(`${sourceLabel} source snapshot produced no rows. ${errors.join(" ")}`.trim());

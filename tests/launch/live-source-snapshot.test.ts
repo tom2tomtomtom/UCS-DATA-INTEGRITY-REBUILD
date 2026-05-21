@@ -2,7 +2,10 @@ import { describe, expect, test } from "vitest";
 import { generateKeyPairSync } from "node:crypto";
 import { pathToFileURL } from "node:url";
 
-import { buildFloatTargetManifestEvidenceFromSnapshot } from "../../src/lib/scenarios/named-scenario-report";
+import {
+  buildFloatTargetManifestEvidenceFromSnapshot,
+  buildScenarioSourceEvidenceFromSnapshot
+} from "../../src/lib/scenarios/named-scenario-report";
 
 type LiveSourceSnapshotModule = {
   readonly buildLiveSourceSnapshot: (input: {
@@ -17,8 +20,13 @@ type LiveSourceSnapshotModule = {
       readonly readOnly: boolean;
       readonly sources: readonly {
         readonly source: string;
+        readonly sourceVersion?: string;
         readonly rows?: readonly {
-          readonly identity?: { readonly stableSourceRowKey?: string; readonly sourceObjectId?: string };
+          readonly identity?: {
+            readonly stableSourceRowKey?: string;
+            readonly sourceObjectId?: string;
+            readonly sourceTab?: string;
+          };
           readonly raw?: Record<string, unknown>;
         }[];
       }[];
@@ -92,7 +100,7 @@ describe("Phase 10 live source snapshot builder", () => {
     ]);
     expect(summary.ready).toBe(true);
     expect(summary.sourceRows).toEqual({
-      fee_sheet: 2,
+      fee_sheet: 6,
       pipeline: 2,
       production_revenue: 2,
       float: 1
@@ -102,6 +110,68 @@ describe("Phase 10 live source snapshot builder", () => {
     expect(fetchCalls.some((url) => url.includes("fee_tracker_sheet"))).toBe(true);
     expect(fetchCalls.some((url) => url.includes("pipeline_sheet"))).toBe(true);
     expect(fetchCalls.some((url) => url.includes("production_revenue_sheet"))).toBe(true);
+  });
+
+  test("captures every Fee Tracker office tab so USA scenario evidence is not hidden behind LDN", async () => {
+    const { buildLiveSourceSnapshot } = await loadLiveSourceSnapshotModule();
+    const fetchImpl = async (url: string) => {
+      if (url.includes("/values/")) {
+        const decodedUrl = decodeURIComponent(url);
+
+        if (decodedUrl.includes("LDN!")) {
+          return ok({ values: [["JOB"], ["UCS04154"]] });
+        }
+
+        if (decodedUrl.includes("UCX!")) {
+          return ok({ values: [["JOB"], ["UCX00001"]] });
+        }
+
+        if (decodedUrl.includes("USA!")) {
+          return ok({ values: [["JOB"], ["USA00262"], ["USA00323"]] });
+        }
+
+        return ok({ values: [["Header"], ["Source row"]] });
+      }
+
+      if (url.endsWith("/projects")) {
+        return ok([{ project_id: 10480262, project_code: "UCS04154" }]);
+      }
+
+      return ok({ sheets: [{ properties: { title: "Sheet1" } }] });
+    };
+
+    const { snapshot, summary } = await buildLiveSourceSnapshot({
+      env,
+      fetchImpl,
+      now: "2026-05-21T00:00:00.000Z",
+      maxRows: 10
+    });
+    const feeTracker = snapshot.sources.find((sourceRow) => sourceRow.source === "fee_sheet");
+    const scenarioEvidence = buildScenarioSourceEvidenceFromSnapshot(snapshot, ["USA00262", "USA00323"]);
+
+    expect(summary.sourceRows.fee_sheet).toBe(7);
+    expect(feeTracker?.sourceVersion).toBe("ranges:LDN!A1:I1000,UCX!A1:I1000,USA!A1:I1000");
+    expect(feeTracker?.rows?.map((row) => row.identity?.sourceTab)).toEqual([
+      "LDN",
+      "LDN",
+      "UCX",
+      "UCX",
+      "USA",
+      "USA",
+      "USA"
+    ]);
+    expect(scenarioEvidence).toEqual([
+      expect.objectContaining({
+        scenarioCode: "USA00262",
+        sources: ["fee_sheet"],
+        rowCount: 1
+      }),
+      expect.objectContaining({
+        scenarioCode: "USA00323",
+        sources: ["fee_sheet"],
+        rowCount: 1
+      })
+    ]);
   });
 
   test("summary is not ready when any required source has no rows", async () => {
