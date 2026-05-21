@@ -1,6 +1,6 @@
 import React from "react";
 
-import type { DashboardDisplayContract, DashboardProjectRow, MetricValue } from "../../../lib";
+import type { DashboardDisplayContract, DashboardProjectRow, DashboardScope, MetricValue } from "../../../lib";
 import { scopedHref } from "../../../lib";
 import { formatProjectMetric, projectRowTraceabilityLabel } from "../../../lib/display/project-metric-format";
 import type { ProjectsViewState } from "../../../lib/ui/projects-view-state";
@@ -53,7 +53,7 @@ export function ProjectsTable({
     React.createElement(
       "div",
       { className: "active-filter-row", "aria-label": "Active filters" },
-      scopeChip("Office", contract.scope.office),
+      scopeChip("Office", displayOffice(contract.scope)),
       scopeChip("From", contract.scope.from),
       scopeChip("To", contract.scope.to),
       optionalScopeChip("Department", contract.scope.department),
@@ -310,6 +310,10 @@ function scopeChip(label: string, value: string) {
 
 function optionalScopeChip(label: string, value: string | undefined) {
   return value === undefined || value.trim() === "" ? null : scopeChip(label, value);
+}
+
+function displayOffice(scope: DashboardScope): string {
+  return scope.offices !== undefined && scope.offices.length > 0 ? scope.offices.join(" + ") : scope.office;
 }
 
 function unallocatedLabel(row: DashboardProjectRow): string {

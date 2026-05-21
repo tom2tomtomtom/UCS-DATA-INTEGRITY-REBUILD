@@ -1,6 +1,6 @@
 import React from "react";
 
-import type { DashboardDisplayContract, DashboardOffice, DashboardScope } from "../../../lib";
+import type { DashboardConcreteOffice, DashboardDisplayContract, DashboardOffice, DashboardScope } from "../../../lib";
 import { scopedHref } from "../../../lib";
 
 const navItems = [
@@ -164,7 +164,7 @@ export function DashboardChrome({
     React.createElement(
       "section",
       { className: "scope-strip", "aria-label": "Active dashboard scope" },
-      scopeChip("Office", displayOffice(scope.office)),
+      scopeChip("Office", displayOffice(scope)),
       scopeChip("From", scope.from),
       scopeChip("To", scope.to),
       optionalScopeChip("Department", scope.department),
@@ -188,20 +188,81 @@ function officePill(
   option: (typeof officeOptions)[number],
   extraScopeParams: Readonly<Record<string, string | undefined>>
 ) {
-  const isActive = scope.office === option.office;
+  const isActive = officePillIsActive(scope, option.office);
 
   return React.createElement(
     "a",
     {
       "aria-pressed": isActive,
       className: isActive ? "office-pill active" : "office-pill",
-      href: hrefWithExtraParams(scopedHref(activePath, scope, { office: option.office }), extraScopeParams),
+      href: hrefWithExtraParams(officePillHref(activePath, scope, option.office), extraScopeParams),
       key: option.office,
       role: "button",
       title: option.title
     },
     option.label
   );
+}
+
+function officePillIsActive(scope: DashboardScope, office: DashboardOffice): boolean {
+  if (office === "ALL") {
+    return scope.office === "ALL" && (scope.offices ?? []).length === 0;
+  }
+
+  if (scope.offices !== undefined && scope.offices.length > 0) {
+    return scope.offices.includes(office);
+  }
+
+  return scope.office === office;
+}
+
+function officePillHref(activePath: string, scope: DashboardScope, office: DashboardOffice): string {
+  if (office === "ALL") {
+    return scopedHref(activePath, scope, { office: "ALL", offices: [] });
+  }
+
+  const currentOffices = currentConcreteOffices(scope);
+  if (scope.offices !== undefined && scope.offices.length > 0) {
+    const nextOffices = currentOffices.includes(office)
+      ? currentOffices.filter((item) => item !== office)
+      : orderedOffices([...currentOffices, office]);
+
+    if (nextOffices.length === 0) {
+      return scopedHref(activePath, scope, { office: "ALL", offices: [] });
+    }
+
+    if (nextOffices.length === 1) {
+      return scopedHref(activePath, scope, { office: nextOffices[0]!, offices: [] });
+    }
+
+    return scopedHref(activePath, scope, { office: "ALL", offices: nextOffices });
+  }
+
+  if (scope.office !== "ALL" && scope.office !== office) {
+    return scopedHref(activePath, scope, {
+      office: "ALL",
+      offices: orderedOffices([scope.office, office])
+    });
+  }
+
+  return scopedHref(activePath, scope, {
+    office: scope.office === office ? "ALL" : office,
+    offices: []
+  });
+}
+
+function currentConcreteOffices(scope: DashboardScope): DashboardConcreteOffice[] {
+  if (scope.offices !== undefined && scope.offices.length > 0) {
+    return orderedOffices(scope.offices);
+  }
+
+  return scope.office === "ALL" ? [] : [scope.office];
+}
+
+function orderedOffices(offices: readonly DashboardConcreteOffice[]): DashboardConcreteOffice[] {
+  const order: readonly DashboardConcreteOffice[] = ["LDN", "UCX", "USA"];
+  const unique = new Set(offices);
+  return order.filter((office) => unique.has(office));
 }
 
 function clearFiltersHref(
@@ -245,11 +306,15 @@ function countActiveFilters(scope: DashboardScope): number {
     scope.floatProjectId
   ].filter((value) => value !== undefined && value.trim() !== "").length;
 
-  return optionalFilters + (scope.office === "ALL" ? 0 : 1);
+  return optionalFilters + (scope.office === "ALL" && (scope.offices ?? []).length === 0 ? 0 : 1);
 }
 
-function displayOffice(office: DashboardOffice): string {
-  return office === "ALL" ? "Agency" : office;
+function displayOffice(scope: DashboardScope): string {
+  if (scope.offices !== undefined && scope.offices.length > 0) {
+    return scope.offices.join(" + ");
+  }
+
+  return scope.office === "ALL" ? "Agency" : scope.office;
 }
 
 function visibleRowLabel(count: number): string {

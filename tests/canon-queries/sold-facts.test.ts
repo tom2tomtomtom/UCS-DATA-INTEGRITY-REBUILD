@@ -92,6 +92,20 @@ describe("P4-B sold fee sheet source fact selector", () => {
     expect(result.facts[0]?.office).toBe("USA");
   });
 
+  test("filters by explicit combined office set without using search", () => {
+    const result = select({
+      ...marchAllScope,
+      office: "ALL",
+      offices: ["LDN", "USA"]
+    });
+
+    expect(new Set(result.facts.map((fact) => fact.office))).toEqual(new Set(["LDN", "USA"]));
+    expect(result.scope).toMatchObject({
+      office: "ALL",
+      offices: ["LDN", "USA"]
+    });
+  });
+
   test("keeps exact client filtering separate from fuzzy search", () => {
     expect(
       select({

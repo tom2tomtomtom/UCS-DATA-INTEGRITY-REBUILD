@@ -66,4 +66,20 @@ describe("P6-H UI scope params", () => {
       to: "2026-12-31"
     });
   });
+
+  test("uses combined offices as first-class scope when offices param is present", () => {
+    expect(
+      scopeFromSearchParams({
+        office: "USA",
+        offices: "LDN,UCX",
+        from: "2026-01-01",
+        to: "2026-03-31"
+      })
+    ).toEqual({
+      office: "ALL",
+      offices: ["LDN", "UCX"],
+      from: "2026-01-01",
+      to: "2026-03-31"
+    });
+  });
 });

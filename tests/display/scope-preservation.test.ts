@@ -67,4 +67,28 @@ describe("P5-C scope preservation helpers", () => {
       client: "Acme Studios"
     });
   });
+
+  test("preserves combined office scopes with offices param winning over single office", () => {
+    const scope: DashboardScope = {
+      office: "ALL",
+      offices: ["LDN", "UCX"],
+      from: "2026-01-01",
+      to: "2026-03-31",
+      department: "Design"
+    };
+
+    const params = scopeToSearchParams(scope);
+
+    expect(params.get("office")).toBe("ALL");
+    expect(params.get("offices")).toBe("LDN,UCX");
+    expect(scopedHref("/dashboard/projects", scope)).toBe(
+      "/dashboard/projects?office=ALL&from=2026-01-01&to=2026-03-31&offices=LDN%2CUCX&department=Design"
+    );
+    expect(preserveScopeForLink(scope, { office: "USA" })).toEqual({
+      office: "USA",
+      from: "2026-01-01",
+      to: "2026-03-31",
+      department: "Design"
+    });
+  });
 });

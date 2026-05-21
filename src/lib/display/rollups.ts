@@ -102,6 +102,11 @@ export function preserveScopeForLink(
     from: overrides.from ?? scope.from,
     to: overrides.to ?? scope.to
   };
+  const offices = overrides.offices ?? (overrides.office === undefined ? scope.offices : undefined);
+
+  if (offices !== undefined && offices.length > 0) {
+    nextScope.offices = offices;
+  }
 
   for (const key of optionalScopeKeys) {
     const value = overrides[key] ?? scope[key];
@@ -120,6 +125,10 @@ export function scopeToSearchParams(scope: DashboardScope): URLSearchParams {
   params.set("office", scope.office);
   params.set("from", scope.from);
   params.set("to", scope.to);
+
+  if (scope.offices !== undefined && scope.offices.length > 0) {
+    params.set("offices", scope.offices.join(","));
+  }
 
   for (const key of optionalScopeKeys) {
     const value = scope[key];

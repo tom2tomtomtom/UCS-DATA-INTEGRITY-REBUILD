@@ -1,5 +1,6 @@
 import type {
   CanonFact,
+  DashboardConcreteOffice,
   DashboardScope,
   SourceCapability,
   SourceCapabilityKey,
@@ -78,7 +79,15 @@ export function sourceSupportsScopedField(
 }
 
 function matchesOffice(fact: CanonFact, scope: DashboardScope): boolean {
+  if (scope.offices !== undefined && scope.offices.length > 0) {
+    return isConcreteOffice(fact.office) && scope.offices.includes(fact.office);
+  }
+
   return scope.office === "ALL" || fact.office === scope.office;
+}
+
+function isConcreteOffice(value: string | undefined): value is DashboardConcreteOffice {
+  return value === "LDN" || value === "UCX" || value === "USA";
 }
 
 function matchesDateRange(fact: CanonFact, scope: DashboardScope): boolean {

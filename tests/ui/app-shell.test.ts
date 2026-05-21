@@ -78,7 +78,7 @@ describe("P6-A dashboard app shell", () => {
     const html = renderToStaticMarkup(element);
 
     expect(html).toContain(
-      "href=\"/dashboard?office=USA&amp;from=2026-01-01&amp;to=2026-03-31&amp;view=client\""
+      "href=\"/dashboard?office=ALL&amp;from=2026-01-01&amp;to=2026-03-31&amp;offices=LDN%2CUSA&amp;view=client\""
     );
   });
 });

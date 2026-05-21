@@ -61,6 +61,9 @@ function chatForm(scope: DashboardScope, question: string | undefined) {
       rows: 4
     }),
     React.createElement("input", { name: "office", type: "hidden", value: scope.office }),
+    ...(scope.offices !== undefined && scope.offices.length > 0
+      ? [React.createElement("input", { key: "offices", name: "offices", type: "hidden", value: scope.offices.join(",") })]
+      : []),
     React.createElement("input", { name: "from", type: "hidden", value: scope.from }),
     React.createElement("input", { name: "to", type: "hidden", value: scope.to }),
     React.createElement("input", { name: "state", type: "hidden", value: "working" }),
@@ -117,6 +120,9 @@ function optionalScopeInputs(scope: DashboardScope) {
 function chatDemoHref(scope: DashboardScope): string {
   const params = new URLSearchParams();
   params.set("office", scope.office);
+  if (scope.offices !== undefined && scope.offices.length > 0) {
+    params.set("offices", scope.offices.join(","));
+  }
   params.set("from", scope.from);
   params.set("to", scope.to);
 
@@ -154,7 +160,11 @@ function labelForState(state: ChatShellState): string {
 }
 
 function scopeLine(scope: DashboardScope): string {
-  return [scope.office, scope.from, scope.to, scope.department, scope.role, scope.client, scope.jobNumber]
+  return [displayOffice(scope), scope.from, scope.to, scope.department, scope.role, scope.client, scope.jobNumber]
     .filter(Boolean)
     .join(" / ");
+}
+
+function displayOffice(scope: DashboardScope): string {
+  return scope.offices !== undefined && scope.offices.length > 0 ? scope.offices.join(" + ") : scope.office;
 }

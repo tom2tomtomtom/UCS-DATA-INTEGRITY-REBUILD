@@ -104,6 +104,7 @@ function projectsFilterHref(
   const nextParams = new URLSearchParams();
   const defaults = {
     office: contract.scope.office,
+    offices: contract.scope.offices?.join(","),
     from: contract.scope.from,
     to: contract.scope.to,
     department: contract.scope.department,
@@ -113,7 +114,7 @@ function projectsFilterHref(
     jobNumber: contract.scope.jobNumber,
     floatProjectId: contract.scope.floatProjectId
   };
-  const keys = ["office", "from", "to", "department", "role", "client", "search", "jobNumber", "floatProjectId", "pview", "view", "sort", "dir"] as const;
+  const keys = ["office", "offices", "from", "to", "department", "role", "client", "search", "jobNumber", "floatProjectId", "pview", "view", "sort", "dir"] as const;
 
   for (const key of keys) {
     const value = scalarParam(params[key]) ?? defaults[key as keyof typeof defaults];
@@ -166,6 +167,7 @@ function dataQualityHref(contract: DashboardDisplayContract, params: UiSearchPar
 
   for (const [key, value] of Object.entries({
     office: scalarParam(params.office) ?? scope.office,
+    offices: scalarParam(params.offices) ?? scope.offices?.join(","),
     from: scalarParam(params.from) ?? scope.from,
     to: scalarParam(params.to) ?? scope.to,
     department: scalarParam(params.department) ?? scope.department,
@@ -208,7 +210,7 @@ function searchForm(params: UiSearchParams) {
 }
 
 function hiddenSearchInputs(params: UiSearchParams) {
-  const keys = ["office", "from", "to", "department", "role", "client", "jobNumber", "floatProjectId", "pview", "view"] as const;
+  const keys = ["office", "offices", "from", "to", "department", "role", "client", "jobNumber", "floatProjectId", "pview", "view"] as const;
 
   return keys.flatMap((key) => {
     const value = scalarParam(params[key]);

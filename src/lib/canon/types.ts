@@ -1,7 +1,9 @@
 export type DashboardOffice = "LDN" | "USA" | "UCX" | "ALL";
+export type DashboardConcreteOffice = Exclude<DashboardOffice, "ALL">;
 
 export type DashboardScope = {
   office: DashboardOffice;
+  offices?: readonly DashboardConcreteOffice[];
   from: string;
   to: string;
   department?: string;

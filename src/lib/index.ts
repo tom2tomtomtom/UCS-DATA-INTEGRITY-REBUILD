@@ -1,6 +1,7 @@
 export type {
   CanonFact,
   CheckStatus,
+  DashboardConcreteOffice,
   DashboardOffice,
   DashboardScope,
   FloatFact,

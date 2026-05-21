@@ -28,7 +28,7 @@ describe("Phase 9.5 dashboard chrome parity", () => {
     expect(html).toContain(">USA</a>");
     expect(html).toContain("class=\"office-pill active\"");
     expect(html).toContain(
-      "href=\"/dashboard/projects?office=UCX&amp;from=2026-01-01&amp;to=2026-03-31&amp;department=Design&amp;role=Motion+Designer&amp;client=British+Airways&amp;search=BA&amp;jobNumber=UCS04787\""
+      "href=\"/dashboard/projects?office=ALL&amp;from=2026-01-01&amp;to=2026-03-31&amp;offices=LDN%2CUCX&amp;department=Design&amp;role=Motion+Designer&amp;client=British+Airways&amp;search=BA&amp;jobNumber=UCS04787\""
     );
   });
 
@@ -71,10 +71,31 @@ describe("Phase 9.5 dashboard chrome parity", () => {
     const html = renderChrome(contract, { pview: "calendar", view: "role" });
 
     expect(html).toContain(
-      "href=\"/dashboard/projects?office=USA&amp;from=2026-01-01&amp;to=2026-03-31&amp;department=Design&amp;pview=calendar&amp;view=role\""
+      "href=\"/dashboard/projects?office=ALL&amp;from=2026-01-01&amp;to=2026-03-31&amp;offices=LDN%2CUSA&amp;department=Design&amp;pview=calendar&amp;view=role\""
     );
     expect(html).toContain(
       "href=\"/dashboard/projects?office=ALL&amp;from=2026-01-01&amp;to=2026-03-31&amp;pview=calendar&amp;view=role\">Clear all filters"
+    );
+  });
+
+  test("renders combined office state from the explicit offices scope", () => {
+    const contract = getFixtureDashboardContract({
+      office: "ALL",
+      offices: ["LDN", "UCX"],
+      from: "2026-01-01",
+      to: "2026-03-31"
+    });
+    const html = renderChrome(contract);
+
+    expect(html).toContain("Office: LDN + UCX");
+    expect(html).toContain("title=\"London office scope\">LDN</a>");
+    expect(html).toContain("title=\"UCX office scope\">UCX</a>");
+    expect(html).toContain("aria-pressed=\"true\" class=\"office-pill active\"");
+    expect(html).toContain(
+      "href=\"/dashboard/projects?office=UCX&amp;from=2026-01-01&amp;to=2026-03-31\""
+    );
+    expect(html).toContain(
+      "href=\"/dashboard/projects?office=ALL&amp;from=2026-01-01&amp;to=2026-03-31&amp;offices=LDN%2CUCX%2CUSA\""
     );
   });
 
