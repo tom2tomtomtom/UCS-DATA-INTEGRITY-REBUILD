@@ -1036,6 +1036,23 @@ select {
   font-weight: 700;
 }
 
+.duplicate-detail-panel {
+  display: grid;
+  gap: 8px;
+  border: 1px solid #e8c96b;
+  border-radius: 8px;
+  background: #fff7d6;
+  padding: 12px 14px;
+}
+
+.duplicate-detail-panel ul {
+  display: grid;
+  gap: 4px;
+  margin: 0;
+  padding-left: 18px;
+  color: var(--muted);
+}
+
 .detail-surface h3,
 .float-surface h3 {
   margin: 6px 0 0;

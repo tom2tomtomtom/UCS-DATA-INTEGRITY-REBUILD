@@ -47,4 +47,23 @@ describe("P6-D project detail", () => {
     expect(html).toContain("Back to Projects");
     expect(html).toContain("href=\"/dashboard/projects?office=LDN&amp;from=2026-01-01&amp;to=2026-03-31&amp;department=Design&amp;jobNumber=UCS04787\"");
   });
+
+  test("does not collapse duplicate visible rows that share one job number", () => {
+    const contract = getFixtureDashboardContract({
+      office: "LDN",
+      from: "2026-01-01",
+      to: "2026-03-31",
+      jobNumber: "UCS05186"
+    });
+    const html = renderToStaticMarkup(React.createElement(ProjectDetail, { contract, jobNumber: "UCS05186" }));
+
+    expect(html).toContain("2 visible rows for this job number");
+    expect(html).toContain("Boldbean Brand Platform - 1,051.4h");
+    expect(html).toContain("Boldbean Manual Duplicate - 1,051h");
+    expect(html).toContain("Allocated hours");
+    expect(html).toContain("2,102.4h");
+    expect(html).toContain("Float Trace");
+    expect(html).toContain("fixture-float-visible-ucs05186-canonical");
+    expect(html).toContain("fixture-float-visible-ucs05186-manual");
+  });
 });
