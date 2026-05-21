@@ -25,7 +25,14 @@ describe("Phase 10 stakeholder approval pack", () => {
         "stakeholder_approval_not_recorded"
       ])
     );
-    expect(pack.warnings).toEqual(["ucs04787", "ucs05186", "pcs00250", "bt-raw-without-cache"]);
+    expect(pack.warnings).toEqual([
+      "ucs04787",
+      "ucs05186",
+      "pcs00250",
+      "usa00262",
+      "usa00323",
+      "bt-raw-without-cache"
+    ]);
     expect(pack.warningEvidence).toEqual(
       expect.arrayContaining([
         expect.objectContaining({
@@ -63,6 +70,14 @@ describe("Phase 10 stakeholder approval pack", () => {
             classification: "unresolved",
             nextHumanAction: expect.stringContaining("import/cache path")
           })
+        }),
+        expect.objectContaining({
+          id: "usa00262",
+          nextHumanAction: expect.stringContaining("targeted USA fee-sheet source rows")
+        }),
+        expect.objectContaining({
+          id: "usa00323",
+          nextHumanAction: expect.stringContaining("targeted USA fee-sheet source rows")
         })
       ])
     );

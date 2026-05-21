@@ -80,6 +80,13 @@ export type NamedScenarioFloatTargetManifestEvidence = {
   readonly unresolvedScenarios: readonly string[];
 };
 
+export type NamedScenarioSourceRowEvidence = {
+  readonly scenarioCode: string;
+  readonly sources: readonly string[];
+  readonly sourceRowKeys: readonly string[];
+  readonly rowCount: number;
+};
+
 export type NamedScenarioResult = {
   readonly id: string;
   readonly name: string;
@@ -113,9 +120,11 @@ export type NamedScenarioSourceEvidence =
       readonly rawRows: number;
       readonly floatTargetManifest: NamedScenarioFloatTargetManifestEvidence;
       readonly floatLayerEvidence: readonly NamedScenarioFloatLayerEvidence[];
+      readonly scenarioSourceEvidence?: readonly NamedScenarioSourceRowEvidence[];
     };
 
 const generatedAt = "2026-05-20T17:59:00.000Z";
+const sourceBackedScenarioCodes = ["USA00262", "USA00323", "UCS04154", "UCS04787", "UCS05186", "PCS00250"];
 
 export function buildNamedScenarioReport(input?: {
   readonly sourceEvidence?: NamedScenarioSourceEvidence;
@@ -165,6 +174,23 @@ export function buildNamedScenarioReport(input?: {
     "BT"
   );
   const btAction = "Tom should inspect the import/cache path before any dashboard approval on that Float row.";
+  const usa00262Checks = withSourceRowEvidenceCheck(
+    [
+      pass("sold_hours_false_zero_guard", "The scenario is guarded because source sold hours are nonzero and cannot be reported as zero."),
+      pass("usa_template_hours_supported", "USA fee-sheet hours must be treated as source-supported when parser evidence exists.")
+    ],
+    sourceEvidence,
+    "USA00262"
+  );
+  const usa00323Checks = withSourceRowEvidenceCheck(
+    [
+      pass("sold_hours_false_zero_guard", "The scenario is guarded because source sold hours are nonzero and cannot be reported as zero."),
+      pass("raw_parser_not_total", "Raw parser rows are not summed unless additive status proves they are totals-safe.")
+    ],
+    sourceEvidence,
+    "USA00323"
+  );
+  const usaAction = "Capture targeted USA fee-sheet source rows and display-contract proof before stakeholder approval.";
 
   const scenarios: NamedScenarioResult[] = [
     {
@@ -239,23 +265,19 @@ export function buildNamedScenarioReport(input?: {
       id: "usa00262",
       name: "USA00262 Sold-hours False-zero Guard",
       owner: "Sian",
-      status: "pass",
+      status: statusFromChecks(usa00262Checks),
       classification: "false_zero_guarded",
-      checks: [
-        pass("sold_hours_false_zero_guard", "The scenario is guarded because source sold hours are nonzero and cannot be reported as zero."),
-        pass("usa_template_hours_supported", "USA fee-sheet hours must be treated as source-supported when parser evidence exists.")
-      ]
+      checks: usa00262Checks,
+      ...(statusFromChecks(usa00262Checks) === "warn" ? { nextHumanAction: usaAction } : {})
     },
     {
       id: "usa00323",
       name: "USA00323 Sold-hours False-zero Guard",
       owner: "Sian",
-      status: "pass",
+      status: statusFromChecks(usa00323Checks),
       classification: "false_zero_guarded",
-      checks: [
-        pass("sold_hours_false_zero_guard", "The scenario is guarded because source sold hours are nonzero and cannot be reported as zero."),
-        pass("raw_parser_not_total", "Raw parser rows are not summed unless additive status proves they are totals-safe.")
-      ]
+      checks: usa00323Checks,
+      ...(statusFromChecks(usa00323Checks) === "warn" ? { nextHumanAction: usaAction } : {})
     },
     {
       id: "bt-raw-without-cache",
@@ -419,6 +441,36 @@ export function buildFloatLayerEvidenceFromSnapshot(
   });
 }
 
+export function buildScenarioSourceEvidenceFromSnapshot(
+  snapshot: unknown,
+  scenarioCodes: readonly string[] = sourceBackedScenarioCodes
+): NamedScenarioSourceRowEvidence[] {
+  const record = asRecord(snapshot);
+  if (record === undefined) return [];
+
+  return scenarioCodes.map((scenarioCode) => {
+    const sources: string[] = [];
+    const sourceRowKeys: string[] = [];
+    for (const source of arrayRecords(record.sources)) {
+      const sourceName = stringValue(source.source) ?? "unknown";
+      for (const row of arrayRecords(source.rows)) {
+        if (!rowMatchesScenarioCode(row, scenarioCode)) continue;
+
+        addUnique(sources, sourceName);
+        const sourceRowKey = stableSourceRowKeyFor(row);
+        if (sourceRowKey !== undefined) addUnique(sourceRowKeys, sourceRowKey);
+      }
+    }
+
+    return {
+      scenarioCode,
+      sources,
+      sourceRowKeys,
+      rowCount: sourceRowKeys.length
+    };
+  });
+}
+
 function missingSourceEvidence(): NamedScenarioSourceEvidence {
   return {
     status: "missing",
@@ -434,6 +486,35 @@ function withLiveFloatTargetCheck(
 ): NamedScenarioCheck[] {
   const liveCheck = liveFloatTargetCheck(sourceEvidence, scenarioCode);
   return liveCheck === undefined ? [...checks] : [...checks, liveCheck];
+}
+
+function withSourceRowEvidenceCheck(
+  checks: readonly NamedScenarioCheck[],
+  sourceEvidence: NamedScenarioSourceEvidence,
+  scenarioCode: string
+): NamedScenarioCheck[] {
+  if (sourceEvidence.status !== "ready") return [...checks];
+
+  const rowEvidence = sourceEvidence.scenarioSourceEvidence?.find((item) =>
+    sameScenarioCode(item.scenarioCode, scenarioCode)
+  );
+  if (rowEvidence !== undefined && rowEvidence.rowCount > 0) {
+    return [
+      ...checks,
+      pass(
+        "source_snapshot_scenario_rows_present",
+        `Source snapshot contains ${rowEvidence.rowCount} raw rows for ${scenarioCode} across ${rowEvidence.sources.join(", ")}.`
+      )
+    ];
+  }
+
+  return [
+    ...checks,
+    warn(
+      "source_snapshot_scenario_rows_missing",
+      `Source snapshot is ready but contains no raw rows for ${scenarioCode}; this false-zero guard cannot be approval-pass until targeted source rows are captured.`
+    )
+  ];
 }
 
 function warningEvidence(
@@ -587,6 +668,10 @@ function layerPresence(value: unknown): NamedScenarioLayerPresence | undefined {
   if (value === true) return "represented";
   if (value === false) return "missing";
   return undefined;
+}
+
+function rowMatchesScenarioCode(row: Record<string, unknown>, scenarioCode: string): boolean {
+  return JSON.stringify(row).toUpperCase().includes(normalizeScenarioCode(scenarioCode));
 }
 
 function liveFloatTargetCheck(

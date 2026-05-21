@@ -5,7 +5,8 @@ import fs from "node:fs";
 import {
   buildFloatLayerEvidenceFromSnapshot,
   buildFloatTargetManifestEvidenceFromSnapshot,
-  buildNamedScenarioReport
+  buildNamedScenarioReport,
+  buildScenarioSourceEvidenceFromSnapshot
 } from "./lib/named-scenario-report.mjs";
 import { buildSourceSnapshotImportPlan, buildSourceSnapshotLifecyclePlan } from "./lib/source-import-report.mjs";
 
@@ -100,7 +101,8 @@ function readSourceEvidence() {
         sourcesChecked,
         rawRows: plan.report.rawRows,
         floatTargetManifest,
-        floatLayerEvidence: buildFloatLayerEvidenceFromSnapshot(snapshot, floatTargetManifest)
+        floatLayerEvidence: buildFloatLayerEvidenceFromSnapshot(snapshot, floatTargetManifest),
+        scenarioSourceEvidence: buildScenarioSourceEvidenceFromSnapshot(snapshot)
       },
       lifecycleEvidence
     };

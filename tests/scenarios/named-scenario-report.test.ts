@@ -7,7 +7,8 @@ import { describe, expect, test } from "vitest";
 import {
   buildFloatLayerEvidenceFromSnapshot,
   buildFloatTargetManifestEvidenceFromSnapshot,
-  buildNamedScenarioReport
+  buildNamedScenarioReport,
+  buildScenarioSourceEvidenceFromSnapshot
 } from "../../src/lib/scenarios/named-scenario-report";
 
 const requiredScenarioIds = [
@@ -134,6 +135,38 @@ describe("P8-E named Sian Yunni Jade scenario report", () => {
           })
         ])
       );
+    }
+  });
+
+  test("downgrades USA false-zero guards when ready source snapshot lacks USA rows", () => {
+    const floatTargetManifest = buildFloatTargetManifestEvidenceFromSnapshot(fourStreamSnapshot());
+    expect(floatTargetManifest).toBeDefined();
+
+    const report = buildNamedScenarioReport({
+      sourceEvidence: {
+        status: "ready",
+        snapshotId: "named-scenario-test-snapshot",
+        sourcesChecked: ["fee_sheet", "pipeline", "production_revenue", "float"],
+        rawRows: 8,
+        floatTargetManifest: floatTargetManifest!,
+        floatLayerEvidence: [],
+        scenarioSourceEvidence: buildScenarioSourceEvidenceFromSnapshot(fourStreamSnapshot())
+      }
+    });
+
+    for (const scenarioId of ["usa00262", "usa00323"]) {
+      const scenario = report.scenarios.find((item) => item.id === scenarioId);
+      expect(scenario).toMatchObject({
+        status: "warn",
+        nextHumanAction: expect.stringContaining("targeted USA fee-sheet source rows"),
+        checks: expect.arrayContaining([
+          expect.objectContaining({
+            code: "source_snapshot_scenario_rows_missing",
+            status: "warn",
+            evidence: expect.stringContaining("contains no raw rows")
+          })
+        ])
+      });
     }
   });
 

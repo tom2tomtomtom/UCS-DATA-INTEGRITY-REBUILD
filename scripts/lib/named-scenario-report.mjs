@@ -24,6 +24,15 @@ export function buildNamedScenarioReport(input = {}) {
     check("raw_not_hidden", "pass", "Raw Float task evidence remains visible even when cache evidence is absent.")
   ], sourceEvidence, "BT");
   const btAction = "Tom should inspect the import/cache path before any dashboard approval on that Float row.";
+  const usa00262Checks = withSourceRowEvidenceCheck([
+    check("sold_hours_false_zero_guard", "pass", "The scenario is guarded because source sold hours are nonzero and cannot be reported as zero."),
+    check("usa_template_hours_supported", "pass", "USA fee-sheet hours must be treated as source-supported when parser evidence exists.")
+  ], sourceEvidence, "USA00262");
+  const usa00323Checks = withSourceRowEvidenceCheck([
+    check("sold_hours_false_zero_guard", "pass", "The scenario is guarded because source sold hours are nonzero and cannot be reported as zero."),
+    check("raw_parser_not_total", "pass", "Raw parser rows are not summed unless additive status proves they are totals-safe.")
+  ], sourceEvidence, "USA00323");
+  const usaAction = "Capture targeted USA fee-sheet source rows and display-contract proof before stakeholder approval.";
 
   const scenarios = [
     scenario("ldn-q1-design", "LDN Q1 Design Rollup To Projects", "Sian", "pass", "display_contract_agrees", [
@@ -53,14 +62,24 @@ export function buildNamedScenarioReport(input = {}) {
       classification: "cache/import issue",
       nextHumanAction: pcs00250Action
     })),
-    scenario("usa00262", "USA00262 Sold-hours False-zero Guard", "Sian", "pass", "false_zero_guarded", [
-      check("sold_hours_false_zero_guard", "pass", "The scenario is guarded because source sold hours are nonzero and cannot be reported as zero."),
-      check("usa_template_hours_supported", "pass", "USA fee-sheet hours must be treated as source-supported when parser evidence exists.")
-    ]),
-    scenario("usa00323", "USA00323 Sold-hours False-zero Guard", "Sian", "pass", "false_zero_guarded", [
-      check("sold_hours_false_zero_guard", "pass", "The scenario is guarded because source sold hours are nonzero and cannot be reported as zero."),
-      check("raw_parser_not_total", "pass", "Raw parser rows are not summed unless additive status proves they are totals-safe.")
-    ]),
+    scenario(
+      "usa00262",
+      "USA00262 Sold-hours False-zero Guard",
+      "Sian",
+      statusFromChecks(usa00262Checks),
+      "false_zero_guarded",
+      usa00262Checks,
+      statusFromChecks(usa00262Checks) === "warn" ? usaAction : undefined
+    ),
+    scenario(
+      "usa00323",
+      "USA00323 Sold-hours False-zero Guard",
+      "Sian",
+      statusFromChecks(usa00323Checks),
+      "false_zero_guarded",
+      usa00323Checks,
+      statusFromChecks(usa00323Checks) === "warn" ? usaAction : undefined
+    ),
     scenario("bt-raw-without-cache", "BT Raw Without Cache", "Yunni", "warn", "source_or_cache_warning", btChecks, btAction, warningEvidence(sourceEvidence, "BT", {
       raw: "represented",
       cache: "missing",
@@ -190,6 +209,36 @@ export function buildFloatLayerEvidenceFromSnapshot(snapshot, floatTargetManifes
   });
 }
 
+export function buildScenarioSourceEvidenceFromSnapshot(
+  snapshot,
+  scenarioCodes = ["USA00262", "USA00323", "UCS04154", "UCS04787", "UCS05186", "PCS00250"]
+) {
+  const record = asRecord(snapshot);
+  if (record === undefined) return [];
+
+  return scenarioCodes.map((scenarioCode) => {
+    const sources = [];
+    const sourceRowKeys = [];
+    for (const source of arrayRecords(record.sources)) {
+      const sourceName = stringValue(source.source) ?? "unknown";
+      for (const row of arrayRecords(source.rows)) {
+        if (!rowMatchesScenarioCode(row, scenarioCode)) continue;
+
+        addUnique(sources, sourceName);
+        const sourceRowKey = stableSourceRowKeyFor(row);
+        if (sourceRowKey !== undefined) addUnique(sourceRowKeys, sourceRowKey);
+      }
+    }
+
+    return {
+      scenarioCode,
+      sources,
+      sourceRowKeys,
+      rowCount: sourceRowKeys.length
+    };
+  });
+}
+
 function missingSourceEvidence() {
   return {
     status: "missing",
@@ -201,6 +250,33 @@ function missingSourceEvidence() {
 function withLiveFloatTargetCheck(checks, sourceEvidence, scenarioCode) {
   const liveCheck = liveFloatTargetCheck(sourceEvidence, scenarioCode);
   return liveCheck === undefined ? [...checks] : [...checks, liveCheck];
+}
+
+function withSourceRowEvidenceCheck(checks, sourceEvidence, scenarioCode) {
+  if (sourceEvidence.status !== "ready") return [...checks];
+
+  const rowEvidence = sourceEvidence.scenarioSourceEvidence?.find((item) =>
+    sameScenarioCode(item.scenarioCode, scenarioCode)
+  );
+  if (rowEvidence !== undefined && rowEvidence.rowCount > 0) {
+    return [
+      ...checks,
+      check(
+        "source_snapshot_scenario_rows_present",
+        "pass",
+        `Source snapshot contains ${rowEvidence.rowCount} raw rows for ${scenarioCode} across ${rowEvidence.sources.join(", ")}.`
+      )
+    ];
+  }
+
+  return [
+    ...checks,
+    check(
+      "source_snapshot_scenario_rows_missing",
+      "warn",
+      `Source snapshot is ready but contains no raw rows for ${scenarioCode}; this false-zero guard cannot be approval-pass until targeted source rows are captured.`
+    )
+  ];
 }
 
 function liveFloatTargetCheck(sourceEvidence, scenarioCode) {
@@ -381,6 +457,10 @@ function layerPresence(value) {
   if (value === true) return "represented";
   if (value === false) return "missing";
   return undefined;
+}
+
+function rowMatchesScenarioCode(row, scenarioCode) {
+  return JSON.stringify(row).toUpperCase().includes(normalizeScenarioCode(scenarioCode));
 }
 
 function statusFromChecks(checks) {

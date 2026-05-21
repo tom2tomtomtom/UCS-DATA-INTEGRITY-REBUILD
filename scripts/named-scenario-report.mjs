@@ -6,7 +6,8 @@ import { buildSourceSnapshotImportPlan } from "./lib/source-import-report.mjs";
 import {
   buildFloatLayerEvidenceFromSnapshot,
   buildFloatTargetManifestEvidenceFromSnapshot,
-  buildNamedScenarioReport
+  buildNamedScenarioReport,
+  buildScenarioSourceEvidenceFromSnapshot
 } from "./lib/named-scenario-report.mjs";
 
 process.stdout.write(`${JSON.stringify(buildNamedScenarioReport({ sourceEvidence: readSourceEvidence() }), null, 2)}\n`);
@@ -33,7 +34,8 @@ function readSourceEvidence() {
       sourcesChecked,
       rawRows: plan.report.rawRows,
       floatTargetManifest,
-      floatLayerEvidence: buildFloatLayerEvidenceFromSnapshot(snapshot, floatTargetManifest)
+      floatLayerEvidence: buildFloatLayerEvidenceFromSnapshot(snapshot, floatTargetManifest),
+      scenarioSourceEvidence: buildScenarioSourceEvidenceFromSnapshot(snapshot)
     };
   } catch {
     return undefined;
