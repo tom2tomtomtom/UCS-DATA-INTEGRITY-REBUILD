@@ -127,10 +127,9 @@ function calendarEmptyState(params: UiSearchParams, viewState: ProjectsViewState
 }
 
 function projectRow(row: DashboardProjectRow) {
-  const href =
-    row.jobNumber === undefined
-      ? scopedHref("/dashboard/projects", row.scope)
-      : scopedHref(`/dashboard/projects/${row.jobNumber}`, row.scope, { jobNumber: row.jobNumber });
+  const detailHref = projectDetailHref(row);
+  const floatHref = projectFloatHref(row);
+  const primaryHref = row.rowType === "float_only" && floatHref !== undefined ? floatHref : detailHref ?? scopedHref("/dashboard/projects", row.scope);
 
   return React.createElement(
     "tr",
@@ -138,7 +137,7 @@ function projectRow(row: DashboardProjectRow) {
     React.createElement(
       "td",
       null,
-      React.createElement("a", { href }, row.jobNumber ?? "No job number"),
+      React.createElement("a", { href: primaryHref }, row.jobNumber ?? "No job number"),
       React.createElement("br"),
       React.createElement("span", { className: "row-type-badge" }, row.rowType)
     ),
@@ -148,8 +147,8 @@ function projectRow(row: DashboardProjectRow) {
     React.createElement("td", null, formatProjectMetric(row.totals.soldFee, row, "soldFee")),
     React.createElement("td", null, formatProjectMetric(row.totals.pipelineFee, row, "pipelineFee")),
     React.createElement("td", null, formatProjectMetric(row.totals.soldHours, row, "soldHours")),
-    React.createElement("td", null, formatProjectMetric(row.totals.floatHours, row, "floatHours")),
-    React.createElement("td", null, unallocatedLabel(row)),
+    React.createElement("td", null, floatEvidenceLink(row, formatProjectMetric(row.totals.floatHours, row, "floatHours"))),
+    React.createElement("td", null, floatEvidenceLink(row, unallocatedLabel(row))),
     React.createElement("td", null, floatValueLabel(row)),
     React.createElement("td", null, varianceHoursLabel(row)),
     React.createElement(
@@ -164,6 +163,36 @@ function projectRow(row: DashboardProjectRow) {
       React.createElement("button", { className: "table-action-button", disabled: true, type: "button" }, "Archive")
     )
   );
+}
+
+function projectDetailHref(row: DashboardProjectRow): string | undefined {
+  if (row.jobNumber === undefined) return undefined;
+  return scopedHref(`/dashboard/projects/${row.jobNumber}`, row.scope, { jobNumber: row.jobNumber });
+}
+
+function projectFloatHref(row: DashboardProjectRow): string | undefined {
+  const floatProjectId = row.canonicalFloatProjectId ?? row.sourceFloatProjectId;
+  if (floatProjectId === undefined || floatProjectId.trim() === "") return undefined;
+  return scopedHref(`/dashboard/float/${floatProjectId}`, row.scope, { floatProjectId });
+}
+
+function floatEvidenceLink(row: DashboardProjectRow, label: string) {
+  const href = floatEvidenceHref(row);
+  if (href === undefined || !rowHasFloatEvidence(row)) return label;
+
+  return React.createElement("a", { href }, label);
+}
+
+function floatEvidenceHref(row: DashboardProjectRow): string | undefined {
+  const floatHref = projectFloatHref(row);
+  if (row.rowType === "float_only") return floatHref;
+
+  const detailHref = projectDetailHref(row);
+  return detailHref === undefined ? floatHref : `${detailHref}#float-trace`;
+}
+
+function rowHasFloatEvidence(row: DashboardProjectRow): boolean {
+  return row.sourceTrace.some((ref) => ref.source === "float" || ref.sourceLayer.startsWith("float_"));
 }
 
 function footerRow(contract: DashboardDisplayContract) {

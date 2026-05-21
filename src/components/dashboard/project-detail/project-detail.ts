@@ -50,7 +50,7 @@ export function ProjectDetail({
       "div",
       { className: "detail-heading" },
       React.createElement("div", null, React.createElement("h2", null, `${row.canonicalClient ?? row.sourceClient ?? "Unknown"} / ${jobNumber}`), scopeLine(contract)),
-      React.createElement("a", { href: scopedHref("/dashboard/projects", contract.scope, { jobNumber }) }, "Back to Projects")
+      React.createElement("a", { href: projectsBackHref(contract) }, "Back to Projects")
     ),
     React.createElement(TimeFilterControls, { basePath: `/dashboard/projects/${jobNumber}`, scope: contract.scope }),
     matchingRows.length > 1 ? duplicateRowsPanel(matchingRows) : null,
@@ -99,6 +99,20 @@ export function ProjectDetail({
       )
     )
   );
+}
+
+function projectsBackHref(contract: DashboardDisplayContract): string {
+  const scope = contract.scope;
+
+  return scopedHref("/dashboard/projects", {
+    office: scope.office,
+    from: scope.from,
+    to: scope.to,
+    ...(scope.department !== undefined ? { department: scope.department } : {}),
+    ...(scope.role !== undefined ? { role: scope.role } : {}),
+    ...(scope.client !== undefined ? { client: scope.client } : {}),
+    ...(scope.search !== undefined ? { search: scope.search } : {})
+  });
 }
 
 function duplicateRowsPanel(rows: readonly DashboardProjectRow[]) {

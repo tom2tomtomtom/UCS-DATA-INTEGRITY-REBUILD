@@ -35,6 +35,8 @@ describe("P6-C Projects table", () => {
     expect(html).toContain("PCS00250");
     expect(html).toContain("Source-only");
     expect(html).toContain("href=\"/dashboard/projects/UCS04787?office=LDN&amp;from=2026-01-01&amp;to=2026-03-31&amp;jobNumber=UCS04787\"");
+    expect(html).toContain("href=\"/dashboard/projects/UCS04787?office=LDN&amp;from=2026-01-01&amp;to=2026-03-31&amp;jobNumber=UCS04787#float-trace\"");
+    expect(html).toContain("href=\"/dashboard/float/11392976?office=LDN&amp;from=2026-01-01&amp;to=2026-03-31&amp;floatProjectId=11392976\"");
     expect(html).toContain("Total");
     expect(html).toContain("£275,947");
     expect(html).toContain("861h");
