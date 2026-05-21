@@ -341,6 +341,60 @@ describe("Phase 10 live source snapshot builder", () => {
     });
   });
 
+  test("falls back to rendered values when rich fee tracker metadata is temporarily unavailable", async () => {
+    const { buildLiveSourceSnapshot } = await loadLiveSourceSnapshotModule();
+    const fetchImpl = async (url: string) => {
+      const decodedUrl = decodeURIComponent(url);
+
+      if (decodedUrl.includes("fee_tracker_sheet") && decodedUrl.includes("includeGridData=true")) {
+        return {
+          ok: false,
+          status: 500,
+          async json() {
+            return {};
+          },
+          async text() {
+            return "metadata unavailable";
+          }
+        };
+      }
+
+      if (decodedUrl.includes("fee_tracker_sheet") && decodedUrl.includes("/values/")) {
+        return ok({
+          values: [
+            ["Created", "Client", "Job Number", "Job Name"],
+            ["09-06-2025", "British Airways", "UCS04787", "BA Retainer"]
+          ]
+        });
+      }
+
+      if (url.includes("/values/")) {
+        return ok({ values: [["Header"], ["Source row"]] });
+      }
+
+      if (url.endsWith("/projects")) {
+        return ok([{ project_id: 10480262, project_code: "UCS04154" }]);
+      }
+
+      return ok({ sheets: [{ properties: { title: "Sheet1" } }] });
+    };
+
+    const { snapshot, summary } = await buildLiveSourceSnapshot({
+      env: {
+        ...env,
+        FEE_TRACKER_SNAPSHOT_RANGE: "LDN!A1:I2"
+      },
+      fetchImpl,
+      now: "2026-05-21T00:00:00.000Z",
+      maxRows: 10
+    });
+    const feeRows = snapshot.sources.find((sourceRow) => sourceRow.source === "fee_sheet")?.rows ?? [];
+
+    expect(summary.ready).toBe(true);
+    expect(feeRows).toHaveLength(2);
+    expect(feeRows[1]?.raw?.cells).toEqual(["09-06-2025", "British Airways", "UCS04787", "BA Retainer"]);
+  });
+
   test("optionally archives linked fee-sheet tabs as raw source evidence", async () => {
     const { buildLiveSourceSnapshot } = await loadLiveSourceSnapshotModule();
     const fetchCalls: string[] = [];
@@ -482,6 +536,92 @@ describe("Phase 10 live source snapshot builder", () => {
       feeSheetUrl: "https://docs.google.com/spreadsheets/d/linked-fee-sheet-id/edit"
     });
     expect(fetchCalls.some((url) => decodeURIComponent(url).includes("linked-fee-sheet-id"))).toBe(true);
+  });
+
+  test("preserves inaccessible linked fee sheets as read-error evidence instead of aborting", async () => {
+    const { buildLiveSourceSnapshot } = await loadLiveSourceSnapshotModule();
+    const fetchImpl = async (url: string) => {
+      const decodedUrl = decodeURIComponent(url);
+
+      if (decodedUrl.includes("fee_tracker_sheet") && decodedUrl.includes("includeGridData=true")) {
+        return ok({
+          sheets: [
+            {
+              properties: { title: "LDN" },
+              data: [
+                {
+                  startRow: 0,
+                  rowData: [
+                    {
+                      values: [
+                        { formattedValue: "Created" },
+                        { formattedValue: "Client" },
+                        { formattedValue: "Job Number" },
+                        { formattedValue: "Job Name" },
+                        {
+                          formattedValue: "Blocked Fee Sheet",
+                          hyperlink: "https://docs.google.com/spreadsheets/d/blocked-fee-sheet-id/edit"
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        });
+      }
+
+      if (decodedUrl.includes("fee_tracker_sheet") && decodedUrl.includes("/values/")) {
+        return ok({ values: [["Created", "Client", "Job Number", "Job Name", "Blocked Fee Sheet"]] });
+      }
+
+      if (decodedUrl.includes("blocked-fee-sheet-id") && decodedUrl.includes("fields=sheets.properties")) {
+        return {
+          ok: false,
+          status: 403,
+          async json() {
+            return {};
+          },
+          async text() {
+            return "permission denied";
+          }
+        };
+      }
+
+      if (url.includes("/values/")) {
+        return ok({ values: [["Header"], ["Source row"]] });
+      }
+
+      if (url.endsWith("/projects")) {
+        return ok([{ project_id: 10480262, project_code: "UCS04154" }]);
+      }
+
+      return ok({ sheets: [{ properties: { title: "Sheet1" } }] });
+    };
+
+    const { snapshot, summary } = await buildLiveSourceSnapshot({
+      env: {
+        ...env,
+        FEE_TRACKER_SNAPSHOT_RANGE: "LDN!A1:I1"
+      },
+      fetchImpl,
+      now: "2026-05-21T00:00:00.000Z",
+      maxRows: 10,
+      includeLinkedFeeSheets: true,
+      linkedFeeSheetLimit: 1
+    });
+    const feeRows = snapshot.sources.find((sourceRow) => sourceRow.source === "fee_sheet")?.rows ?? [];
+    const errorRow = feeRows.find((row) => row.raw?.readError);
+
+    expect(summary.ready).toBe(true);
+    const raw = errorRow?.raw as { linkedFeeSheet?: { feeSheetSpreadsheetId?: string }; readError?: unknown } | undefined;
+
+    expect(raw?.linkedFeeSheet?.feeSheetSpreadsheetId).toBe("blocked-fee-sheet-id");
+    expect(raw?.readError).toMatchObject({
+      stage: "metadata",
+      tabTitle: "metadata"
+    });
   });
 
   test("supports explicit all-row snapshots without the 1000-row approval cap", async () => {

@@ -132,16 +132,21 @@ async function readSheetSource({
   const collectedRanges = [];
   for (const range of ranges) {
     try {
-      const rows = includeCellMetadata
-        ? await fetchSheetRowsWithCellMetadata({
-          fetchImpl,
-          googleAccessToken,
-          spreadsheetId,
-          range,
-          source,
-          maxRows
-        })
-        : [];
+      let rows = [];
+      if (includeCellMetadata) {
+        try {
+          rows = await fetchSheetRowsWithCellMetadata({
+            fetchImpl,
+            googleAccessToken,
+            spreadsheetId,
+            range,
+            source,
+            maxRows
+          });
+        } catch (error) {
+          errors.push(error instanceof Error ? error.message : String(error));
+        }
+      }
       const values = rows.length > 0 ? [] : await fetchSheetValues({
         fetchImpl,
         googleAccessToken,
@@ -210,23 +215,34 @@ async function readLinkedFeeSheetRows({
   const rows = [];
 
   for (const link of links) {
-    const tabTitles = await linkedFeeSheetTabTitles({
-      fetchImpl,
-      googleAccessToken,
-      spreadsheetId: link.feeSheetSpreadsheetId
-    });
+    let tabTitles;
 
-    for (const tabTitle of tabTitles) {
-      const linkedRows = await fetchSheetRowsWithCellMetadata({
+    try {
+      tabTitles = await linkedFeeSheetTabTitles({
         fetchImpl,
         googleAccessToken,
-        spreadsheetId: link.feeSheetSpreadsheetId,
-        range: rangeFor(tabTitle, "A", "AZ", maxRows),
-        source: "fee_sheet",
-        maxRows
+        spreadsheetId: link.feeSheetSpreadsheetId
       });
+    } catch (error) {
+      rows.push(linkedFeeSheetReadErrorRow(link, error, "metadata"));
+      continue;
+    }
 
-      rows.push(...linkedRows.map((row) => annotateLinkedFeeSheetRow(row, link)));
+    for (const tabTitle of tabTitles) {
+      try {
+        const linkedRows = await fetchSheetRowsWithCellMetadata({
+          fetchImpl,
+          googleAccessToken,
+          spreadsheetId: link.feeSheetSpreadsheetId,
+          range: rangeFor(tabTitle, "A", "AZ", maxRows),
+          source: "fee_sheet",
+          maxRows
+        });
+
+        rows.push(...linkedRows.map((row) => annotateLinkedFeeSheetRow(row, link)));
+      } catch (error) {
+        rows.push(linkedFeeSheetReadErrorRow(link, error, tabTitle));
+      }
     }
   }
 
@@ -309,6 +325,30 @@ function annotateLinkedFeeSheetRow(row, link) {
     raw: {
       ...asRecord(row.raw),
       linkedFeeSheet: link
+    }
+  };
+}
+
+function linkedFeeSheetReadErrorRow(link, error, tabTitle) {
+  const safeTabTitle = String(tabTitle || "unknown");
+  const reason = error instanceof Error ? error.message : String(error);
+
+  return {
+    identity: {
+      stableSourceRowKey: `${link.feeSheetSpreadsheetId}:${safeTabTitle}:read-error`,
+      sourceDocumentId: link.feeSheetSpreadsheetId,
+      sourceTab: safeTabTitle
+    },
+    raw: {
+      source: "fee_sheet",
+      rowNumber: null,
+      cells: [],
+      linkedFeeSheet: link,
+      readError: {
+        stage: safeTabTitle === "metadata" ? "metadata" : "tab",
+        tabTitle: safeTabTitle,
+        reason
+      }
     }
   };
 }
