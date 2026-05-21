@@ -15,6 +15,14 @@ describe("P6-C Projects table", () => {
     const html = renderToStaticMarkup(React.createElement(ProjectsTable, { contract }));
 
     expect(html).toContain("Projects");
+    expect(html).toContain("Job #");
+    expect(html).toContain("Sold (fee sheet)");
+    expect(html).toContain("Allocated");
+    expect(html).toContain("Unallocated");
+    expect(html).toContain("Float value (£)");
+    expect(html).toContain("Variance (hrs)");
+    expect(html).toContain("Last sync");
+    expect(html).toContain("Actions");
     expect(html).toContain("British Airways");
     expect(html).toContain("UCS04787");
     expect(html).toContain("pipeline_only");
@@ -28,6 +36,10 @@ describe("P6-C Projects table", () => {
     expect(html).toContain("Total");
     expect(html).toContain("£275,947");
     expect(html).toContain("861h");
+    expect(html).toContain("-441h");
+    expect(html).toContain("Display contract");
+    expect(html).toContain("Read-only");
+    expect(html).toContain("disabled=\"\"");
     expect(html).not.toContain("<td>£0</td>");
     expect(html).not.toContain("<td>0h</td>");
   });

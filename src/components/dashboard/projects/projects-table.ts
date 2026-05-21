@@ -1,20 +1,12 @@
 import React from "react";
 
-import type { DashboardDisplayContract, DashboardProjectRow, DashboardTotals } from "../../../lib";
+import type { DashboardDisplayContract, DashboardProjectRow, MetricValue } from "../../../lib";
 import { scopedHref } from "../../../lib";
 import { formatProjectMetric, projectRowTraceabilityLabel } from "../../../lib/display/project-metric-format";
 import type { ProjectsViewState } from "../../../lib/ui/projects-view-state";
 import type { UiSearchParams } from "../../../lib/ui/scope-params";
 import { buildCsvDataUriFromContract } from "../export/csv-export";
 import { ProjectsBreakdownControls, ProjectsControls } from "./projects-controls";
-
-const tableMetrics = [
-  ["Sold", "soldFee"],
-  ["Pipeline", "pipelineFee"],
-  ["Sold hours", "soldHours"],
-  ["Float hours", "floatHours"],
-  ["Production rev", "productionRevenue"]
-] as const satisfies readonly (readonly [string, keyof DashboardTotals])[];
 
 export function ProjectsTable({
   contract,
@@ -70,12 +62,20 @@ function projectsListTable(contract: DashboardDisplayContract) {
       React.createElement(
         "tr",
         null,
-        React.createElement("th", null, "Job Number"),
+        React.createElement("th", null, "Job #"),
         React.createElement("th", null, "Client"),
         React.createElement("th", null, "Project"),
-        React.createElement("th", null, "Row Type"),
-        ...tableMetrics.map(([label]) => React.createElement("th", { key: label }, label)),
-        React.createElement("th", null, "Confidence")
+        React.createElement("th", null, "Office"),
+        React.createElement("th", null, "Sold (fee sheet)"),
+        React.createElement("th", null, "Pipeline"),
+        React.createElement("th", null, "Sold (hrs)"),
+        React.createElement("th", null, "Allocated"),
+        React.createElement("th", null, "Unallocated"),
+        React.createElement("th", null, "Float value (£)"),
+        React.createElement("th", null, "Variance (hrs)"),
+        React.createElement("th", null, "Confidence"),
+        React.createElement("th", null, "Last sync"),
+        React.createElement("th", null, "Actions")
       )
     ),
     React.createElement(
@@ -105,12 +105,34 @@ function projectRow(row: DashboardProjectRow) {
   return React.createElement(
     "tr",
     { key: row.id },
-    React.createElement("td", null, React.createElement("a", { href }, row.jobNumber ?? "No job number")),
+    React.createElement(
+      "td",
+      null,
+      React.createElement("a", { href }, row.jobNumber ?? "No job number"),
+      React.createElement("br"),
+      React.createElement("span", { className: "row-type-badge" }, row.rowType)
+    ),
     React.createElement("td", null, row.canonicalClient ?? row.sourceClient ?? "Unknown client"),
     React.createElement("td", null, row.canonicalProjectName ?? row.sourceProjectName ?? row.id),
-    React.createElement("td", null, React.createElement("span", { className: "row-type-badge" }, row.rowType)),
-    ...tableMetrics.map(([, metric]) => React.createElement("td", { key: metric }, formatProjectMetric(row.totals[metric], row, metric))),
-    React.createElement("td", null, projectRowTraceabilityLabel(row))
+    React.createElement("td", null, row.scope.office),
+    React.createElement("td", null, formatProjectMetric(row.totals.soldFee, row, "soldFee")),
+    React.createElement("td", null, formatProjectMetric(row.totals.pipelineFee, row, "pipelineFee")),
+    React.createElement("td", null, formatProjectMetric(row.totals.soldHours, row, "soldHours")),
+    React.createElement("td", null, formatProjectMetric(row.totals.floatHours, row, "floatHours")),
+    React.createElement("td", null, unallocatedLabel(row)),
+    React.createElement("td", null, floatValueLabel(row)),
+    React.createElement("td", null, varianceHoursLabel(row)),
+    React.createElement(
+      "td",
+      null,
+      React.createElement("span", { className: "row-type-badge" }, projectRowTraceabilityLabel(row))
+    ),
+    React.createElement("td", null, lastSyncLabel(row)),
+    React.createElement(
+      "td",
+      null,
+      React.createElement("button", { className: "table-action-button", disabled: true, type: "button" }, "Archive")
+    )
   );
 }
 
@@ -122,8 +144,16 @@ function footerRow(contract: DashboardDisplayContract) {
     React.createElement("td", null, ""),
     React.createElement("td", null, ""),
     React.createElement("td", null, contract.visibleRows.length),
-    ...tableMetrics.map(([, metric]) => React.createElement("td", { key: metric }, formatFooterMetric(contract.footerTotals[metric]))),
-    React.createElement("td", null, contract.confidence)
+    React.createElement("td", null, formatFooterMetric(contract.footerTotals.soldFee)),
+    React.createElement("td", null, formatFooterMetric(contract.footerTotals.pipelineFee)),
+    React.createElement("td", null, formatFooterMetric(contract.footerTotals.soldHours)),
+    React.createElement("td", null, formatFooterMetric(contract.footerTotals.floatHours)),
+    React.createElement("td", null, "Unsupported"),
+    React.createElement("td", null, "Derived per row"),
+    React.createElement("td", null, varianceHoursFooterLabel(contract)),
+    React.createElement("td", null, contract.confidence),
+    React.createElement("td", null, "Display contract"),
+    React.createElement("td", null, "Read-only")
   );
 }
 
@@ -135,17 +165,57 @@ function optionalScopeChip(label: string, value: string | undefined) {
   return value === undefined || value.trim() === "" ? null : scopeChip(label, value);
 }
 
-function formatFooterMetric(value: DashboardTotals[keyof DashboardTotals]): string {
+function unallocatedLabel(row: DashboardProjectRow): string {
+  if (metricNumber(row.totals.floatHours) === 0) {
+    return formatProjectMetric(row.totals.floatHours, row, "floatHours");
+  }
+
+  return "Unsupported";
+}
+
+function floatValueLabel(row: DashboardProjectRow): string {
+  const soldHours = metricNumber(row.totals.soldHours);
+  const soldFee = metricNumber(row.totals.soldFee);
+  const allocatedHours = metricNumber(row.totals.floatHours);
+
+  if (soldHours <= 0 || allocatedHours <= 0) {
+    return "Unsupported";
+  }
+
+  return formatGbp((soldFee / soldHours) * allocatedHours);
+}
+
+function varianceHoursLabel(row: DashboardProjectRow): string {
+  const soldHours = metricNumber(row.totals.soldHours);
+  const allocatedHours = metricNumber(row.totals.floatHours);
+
+  if (soldHours === 0 && allocatedHours === 0 && row.rowType !== "matched") return "Source-only";
+  if (soldHours === 0 && allocatedHours === 0) return "No source row";
+  return `${formatNumber(soldHours - allocatedHours)}h`;
+}
+
+function varianceHoursFooterLabel(contract: DashboardDisplayContract): string {
+  return `${formatNumber(metricNumber(contract.footerTotals.soldHours) - metricNumber(contract.footerTotals.floatHours))}h`;
+}
+
+function lastSyncLabel(row: DashboardProjectRow): string {
+  if (row.sourceTrace.length === 0) return "No source trace";
+  return "Display contract";
+}
+
+function metricNumber(value: MetricValue): number {
+  if (value.kind === "money") return value.value.amountGbp;
+  if (value.kind === "hours" || value.kind === "count") return value.value;
+  return 0;
+}
+
+function formatFooterMetric(value: MetricValue): string {
   if (value.kind === "unsupported") {
     return value.displayLabel;
   }
 
   if (value.kind === "money") {
-    return new Intl.NumberFormat("en-GB", {
-      style: "currency",
-      currency: "GBP",
-      maximumFractionDigits: 0
-    }).format(value.value.amountGbp);
+    return formatGbp(value.value.amountGbp);
   }
 
   if (value.kind === "hours") {
@@ -153,6 +223,14 @@ function formatFooterMetric(value: DashboardTotals[keyof DashboardTotals]): stri
   }
 
   return formatNumber(value.value);
+}
+
+function formatGbp(value: number): string {
+  return new Intl.NumberFormat("en-GB", {
+    style: "currency",
+    currency: "GBP",
+    maximumFractionDigits: 0
+  }).format(value);
 }
 
 function formatNumber(value: number): string {

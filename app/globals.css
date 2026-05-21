@@ -977,6 +977,16 @@ select {
   font-weight: 800;
 }
 
+.table-action-button {
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: #ebe3d4;
+  padding: 6px 9px;
+  color: var(--muted);
+  cursor: not-allowed;
+  font-weight: 800;
+}
+
 .row-type-badge {
   display: inline-block;
   border: 1px solid var(--line);
