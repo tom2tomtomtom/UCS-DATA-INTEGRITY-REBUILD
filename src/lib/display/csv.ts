@@ -51,6 +51,9 @@ function buildCsvCells(row: DashboardProjectRow): Record<string, string | number
   for (const metric of metricKeys) {
     cells[projectMetricCellName(row, metric)] = projectMetricCsvValue(row, metric);
   }
+  if (row.warnings.length > 0) {
+    cells.warningCodes = row.warnings.map((warning) => warning.code).join("; ");
+  }
 
   return cells;
 }

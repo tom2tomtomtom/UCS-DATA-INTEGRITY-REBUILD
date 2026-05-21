@@ -88,6 +88,15 @@ export function fixtureFactSet(): SourceFactSet {
     message: "Cache has Float hours but raw Float canon has no current task rows.",
     rawRowId: "fixture-float-cache-pcs00250"
   });
+  const archivedProductionWarning = sourceWarning({
+    id: "fixture:warning:archived-production-revenue",
+    source: "production_revenue",
+    sourceLayer: "production_revenue",
+    code: "ARCHIVED_PRODUCTION_REVENUE_VISIBLE",
+    message: "Archived project production revenue remains visible because source revenue must not be hidden.",
+    rawRowId: "fixture-prod-archived",
+    owner: "Production"
+  });
 
   return {
     soldFacts: [designSold, strategySold, usaWhiteCaseSold, usaChobaniSold],
@@ -110,7 +119,8 @@ export function fixtureFactSet(): SourceFactSet {
         client: "Archived Client",
         projectName: "Archived Production Revenue",
         amountGbp: 35_000,
-        month: "2026-03"
+        month: "2026-03",
+        warnings: [archivedProductionWarning]
       })
     ],
     floatFacts: [
@@ -200,7 +210,7 @@ export function fixtureFactSet(): SourceFactSet {
     ],
     readOnlySqlFacts: [],
     syncLogFacts: [],
-    sourceIssues: [floatWarning],
+    sourceIssues: [floatWarning, archivedProductionWarning],
     capabilities: []
   };
 }
@@ -288,6 +298,7 @@ function productionRevenueFact(input: {
   projectName: string;
   amountGbp: number;
   month: string;
+  warnings?: SourceWarning[];
 }): ProductionRevenueFact {
   return {
     id: input.id,
@@ -306,7 +317,7 @@ function productionRevenueFact(input: {
     productionStatus: "CONFIRMED",
     isAdditive: true,
     confidence: "medium",
-    warnings: [],
+    warnings: input.warnings ?? [],
     trace: trace("production_revenue", "production_revenue", input.rawRowId, "productionRevenue")
   };
 }
@@ -402,18 +413,21 @@ function trace(
 
 function sourceWarning(input: {
   id: string;
-  sourceLayer: FloatFact["sourceLayer"];
+  source?: SourceTraceRef["source"];
+  sourceLayer: SourceTraceRef["sourceLayer"];
   code: string;
   message: string;
   rawRowId: string;
+  owner?: SourceWarning["owner"];
 }): SourceWarning {
-  const sourceRefs = trace("float", input.sourceLayer, input.rawRowId, "floatHours");
+  const source = input.source ?? "float";
+  const sourceRefs = trace(source, input.sourceLayer, input.rawRowId, source === "float" ? "floatHours" : "productionRevenue");
 
   return {
     id: input.id,
     status: "PROCESS_WARN",
     lifecycleState: "open",
-    source: "float",
+    source,
     sourceLayer: input.sourceLayer,
     code: input.code,
     message: input.message,
@@ -422,7 +436,7 @@ function sourceWarning(input: {
       from: "2026-01-01",
       to: "2026-03-31"
     },
-    owner: "Yunni",
+    owner: input.owner ?? "Yunni",
     sourceRefs,
     firstSeenAt: generatedAt,
     lastSeenAt: generatedAt

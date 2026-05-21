@@ -38,7 +38,7 @@ describe("P6-B dashboard home rollups", () => {
     expect(html).toContain("Approval state:");
     expect(html).toContain("No cutover approved");
     expect(html).toContain("Source evidence visible");
-    expect(html).toContain("1 source warning");
+    expect(html).toContain("2 source warnings");
     expect(html).toContain("6 reconciliation warnings");
     expect(html).toContain("0 unsupported headline metrics");
     expect(html).toContain("Warnings remain source evidence, not approval.");

@@ -252,6 +252,10 @@ function scenarioCodeForId(scenarioId) {
       return "USA00323";
     case "bt-raw-without-cache":
       return "BT";
+    case "tbc-pipeline-identity":
+      return "TBC";
+    case "archived-production-revenue":
+      return "Archived Production Revenue";
     default:
       return undefined;
   }
@@ -511,7 +515,16 @@ export function buildFloatLayerEvidenceFromSnapshot(snapshot, floatTargetManifes
 
 export function buildScenarioSourceEvidenceFromSnapshot(
   snapshot,
-  scenarioCodes = ["USA00262", "USA00323", "UCS04154", "UCS04787", "UCS05186", "PCS00250"]
+  scenarioCodes = [
+    "USA00262",
+    "USA00323",
+    "UCS04154",
+    "UCS04787",
+    "UCS05186",
+    "PCS00250",
+    "TBC",
+    "Archived Production Revenue"
+  ]
 ) {
   const record = asRecord(snapshot);
   if (record === undefined) return [];

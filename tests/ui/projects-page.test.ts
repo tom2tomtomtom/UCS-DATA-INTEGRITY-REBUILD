@@ -20,6 +20,8 @@ describe("P6-C Projects table", () => {
     expect(html).toContain("pipeline_only");
     expect(html).toContain("production_revenue_only");
     expect(html).toContain("float_only");
+    expect(html).toContain("Archived Production Revenue");
+    expect(html).toContain("Warn");
     expect(html).toContain("PCS00250");
     expect(html).toContain("Source-only");
     expect(html).toContain("href=\"/dashboard/projects/UCS04787?office=LDN&amp;from=2026-01-01&amp;to=2026-03-31&amp;jobNumber=UCS04787\"");

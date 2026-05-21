@@ -177,7 +177,7 @@ describe("P8-E named Sian Yunni Jade scenario report", () => {
         status: "ready",
         snapshotId: "named-scenario-test-snapshot",
         sourcesChecked: ["fee_sheet", "pipeline", "production_revenue", "float"],
-        rawRows: 8,
+        rawRows: 10,
         floatTargetManifest: floatTargetManifest!,
         floatLayerEvidence: [],
         scenarioSourceEvidence: buildScenarioSourceEvidenceFromSnapshot(fourStreamSnapshot())
@@ -247,7 +247,7 @@ describe("P8-E named Sian Yunni Jade scenario report", () => {
       status: "ready",
       snapshotId: "named-scenario-test-snapshot",
       sourcesChecked: ["fee_sheet", "pipeline", "production_revenue", "float"],
-      rawRows: 8,
+      rawRows: 10,
       floatTargetManifest: {
         status: "ready",
         manifestStableSourceRowKey: "float:target-manifest",
@@ -284,6 +284,18 @@ describe("P8-E named Sian Yunni Jade scenario report", () => {
       chatEvidenceResult: {
         status: "not_applicable"
       }
+    });
+    expect(report.scenarios.find((scenario: { id: string }) => scenario.id === "tbc-pipeline-identity")).toMatchObject({
+      approvalStatus: "ready_for_stakeholder_review",
+      sourceSnapshotRefs: expect.arrayContaining([
+        { layer: "source_row", ref: "pipeline_sheet:Pipeline:2" }
+      ])
+    });
+    expect(report.scenarios.find((scenario: { id: string }) => scenario.id === "archived-production-revenue")).toMatchObject({
+      approvalStatus: "ready_for_stakeholder_review",
+      sourceSnapshotRefs: expect.arrayContaining([
+        { layer: "source_row", ref: "production_revenue_sheet:PRODUCTION ONLY:2" }
+      ])
     });
     expect(report.scenarios.find((scenario: { id: string }) => scenario.id === "usa00262")).toMatchObject({
       approvalStatus: "blocked_warning",
@@ -515,10 +527,16 @@ function fourStreamSnapshot() {
     snapshotId: "named-scenario-test-snapshot",
     capturedAt: "2026-05-21T00:00:00.000Z",
     readOnly: true,
-    sources: [
+      sources: [
       sheetSource("fee_sheet", "Fee Tracker", "fee_tracker", "CLIENT SUMMARY"),
-      sheetSource("pipeline", "Pipeline", "pipeline_sheet", "Pipeline"),
-      sheetSource("production_revenue", "Production Revenue", "production_revenue_sheet", "PRODUCTION ONLY"),
+      sheetSource("pipeline", "Pipeline", "pipeline_sheet", "Pipeline", [
+        { jobNumber: "UCS04154" },
+        { jobNumber: "TBC", projectName: "TBC Retail Pitch" }
+      ]),
+      sheetSource("production_revenue", "Production Revenue", "production_revenue_sheet", "PRODUCTION ONLY", [
+        { jobNumber: "UCS04154" },
+        { jobNumber: "UCS09999", projectName: "Archived Production Revenue" }
+      ]),
       {
         source: "float",
         mode: "read_only_live",
@@ -707,23 +725,25 @@ function floatTargetManifestRow() {
   };
 }
 
-function sheetSource(source: string, sourceLabel: string, sourceDocumentId: string, sourceTab: string) {
+function sheetSource(
+  source: string,
+  sourceLabel: string,
+  sourceDocumentId: string,
+  sourceTab: string,
+  rawRows: readonly Record<string, string>[] = [{ jobNumber: "UCS04154" }]
+) {
   return {
     source,
     mode: "manual_snapshot",
     sourceLabel,
-    rows: [
-      {
+    rows: rawRows.map((raw, index) => ({
         identity: {
-          stableSourceRowKey: `${sourceDocumentId}:${sourceTab}:1`,
+          stableSourceRowKey: `${sourceDocumentId}:${sourceTab}:${index + 1}`,
           sourceDocumentId,
           sourceTab,
-          sourceRowNumber: 1
+          sourceRowNumber: index + 1
         },
-        raw: {
-          jobNumber: "UCS04154"
-        }
-      }
-    ]
+        raw
+      }))
   };
 }

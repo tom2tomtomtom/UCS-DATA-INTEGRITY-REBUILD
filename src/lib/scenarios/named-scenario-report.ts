@@ -181,7 +181,16 @@ type NamedScenarioCoreResult = Omit<
 >;
 
 const generatedAt = "2026-05-20T17:59:00.000Z";
-const sourceBackedScenarioCodes = ["USA00262", "USA00323", "UCS04154", "UCS04787", "UCS05186", "PCS00250"];
+const sourceBackedScenarioCodes = [
+  "USA00262",
+  "USA00323",
+  "UCS04154",
+  "UCS04787",
+  "UCS05186",
+  "PCS00250",
+  "TBC",
+  "Archived Production Revenue"
+];
 
 export function buildNamedScenarioReport(input?: {
   readonly sourceEvidence?: NamedScenarioSourceEvidence;
@@ -544,6 +553,10 @@ function scenarioCodeForId(scenarioId: string): string | undefined {
       return "USA00323";
     case "bt-raw-without-cache":
       return "BT";
+    case "tbc-pipeline-identity":
+      return "TBC";
+    case "archived-production-revenue":
+      return "Archived Production Revenue";
     default:
       return undefined;
   }
