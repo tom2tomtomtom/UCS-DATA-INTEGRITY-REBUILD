@@ -28,6 +28,12 @@ export function DataQualityDashboard({
   const floatChecks = contract.reconciliation.filter(
     (check) => check.sourceRefs.some((sourceRef) => sourceRef.source === "float") || check.code.includes("FLOAT")
   );
+  const orphanRevenueRows = contract.visibleRows.filter((row) => row.rowType === "pipeline_only" || row.rowType === "production_revenue_only");
+  const archivedRows = contract.visibleRows.filter((row) => row.warnings.some((warning) => warning.code.includes("ARCHIVED")));
+  const parserDiagnostics = [
+    ...contract.warnings.filter((warning) => warning.source !== "float"),
+    ...contract.reconciliation.filter((check) => !check.code.includes("FLOAT") && !check.code.includes("PCS00250") && !check.code.includes("BT_RAW_CACHE"))
+  ];
 
   return React.createElement(
     "section",
@@ -40,6 +46,10 @@ export function DataQualityDashboard({
       qualityTab("Named checks", "#named-checks"),
       qualityTab("Float", "#float-issues"),
       qualityTab("Affected rows", "#affected-rows"),
+      qualityTab("Chase list", "#chase-list"),
+      qualityTab("Orphan revenue", "#orphan-revenue"),
+      qualityTab("Parser diagnostics", "#parser-diagnostics"),
+      qualityTab("Archived", "#archived-source"),
       qualityTab("Needs Codex", "#needs-codex")
     ),
     React.createElement(
@@ -59,6 +69,14 @@ export function DataQualityDashboard({
     React.createElement("ul", { className: "evidence-list" }, floatChecks.map((check) => checkCard(check))),
     React.createElement("h3", { id: "affected-rows" }, "Affected dashboard rows"),
     React.createElement("ul", { className: "evidence-list" }, affectedRows.map((row) => affectedRowCard(row))),
+    React.createElement("h3", { id: "chase-list" }, "Chase list"),
+    React.createElement("ul", { className: "evidence-list" }, chaseList(contract, floatChecks, orphanRevenueRows, parserDiagnostics)),
+    React.createElement("h3", { id: "orphan-revenue" }, "Orphan revenue"),
+    React.createElement("ul", { className: "evidence-list" }, orphanRevenueRows.map((row) => affectedRowCard(row))),
+    React.createElement("h3", { id: "parser-diagnostics" }, "Parser diagnostics"),
+    React.createElement("ul", { className: "evidence-list" }, parserDiagnostics.map((item) => diagnosticCard(item))),
+    React.createElement("h3", { id: "archived-source" }, "Archived source rows"),
+    React.createElement("ul", { className: "evidence-list" }, archivedRows.map((row) => affectedRowCard(row))),
     React.createElement("h3", { id: "all-issues" }, "Open evidence"),
     React.createElement("ul", { className: "evidence-list" }, warningItems),
     React.createElement(
@@ -135,6 +153,35 @@ function statusCard(label: string, count: number) {
   );
 }
 
+function chaseList(
+  contract: DashboardDisplayContract,
+  floatChecks: readonly ReconciliationCheck[],
+  orphanRevenueRows: readonly DashboardProjectRow[],
+  parserDiagnostics: readonly (SourceWarning | ReconciliationCheck)[]
+) {
+  const floatOnlyRows = contract.visibleRows.filter((row) => row.rowType === "float_only");
+
+  return [
+    chaseCard("Yunni", floatChecks.length + floatOnlyRows.length, "Float raw/cache/visible checks, Float-only rows, duplicate/manual Float candidates."),
+    chaseCard("Sian", parserDiagnostics.length, "Fee-sheet/parser/source diagnostics that can affect SOLD and role/hour confidence."),
+    chaseCard("Jade", orphanRevenueRows.filter((row) => row.rowType === "pipeline_only").length, "Pipeline-only rows and TBC source identities that need source confirmation."),
+    chaseCard("Production", orphanRevenueRows.filter((row) => row.rowType === "production_revenue_only").length, "Production revenue rows that have no matched project row in the active scope.")
+  ];
+}
+
+function chaseCard(owner: string, count: number, detail: string) {
+  return React.createElement(
+    "li",
+    { key: owner },
+    React.createElement("strong", null, `${owner}: ${count} evidence items`),
+    React.createElement("span", null, detail)
+  );
+}
+
+function diagnosticCard(item: SourceWarning | ReconciliationCheck) {
+  return "owner" in item ? warningCard(item) : checkCard(item);
+}
+
 function warningCard(warning: SourceWarning) {
   return React.createElement(
     "li",
@@ -154,10 +201,13 @@ function checkCard(check: ReconciliationCheck) {
 }
 
 function affectedRowCard(row: DashboardProjectRow) {
+  const floatProjectId = row.canonicalFloatProjectId ?? row.sourceFloatProjectId;
   const href =
-    row.jobNumber === undefined
-      ? scopedHref("/dashboard/projects", row.scope)
-      : scopedHref(`/dashboard/projects/${row.jobNumber}`, row.scope, { jobNumber: row.jobNumber });
+    row.rowType === "float_only" && floatProjectId !== undefined
+      ? scopedHref(`/dashboard/float/${floatProjectId}`, row.scope, { floatProjectId })
+      : row.jobNumber === undefined
+        ? scopedHref("/dashboard/projects", row.scope)
+        : scopedHref(`/dashboard/projects/${row.jobNumber}`, row.scope, { jobNumber: row.jobNumber });
 
   return React.createElement(
     "li",

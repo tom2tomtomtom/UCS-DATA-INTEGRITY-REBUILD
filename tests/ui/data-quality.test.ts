@@ -16,6 +16,10 @@ describe("P6-E Data Quality", () => {
     expect(html).toContain("Named checks");
     expect(html).toContain("Float");
     expect(html).toContain("Affected rows");
+    expect(html).toContain("Chase list");
+    expect(html).toContain("Orphan revenue");
+    expect(html).toContain("Parser diagnostics");
+    expect(html).toContain("Archived");
     expect(html).toContain("FAIL");
     expect(html).toContain("WARN");
     expect(html).toContain("UNRESOLVED");
@@ -35,7 +39,12 @@ describe("P6-E Data Quality", () => {
     expect(html).toContain("Float issues");
     expect(html).toContain("Affected dashboard rows");
     expect(html).toContain("FLOAT_ONLY: UCS05186");
-    expect(html).toContain("href=\"/dashboard/projects/UCS05186?office=LDN&amp;from=2026-01-01&amp;to=2026-03-31&amp;jobNumber=UCS05186\"");
+    expect(html).toContain("href=\"/dashboard/float/11413292?office=LDN&amp;from=2026-01-01&amp;to=2026-03-31&amp;floatProjectId=11413292\"");
+    expect(html).toContain("Yunni:");
+    expect(html).toContain("Sian:");
+    expect(html).toContain("Jade:");
+    expect(html).toContain("PRODUCTION_REVENUE_ONLY: UCS09999");
+    expect(html).toContain("Archived source rows");
     expect(html).toContain("Use Codex for repo changes");
   });
 
