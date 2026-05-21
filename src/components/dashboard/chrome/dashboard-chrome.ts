@@ -39,6 +39,7 @@ export function DashboardChrome({
   const scope = contract.scope;
   const warningCount = contract.warnings.length + contract.reconciliation.filter((check) => check.status !== "PASS").length;
   const activeFilterCount = countActiveFilters(scope);
+  const dataQualityCount = warningCount + contract.unsupported.length;
 
   return React.createElement(
     "div",
@@ -48,63 +49,71 @@ export function DashboardChrome({
       { className: "dashboard-topbar" },
       React.createElement(
         "div",
-        { className: "dashboard-brand" },
-        React.createElement("span", { className: "brand-eye", "aria-label": "Uncommon eye logo", role: "img" }),
+        { className: "dashboard-topbar-row dashboard-topbar-row-primary" },
         React.createElement(
           "div",
-          null,
-          React.createElement("p", { className: "dashboard-kicker" }, "Source-traceable reconciliation"),
-          React.createElement("h1", null, "UCS Commercial Dashboard")
+          { className: "dashboard-brand" },
+          React.createElement("span", { className: "brand-eye", "aria-label": "Uncommon eye logo", role: "img" }),
+          React.createElement(
+            "div",
+            null,
+            React.createElement("p", { className: "dashboard-kicker" }, "Source-traceable reconciliation"),
+            React.createElement("h1", null, "UCS Commercial Dashboard")
+          )
+        ),
+        React.createElement(
+          "section",
+          { className: "office-controls", "aria-label": "Office scope controls" },
+          React.createElement("span", { className: "office-label" }, "OFFICE"),
+          React.createElement(
+            "div",
+            { className: "office-pill-row" },
+            officeOptions.map((option) => officePill(activePath, scope, option))
+          ),
+          activeFilterCount > 0
+            ? React.createElement("a", { className: "clear-filters", href: clearFiltersHref(activePath, scope) }, "Clear all filters")
+            : React.createElement(
+                "span",
+                { className: "clear-filters disabled", "aria-disabled": "true" },
+                "Clear all filters"
+              )
         )
       ),
       React.createElement(
-        "section",
-        { className: "office-controls", "aria-label": "Office scope controls" },
-        React.createElement("span", { className: "office-label" }, "OFFICE"),
-        React.createElement(
-          "div",
-          { className: "office-pill-row" },
-          officeOptions.map((option) => officePill(activePath, scope, option))
-        ),
-        activeFilterCount > 0
-          ? React.createElement("a", { className: "clear-filters", href: clearFiltersHref(activePath, scope) }, "Clear all filters")
-          : React.createElement(
-              "span",
-              { className: "clear-filters disabled", "aria-disabled": "true" },
-              "Clear all filters"
-            )
-      ),
-      React.createElement(
         "div",
-        { className: "dashboard-actions" },
+        { className: "dashboard-topbar-row dashboard-topbar-row-actions" },
         React.createElement(
           "div",
-          { className: "sync-readiness", "aria-label": "Readiness and sync status" },
-          React.createElement("span", { className: "user-email" }, "read-only@ucs.local"),
-          React.createElement("span", null, visibleRowLabel(contract.visibleRows.length)),
-          React.createElement("span", null, "No production cutover. Read-only source snapshot.")
-        ),
-        React.createElement(
-          "button",
-          {
-            className: "sync-button",
-            disabled: true,
-            title: "Sync handoff is blocked while the rebuild mutation guard is read-only.",
-            type: "button",
-            "aria-label": "Sync Now unavailable while the rebuild is read-only"
-          },
-          React.createElement("span", { className: "refresh-icon", "aria-hidden": "true" }),
-          "Sync Now unavailable"
-        ),
-        React.createElement(
-          "a",
-          {
-            className: "chat-entry",
-            href: scopedHref("/dashboard/chat-demo", scope),
-            "aria-label": "Ask AI read-only evidence assistant"
-          },
-          React.createElement("span", { className: "chat-icon", "aria-hidden": "true" }, "AI"),
-          React.createElement("span", null, "Ask AI")
+          { className: "dashboard-actions" },
+          React.createElement(
+            "div",
+            { className: "sync-readiness", "aria-label": "Readiness and sync status" },
+            React.createElement("span", { className: "user-email" }, "tomh@redbaez.com"),
+            React.createElement("span", null, `synced ${contract.visibleRows.length} projects`),
+            React.createElement("span", null, "No production cutover. Read-only source snapshot.")
+          ),
+          React.createElement(
+            "button",
+            {
+              className: "sync-button",
+              disabled: true,
+              title: "Sync handoff is blocked while the rebuild mutation guard is read-only.",
+              type: "button",
+              "aria-label": "Sync Now unavailable while the rebuild is read-only"
+            },
+            React.createElement("span", { className: "refresh-icon", "aria-hidden": "true" }),
+            "Sync Now unavailable"
+          ),
+          React.createElement(
+            "a",
+            {
+              className: "chat-entry",
+              href: scopedHref("/dashboard/chat-demo", scope),
+              "aria-label": "Ask AI read-only evidence assistant"
+            },
+            React.createElement("span", { className: "chat-icon", "aria-hidden": "true" }, "AI"),
+            React.createElement("span", null, "Ask AI")
+          )
         )
       )
     ),
@@ -120,9 +129,31 @@ export function DashboardChrome({
             href: scopedHref(item.href, scope),
             key: item.href
           },
-          item.label
+          item.label,
+          item.label === "Data Quality"
+            ? React.createElement("span", { className: "nav-badge" }, String(dataQualityCount))
+            : null
         )
       )
+    ),
+    React.createElement(
+      "section",
+      { className: warningCount > 0 ? "sync-alert-banner" : "sync-alert-banner clean", "aria-live": "polite" },
+      React.createElement("strong", null, warningCount > 0 ? `${warningCount} issues found in current contract` : "No sync issues in this scope"),
+      React.createElement(
+        "span",
+        null,
+        warningCount > 0
+          ? "Source warnings and reconciliation checks stay visible until the source owner fixes or acknowledges them."
+          : "Source evidence is contract-backed for the current fixture scope."
+      ),
+      React.createElement("a", { href: scopedHref("/dashboard/audit", scope) }, "View details")
+    ),
+    React.createElement(
+      "section",
+      { className: "exchange-warning-banner" },
+      React.createElement("strong", null, "Exchange rate warning:"),
+      React.createElement("span", null, " FX values are carried from source/parser evidence. Treat unsupported or missing FX evidence as a visible source gap, not a dashboard correction.")
     ),
     React.createElement(
       "section",

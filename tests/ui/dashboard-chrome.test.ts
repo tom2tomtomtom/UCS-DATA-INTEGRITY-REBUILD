@@ -70,8 +70,8 @@ describe("Phase 9.5 dashboard chrome parity", () => {
     });
     const html = renderChrome(contract);
 
-    expect(html).toContain("read-only@ucs.local");
-    expect(html).toMatch(/\d+ visible contract rows?/);
+    expect(html).toContain("tomh@redbaez.com");
+    expect(html).toMatch(/synced \d+ projects/);
     expect(html).toContain("No production cutover. Read-only source snapshot.");
     expect(html).toContain("Sync Now unavailable");
     expect(html).toContain("aria-label=\"Sync Now unavailable while the rebuild is read-only\"");
@@ -79,6 +79,21 @@ describe("Phase 9.5 dashboard chrome parity", () => {
     expect(html).toContain(
       "href=\"/dashboard/chat-demo?office=LDN&amp;from=2026-01-01&amp;to=2026-03-31&amp;department=Design\""
     );
+  });
+
+  test("shows legacy-style data-quality badge and source alert banners", () => {
+    const contract = getFixtureDashboardContract({
+      office: "LDN",
+      from: "2026-01-01",
+      to: "2026-03-31"
+    });
+    const html = renderChrome(contract);
+
+    expect(html).toContain("class=\"nav-badge\"");
+    expect(html).toContain("issues found in current contract");
+    expect(html).toContain("View details");
+    expect(html).toContain("Exchange rate warning:");
+    expect(html).toContain("visible source gap");
   });
 
   test("preserves the full approved legacy nav route set", () => {

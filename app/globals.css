@@ -40,6 +40,8 @@ select {
 
 .dashboard-topbar,
 .dashboard-tabs,
+.sync-alert-banner,
+.exchange-warning-banner,
 .scope-strip,
 .warning-banner,
 .dashboard-main {
@@ -51,15 +53,28 @@ select {
   position: sticky;
   top: 0;
   z-index: 40;
+  display: grid;
+  gap: 12px;
+  padding-top: 16px;
+  padding-bottom: 14px;
+  background: var(--panel);
+  border-bottom: 1px solid var(--line);
+}
+
+.dashboard-topbar-row {
   display: flex;
   align-items: center;
   justify-content: space-between;
   flex-wrap: wrap;
   gap: 14px;
-  padding-top: 22px;
-  padding-bottom: 16px;
-  background: var(--panel);
-  border-bottom: 1px solid var(--line);
+}
+
+.dashboard-topbar-row-primary {
+  align-items: flex-start;
+}
+
+.dashboard-topbar-row-actions {
+  justify-content: flex-end;
 }
 
 .dashboard-brand {
@@ -235,6 +250,9 @@ select {
 }
 
 .dashboard-tabs a {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
   border: 1px solid var(--line);
   border-radius: 6px;
   padding: 8px 10px;
@@ -246,6 +264,51 @@ select {
   border-color: var(--ink);
   background: var(--ink);
   color: white;
+}
+
+.nav-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 20px;
+  min-height: 18px;
+  border-radius: 999px;
+  background: var(--fail);
+  color: white;
+  font-size: 11px;
+  font-weight: 900;
+}
+
+.sync-alert-banner,
+.exchange-warning-banner {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding-top: 10px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid var(--line);
+}
+
+.sync-alert-banner {
+  background: #fff0dd;
+  color: #4a2b00;
+}
+
+.sync-alert-banner.clean {
+  background: #edf8f0;
+  color: var(--good);
+}
+
+.sync-alert-banner a {
+  color: var(--accent);
+  font-weight: 900;
+  text-decoration: underline;
+}
+
+.exchange-warning-banner {
+  background: #fff8d9;
+  color: #564200;
 }
 
 .scope-strip {
