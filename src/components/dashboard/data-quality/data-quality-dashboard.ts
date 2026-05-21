@@ -3,6 +3,7 @@ import React from "react";
 import type {
   DashboardDisplayContract,
   DashboardProjectRow,
+  MetricValue,
   NamedScenarioReport,
   NamedScenarioResult,
   ReconciliationCheck,
@@ -34,6 +35,7 @@ export function DataQualityDashboard({
     ...contract.warnings.filter((warning) => warning.source !== "float"),
     ...contract.reconciliation.filter((check) => !check.code.includes("FLOAT") && !check.code.includes("PCS00250") && !check.code.includes("BT_RAW_CACHE"))
   ];
+  const chaseRows = buildChaseRows(contract, floatChecks, orphanRevenueRows, parserDiagnostics);
 
   return React.createElement(
     "section",
@@ -70,7 +72,7 @@ export function DataQualityDashboard({
     React.createElement("h3", { id: "affected-rows" }, "Affected dashboard rows"),
     React.createElement("ul", { className: "evidence-list" }, affectedRows.map((row) => affectedRowCard(row))),
     React.createElement("h3", { id: "chase-list" }, "Chase list"),
-    React.createElement("ul", { className: "evidence-list" }, chaseList(contract, floatChecks, orphanRevenueRows, parserDiagnostics)),
+    chaseRowsTable(chaseRows),
     React.createElement("h3", { id: "orphan-revenue" }, "Orphan revenue"),
     React.createElement("ul", { className: "evidence-list" }, orphanRevenueRows.map((row) => affectedRowCard(row))),
     React.createElement("h3", { id: "parser-diagnostics" }, "Parser diagnostics"),
@@ -153,33 +155,178 @@ function statusCard(label: string, count: number) {
   );
 }
 
-function chaseList(
+type ChaseRow = {
+  readonly id: string;
+  readonly severity: string;
+  readonly owner: string;
+  readonly issue: string;
+  readonly suggestedFix: string;
+  readonly atRisk: string;
+  readonly sourceRefs: number;
+  readonly href: string;
+};
+
+function buildChaseRows(
   contract: DashboardDisplayContract,
   floatChecks: readonly ReconciliationCheck[],
   orphanRevenueRows: readonly DashboardProjectRow[],
   parserDiagnostics: readonly (SourceWarning | ReconciliationCheck)[]
-) {
+): ChaseRow[] {
   const floatOnlyRows = contract.visibleRows.filter((row) => row.rowType === "float_only");
 
   return [
-    chaseCard("Yunni", floatChecks.length + floatOnlyRows.length, "Float raw/cache/visible checks, Float-only rows, duplicate/manual Float candidates."),
-    chaseCard("Sian", parserDiagnostics.length, "Fee-sheet/parser/source diagnostics that can affect SOLD and role/hour confidence."),
-    chaseCard("Jade", orphanRevenueRows.filter((row) => row.rowType === "pipeline_only").length, "Pipeline-only rows and TBC source identities that need source confirmation."),
-    chaseCard("Production", orphanRevenueRows.filter((row) => row.rowType === "production_revenue_only").length, "Production revenue rows that have no matched project row in the active scope.")
-  ];
+    ...floatChecks.map((check) => chaseRowForCheck(contract, check, "Yunni")),
+    ...parserDiagnostics.map((item) => ("owner" in item ? chaseRowForWarning(contract, item) : chaseRowForCheck(contract, item, ownerForCheck(item)))),
+    ...orphanRevenueRows.map((row) => chaseRowForProjectRow(row)),
+    ...floatOnlyRows.map((row) => chaseRowForProjectRow(row))
+  ].slice(0, 30);
 }
 
-function chaseCard(owner: string, count: number, detail: string) {
+function chaseRowsTable(rows: readonly ChaseRow[]) {
   return React.createElement(
-    "li",
-    { key: owner },
-    React.createElement("strong", null, `${owner}: ${count} evidence items`),
-    React.createElement("span", null, detail)
+    "table",
+    { className: "projects-table", "aria-label": "Data quality chase rows" },
+    React.createElement(
+      "thead",
+      null,
+      React.createElement(
+        "tr",
+        null,
+        ["Severity", "Owner", "Issue", "Suggested fix", "At risk", "Source refs", "Link"].map((header) =>
+          React.createElement("th", { key: header }, header)
+        )
+      )
+    ),
+    React.createElement(
+      "tbody",
+      null,
+      rows.length === 0
+        ? React.createElement("tr", null, React.createElement("td", { colSpan: 7 }, "No chase rows in the active scope."))
+        : rows.map((row) =>
+            React.createElement(
+              "tr",
+              { key: row.id },
+              React.createElement("td", null, row.severity),
+              React.createElement("td", null, row.owner),
+              React.createElement("td", null, row.issue),
+              React.createElement("td", null, row.suggestedFix),
+              React.createElement("td", null, row.atRisk),
+              React.createElement("td", null, String(row.sourceRefs)),
+              React.createElement("td", null, React.createElement("a", { href: row.href }, "Open evidence"))
+            )
+          )
+    )
   );
 }
 
 function diagnosticCard(item: SourceWarning | ReconciliationCheck) {
   return "owner" in item ? warningCard(item) : checkCard(item);
+}
+
+function chaseRowForWarning(contract: DashboardDisplayContract, warning: SourceWarning): ChaseRow {
+  return {
+    id: `warning:${warning.id}`,
+    severity: warning.status,
+    owner: warning.owner,
+    issue: warning.code,
+    suggestedFix: suggestedFixForOwner(warning.owner),
+    atRisk: "Source evidence",
+    sourceRefs: warning.sourceRefs.length,
+    href: scopedHref("/dashboard/data-quality", warning.scope)
+  };
+}
+
+function chaseRowForCheck(contract: DashboardDisplayContract, check: ReconciliationCheck, owner: string): ChaseRow {
+  return {
+    id: `check:${check.id}`,
+    severity: check.status,
+    owner,
+    issue: check.code,
+    suggestedFix: suggestedFixForOwner(owner),
+    atRisk: riskFromCheck(check),
+    sourceRefs: check.sourceRefs.length,
+    href: evidenceHrefForScope(contract, check.scope)
+  };
+}
+
+function chaseRowForProjectRow(row: DashboardProjectRow): ChaseRow {
+  const owner = ownerForProjectRow(row);
+
+  return {
+    id: `row:${row.id}`,
+    severity: row.warnings.some((warning) => warning.status === "FAIL") ? "FAIL" : "WARN",
+    owner,
+    issue: row.rowType.toUpperCase(),
+    suggestedFix: suggestedFixForOwner(owner),
+    atRisk: riskFromProjectRow(row),
+    sourceRefs: row.sourceTrace.length,
+    href: projectRowHref(row)
+  };
+}
+
+function ownerForCheck(check: ReconciliationCheck): string {
+  if (check.sourceRefs.some((sourceRef) => sourceRef.source === "float") || check.code.includes("FLOAT")) return "Yunni";
+  if (check.sourceRefs.some((sourceRef) => sourceRef.source === "pipeline") || check.code.includes("PIPELINE")) return "Jade";
+  if (check.sourceRefs.some((sourceRef) => sourceRef.source === "production_revenue") || check.code.includes("PRODUCTION")) return "Production";
+  return "Sian";
+}
+
+function ownerForProjectRow(row: DashboardProjectRow): string {
+  if (row.rowType === "float_only") return "Yunni";
+  if (row.rowType === "pipeline_only") return "Jade";
+  if (row.rowType === "production_revenue_only") return "Production";
+  return "Sian";
+}
+
+function suggestedFixForOwner(owner: string): string {
+  if (owner === "Yunni") return "Check Float project ID, duplicate/manual/archive status, and export settings.";
+  if (owner === "Jade") return "Check Pipeline row identity, project name, and job code in the Pipeline sheet.";
+  if (owner === "Production") return "Check production revenue source row and archived project status.";
+  if (owner === "Codex") return "Use Codex for code, browser, sync, deployment, or source-access investigation.";
+  return "Check fee-sheet source rows, role/hour sections, and parser warnings.";
+}
+
+function riskFromCheck(check: ReconciliationCheck): string {
+  const values = [metricRiskLabel(check.expected), metricRiskLabel(check.actual)].filter(Boolean);
+  return values.length === 0 ? "Source mismatch" : values.join(" / ");
+}
+
+function riskFromProjectRow(row: DashboardProjectRow): string {
+  const values = [
+    metricRiskLabel(row.totals.soldFee),
+    metricRiskLabel(row.totals.soldHours),
+    metricRiskLabel(row.totals.floatHours),
+    metricRiskLabel(row.totals.pipelineFee),
+    metricRiskLabel(row.totals.productionRevenue)
+  ].filter(Boolean);
+
+  return values.length === 0 ? row.rowType : values.join(" / ");
+}
+
+function metricRiskLabel(value: MetricValue | undefined): string | undefined {
+  if (value === undefined || value.kind === "unsupported") return undefined;
+  if (value.kind === "money" && value.value.amountGbp !== 0) return formatMoney(value.value.amountGbp);
+  if (value.kind === "hours" && value.value !== 0) return `${formatNumber(value.value)}h`;
+  if (value.kind === "count" && value.value !== 0) return formatNumber(value.value);
+  return undefined;
+}
+
+function evidenceHrefForScope(contract: DashboardDisplayContract, scope: DashboardDisplayContract["scope"]): string {
+  if (scope.jobNumber !== undefined) return scopedHref(`/dashboard/projects/${scope.jobNumber}`, scope);
+  if (scope.floatProjectId !== undefined) return scopedHref(`/dashboard/float/${scope.floatProjectId}`, scope);
+  return scopedHref("/dashboard/data-quality", contract.scope);
+}
+
+function projectRowHref(row: DashboardProjectRow): string {
+  const floatProjectId = row.canonicalFloatProjectId ?? row.sourceFloatProjectId;
+
+  if (row.rowType === "float_only" && floatProjectId !== undefined) {
+    return scopedHref(`/dashboard/float/${floatProjectId}`, row.scope, { floatProjectId });
+  }
+
+  return row.jobNumber === undefined
+    ? scopedHref("/dashboard/projects", row.scope)
+    : scopedHref(`/dashboard/projects/${row.jobNumber}`, row.scope, { jobNumber: row.jobNumber });
 }
 
 function warningCard(warning: SourceWarning) {
@@ -224,4 +371,18 @@ function affectedRowCard(row: DashboardProjectRow) {
     ),
     React.createElement("a", { href }, "Open row")
   );
+}
+
+function formatMoney(value: number): string {
+  return new Intl.NumberFormat("en-GB", {
+    style: "currency",
+    currency: "GBP",
+    maximumFractionDigits: 0
+  }).format(value);
+}
+
+function formatNumber(value: number): string {
+  return new Intl.NumberFormat("en-GB", {
+    maximumFractionDigits: 1
+  }).format(value);
 }

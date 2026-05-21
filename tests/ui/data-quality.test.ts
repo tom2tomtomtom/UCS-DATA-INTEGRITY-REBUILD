@@ -17,6 +17,12 @@ describe("P6-E Data Quality", () => {
     expect(html).toContain("Float");
     expect(html).toContain("Affected rows");
     expect(html).toContain("Chase list");
+    expect(html).toContain("Data quality chase rows");
+    expect(html).toContain("Suggested fix");
+    expect(html).toContain("At risk");
+    expect(html).toContain("Source refs");
+    expect(html).toContain("Check Float project ID");
+    expect(html).toContain("Check Pipeline row identity");
     expect(html).toContain("Orphan revenue");
     expect(html).toContain("Parser diagnostics");
     expect(html).toContain("Archived");
