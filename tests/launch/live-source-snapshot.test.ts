@@ -2,6 +2,8 @@ import { describe, expect, test } from "vitest";
 import { generateKeyPairSync } from "node:crypto";
 import { pathToFileURL } from "node:url";
 
+import { buildFloatTargetManifestEvidenceFromSnapshot } from "../../src/lib/scenarios/named-scenario-report";
+
 type LiveSourceSnapshotModule = {
   readonly buildLiveSourceSnapshot: (input: {
     readonly env: Record<string, string>;
@@ -243,8 +245,24 @@ describe("Phase 10 live source snapshot builder", () => {
       requestedScenarioCodes: ["UCS04787", "UCS05186", "PCS00250", "BT"],
       requestedProjectIds: ["10480262"],
       resolvedProjectIds: ["4787", "10480262"],
+      resolvedScenarios: [
+        {
+          scenarioCode: "UCS04787",
+          floatProjectId: "4787",
+          sourceStableSourceRowKey: "float:projects:4787",
+          sourceObjectId: "4787"
+        }
+      ],
       unresolvedScenarioCodes: ["UCS05186", "PCS00250", "BT"]
     });
+    expect(buildFloatTargetManifestEvidenceFromSnapshot(snapshot)?.resolvedScenarios).toEqual([
+      {
+        scenarioCode: "UCS04787",
+        floatProjectId: "4787",
+        sourceStableSourceRowKey: "float:projects:4787",
+        sourceObjectId: "4787"
+      }
+    ]);
     expect(fetchCalls.some((url) => url.includes("/tasks?project_id=4787&start_date=2026-01-01&end_date=2027-12-31"))).toBe(true);
     expect(fetchCalls.some((url) => url.includes("/allocations"))).toBe(false);
     expect(fetchCalls.some((url) => url.endsWith("/people"))).toBe(true);

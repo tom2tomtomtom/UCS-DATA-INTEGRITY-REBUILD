@@ -282,14 +282,47 @@ export function routePlaybook(question: string): ChatPlaybook {
 function handoffTriggers(question: string): NeedsCodexTrigger[] {
   const triggers: NeedsCodexTrigger[] = [];
 
-  if (matchesAny(question, ["code", "fix", "build", "implement"])) triggers.push("code");
-  if (matchesAny(question, ["browser", "ui test", "open the browser"])) triggers.push("browser");
-  if (matchesAny(question, ["archive", "delete", "write", "change source"])) triggers.push("mutation");
-  if (question.includes("sync") && matchesAny(question, ["now", "run"])) triggers.push("sync");
+  if (matchesAny(question, ["code", "fix", "build", "implement", "repo", "terminal"])) triggers.push("code");
+  if (matchesAny(question, ["browser", "ui test", "open the browser", "test in ui", "screenshot"])) {
+    triggers.push("browser");
+  }
+  if (
+    matchesAny(question, [
+      "archive",
+      "delete",
+      "write",
+      "change source",
+      "mutate",
+      "mutation",
+      "edit source",
+      "update source",
+      "write to source"
+    ])
+  ) {
+    triggers.push("mutation");
+  }
+  if (isSyncAction(question)) triggers.push("sync");
   if (matchesAny(question, ["deploy", "railway"])) triggers.push("deploy");
   if (matchesAny(question, ["email", "stakeholder", "tell sian", "tell yunni", "tell jade"])) triggers.push("stakeholder");
 
   return [...new Set(triggers)];
+}
+
+function isSyncAction(question: string): boolean {
+  if (!question.includes("sync")) return false;
+  if (matchesAny(question, ["last sync", "sync freshness", "freshness", "sync status", "when did"])) return false;
+
+  return matchesAny(question, [
+    "sync now",
+    "run sync",
+    "start sync",
+    "trigger sync",
+    "can you sync",
+    "please sync",
+    "sync float",
+    "sync source",
+    "sync,"
+  ]);
 }
 
 function matchesAny(value: string, needles: readonly string[]): boolean {

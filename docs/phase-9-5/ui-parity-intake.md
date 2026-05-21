@@ -79,6 +79,8 @@ Current review state: UX reviewer PASS after second pass.
 
 First safe UI parity slice: Department Rollup now surfaces an approval/source-evidence status strip above the headline metrics. This is an "Improve Carefully" change because it makes no-cutover, source-warning, reconciliation-warning, and unsupported-headline counts visible from the existing display contract without changing data selectors, row granularity, drilldown links, or metric formatting.
 
+Second safe UI parity slice: Dashboard chrome now surfaces the legacy office controls, disabled clear-filters state, read-only sync/readiness copy, and a scoped Ask AI affordance. `Sync Now` is visibly unavailable while the rebuild is read-only, and clear filters uses the current canonical `office=ALL` route state until the parser safely accepts the legacy `office=Agency` URL value.
+
 Implementation agents must read `docs/phase-9-5/legacy-ui-ux-spec.md` and `docs/phase-9-5/ui-parity-acceptance-checklist.md` together. Legacy behaviours like `Sync Now`, archive actions, `All sources fresh`, and archived-project explanations are preserved only under the caveats in the checklist and data-law override section.
 
 Allowed in the meantime:

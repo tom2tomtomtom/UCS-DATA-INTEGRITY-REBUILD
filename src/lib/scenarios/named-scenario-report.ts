@@ -17,6 +17,28 @@ export type NamedScenarioCheck = {
   readonly evidence: string;
 };
 
+export type NamedScenarioFloatResolution = {
+  readonly scenarioCode: string;
+  readonly floatProjectId: string;
+  readonly sourceStableSourceRowKey: string;
+  readonly sourceObjectId: string;
+};
+
+export type NamedScenarioFloatTargetManifestEvidence = {
+  readonly status: "ready";
+  readonly source: "float";
+  readonly sourceMode: string;
+  readonly sourceLabel?: string;
+  readonly manifestStableSourceRowKey: string;
+  readonly manifestSourceObjectId: string;
+  readonly requestedScenarioCodes: readonly string[];
+  readonly requestedProjectIds: readonly string[];
+  readonly resolvedProjectIds: readonly string[];
+  readonly unresolvedScenarioCodes: readonly string[];
+  readonly resolvedScenarios: readonly NamedScenarioFloatResolution[];
+  readonly unresolvedScenarios: readonly string[];
+};
+
 export type NamedScenarioResult = {
   readonly id: string;
   readonly name: string;
@@ -47,6 +69,7 @@ export type NamedScenarioSourceEvidence =
       readonly snapshotId: string;
       readonly sourcesChecked: readonly ["fee_sheet", "pipeline", "production_revenue", "float"];
       readonly rawRows: number;
+      readonly floatTargetManifest: NamedScenarioFloatTargetManifestEvidence;
     };
 
 const generatedAt = "2026-05-20T17:59:00.000Z";
@@ -54,6 +77,48 @@ const generatedAt = "2026-05-20T17:59:00.000Z";
 export function buildNamedScenarioReport(input?: {
   readonly sourceEvidence?: NamedScenarioSourceEvidence;
 }): NamedScenarioReport {
+  const sourceEvidence = input?.sourceEvidence ?? missingSourceEvidence();
+  const ucs04787Checks = withLiveFloatTargetCheck(
+    [
+      pass("float_layers_compared", "Raw Float, visible dashboard Float, and cache/compare layers are kept separate."),
+      warn("raw_cache_visible_mismatch_surfaced", "The fixture contains raw/visible Float mismatch evidence and the report leaves it as warning evidence.")
+    ],
+    sourceEvidence,
+    "UCS04787"
+  );
+  const ucs05186Checks = withLiveFloatTargetCheck(
+    [
+      pass("duplicate_candidates_visible", "Canonical and manual duplicate Float candidates remain visible instead of being silently merged."),
+      warn("archived_duplicate_still_evidence", "Archived/manual duplicate evidence remains warning evidence until a fresh source pull proves it no longer contributes.")
+    ],
+    sourceEvidence,
+    "UCS05186"
+  );
+  const ucs04154Checks = withLiveFloatTargetCheck(
+    [
+      pass("fee_sheet_float_id_join_key", "The fee-sheet Float ID is represented as the canonical join key for the original sold work."),
+      pass("manual_duplicate_not_winner", "Manual duplicates are evidence only, not automatic winners over the fee-sheet Float ID.")
+    ],
+    sourceEvidence,
+    "UCS04154"
+  );
+  const pcs00250Checks = withLiveFloatTargetCheck(
+    [
+      warn("cache_without_raw_warn", "Cache-only Float hours remain warning evidence when raw Float task evidence is absent."),
+      pass("not_green_when_cache_only", "Cache-only hours cannot be marked as pass.")
+    ],
+    sourceEvidence,
+    "PCS00250"
+  );
+  const btChecks = withLiveFloatTargetCheck(
+    [
+      warn("raw_without_cache_fail_class", "Raw Float hours without cache are classified as a blocking reconciliation issue in the evidence layer."),
+      pass("raw_not_hidden", "Raw Float task evidence remains visible even when cache evidence is absent.")
+    ],
+    sourceEvidence,
+    "BT"
+  );
+
   const scenarios: NamedScenarioResult[] = [
     {
       id: "ldn-q1-design",
@@ -73,10 +138,7 @@ export function buildNamedScenarioReport(input?: {
       owner: "Yunni",
       status: "warn",
       classification: "source_or_cache_warning",
-      checks: [
-        pass("float_layers_compared", "Raw Float, visible dashboard Float, and cache/compare layers are kept separate."),
-        warn("raw_cache_visible_mismatch_surfaced", "The fixture contains raw/visible Float mismatch evidence and the report leaves it as warning evidence.")
-      ],
+      checks: ucs04787Checks,
       nextHumanAction: "Yunni or Tom should compare the current Float export settings with the scoped dashboard period before treating the delta as fixed."
     },
     {
@@ -85,22 +147,16 @@ export function buildNamedScenarioReport(input?: {
       owner: "Yunni",
       status: "warn",
       classification: "source_or_cache_warning",
-      checks: [
-        pass("duplicate_candidates_visible", "Canonical and manual duplicate Float candidates remain visible instead of being silently merged."),
-        warn("archived_duplicate_still_evidence", "Archived/manual duplicate evidence remains warning evidence until a fresh source pull proves it no longer contributes.")
-      ],
+      checks: ucs05186Checks,
       nextHumanAction: "Keep duplicate/manual Float rows visible until Yunni confirms which source row should be fixed."
     },
     {
       id: "ucs04154",
       name: "UCS04154 Fee-sheet Float ID Join",
       owner: "Yunni",
-      status: "pass",
+      status: statusFromChecks(ucs04154Checks),
       classification: "join_key_protected",
-      checks: [
-        pass("fee_sheet_float_id_join_key", "The fee-sheet Float ID is represented as the canonical join key for the original sold work."),
-        pass("manual_duplicate_not_winner", "Manual duplicates are evidence only, not automatic winners over the fee-sheet Float ID.")
-      ]
+      checks: ucs04154Checks
     },
     {
       id: "pcs00250",
@@ -108,10 +164,7 @@ export function buildNamedScenarioReport(input?: {
       owner: "Yunni",
       status: "warn",
       classification: "source_or_cache_warning",
-      checks: [
-        warn("cache_without_raw_warn", "Cache-only Float hours remain warning evidence when raw Float task evidence is absent."),
-        pass("not_green_when_cache_only", "Cache-only hours cannot be marked as pass.")
-      ],
+      checks: pcs00250Checks,
       nextHumanAction: "A fresh Float pull must prove whether raw task rows now exist."
     },
     {
@@ -142,10 +195,7 @@ export function buildNamedScenarioReport(input?: {
       owner: "Yunni",
       status: "warn",
       classification: "source_or_cache_warning",
-      checks: [
-        warn("raw_without_cache_fail_class", "Raw Float hours without cache are classified as a blocking reconciliation issue in the evidence layer."),
-        pass("raw_not_hidden", "Raw Float task evidence remains visible even when cache evidence is absent.")
-      ],
+      checks: btChecks,
       nextHumanAction: "Tom should inspect the import/cache path before any dashboard approval on that Float row."
     },
     {
@@ -184,7 +234,6 @@ export function buildNamedScenarioReport(input?: {
   ];
 
   const status = reportStatus(scenarios);
-  const sourceEvidence = input?.sourceEvidence ?? missingSourceEvidence();
 
   return {
     generatedAt,
@@ -200,12 +249,95 @@ export function buildNamedScenarioReport(input?: {
   };
 }
 
+export function buildFloatTargetManifestEvidenceFromSnapshot(snapshot: unknown): NamedScenarioFloatTargetManifestEvidence | undefined {
+  const floatSource = findLiveFloatSource(snapshot);
+  if (floatSource === undefined) return undefined;
+
+  const rows = arrayRecords(floatSource.rows);
+  const manifestRow = rows.find(isFloatTargetManifestRow);
+  if (manifestRow === undefined) return undefined;
+
+  const identity = asRecord(manifestRow.identity);
+  const raw = asRecord(manifestRow.raw);
+  if (identity === undefined || raw === undefined) return undefined;
+
+  const requestedScenarioCodes = stringList(raw.requestedScenarioCodes);
+  const requestedProjectIds = stringList(raw.requestedProjectIds);
+  const resolvedProjectIds = stringList(raw.resolvedProjectIds);
+  const unresolvedScenarioCodes = stringList(raw.unresolvedScenarioCodes);
+  const resolvedScenarios = resolutionList(raw.resolvedScenarios);
+  const inferredUnresolvedScenarios = [...unresolvedScenarioCodes];
+
+  for (const scenarioCode of requestedScenarioCodes) {
+    const hasExplicitResolution = resolvedScenarios.some((resolution) =>
+      sameScenarioCode(resolution.scenarioCode, scenarioCode)
+    );
+    const isAlreadyUnresolved = inferredUnresolvedScenarios.some((code) => sameScenarioCode(code, scenarioCode));
+    if (!hasExplicitResolution && !isAlreadyUnresolved) {
+      addUnique(inferredUnresolvedScenarios, scenarioCode);
+    }
+  }
+
+  const sourceLabel = stringValue(floatSource.sourceLabel);
+
+  return {
+    status: "ready",
+    source: "float",
+    sourceMode: stringValue(floatSource.mode) ?? "unknown",
+    ...(sourceLabel === undefined ? {} : { sourceLabel }),
+    manifestStableSourceRowKey: stringValue(identity.stableSourceRowKey) ?? "float:target-manifest",
+    manifestSourceObjectId: stringValue(identity.sourceObjectId) ?? "target_manifest",
+    requestedScenarioCodes,
+    requestedProjectIds,
+    resolvedProjectIds,
+    unresolvedScenarioCodes,
+    resolvedScenarios,
+    unresolvedScenarios: inferredUnresolvedScenarios
+  };
+}
+
 function missingSourceEvidence(): NamedScenarioSourceEvidence {
   return {
     status: "missing",
     sourcesChecked: [],
     blocker: "source_snapshot_missing"
   };
+}
+
+function withLiveFloatTargetCheck(
+  checks: readonly NamedScenarioCheck[],
+  sourceEvidence: NamedScenarioSourceEvidence,
+  scenarioCode: string
+): NamedScenarioCheck[] {
+  const liveCheck = liveFloatTargetCheck(sourceEvidence, scenarioCode);
+  return liveCheck === undefined ? [...checks] : [...checks, liveCheck];
+}
+
+function liveFloatTargetCheck(
+  sourceEvidence: NamedScenarioSourceEvidence,
+  scenarioCode: string
+): NamedScenarioCheck | undefined {
+  if (sourceEvidence.status !== "ready") return undefined;
+  const floatTargetManifest = sourceEvidence.floatTargetManifest;
+  if (floatTargetManifest === undefined) return undefined;
+
+  const resolution = floatTargetManifest.resolvedScenarios.find((item) =>
+    sameScenarioCode(item.scenarioCode, scenarioCode)
+  );
+
+  if (resolution !== undefined) {
+    return pass(
+      "live_float_target_manifest_resolved",
+      `Live Float target manifest ${floatTargetManifest.manifestStableSourceRowKey} resolved ${scenarioCode} to Float project ${resolution.floatProjectId}.`
+    );
+  }
+
+  const requested = floatTargetManifest.requestedScenarioCodes.some((code) => sameScenarioCode(code, scenarioCode));
+  const verb = requested ? "leaves" : "does not include";
+  return warn(
+    "live_float_target_manifest_unresolved",
+    `Live Float target manifest ${floatTargetManifest.manifestStableSourceRowKey} ${verb} ${scenarioCode} unresolved; no Float project ID is safe to infer.`
+  );
 }
 
 function pass(code: string, evidence: string): NamedScenarioCheck {
@@ -224,8 +356,108 @@ function warn(code: string, evidence: string): NamedScenarioCheck {
   };
 }
 
+function statusFromChecks(checks: readonly NamedScenarioCheck[]): NamedScenarioStatus {
+  if (checks.some((check) => check.status === "fail")) return "fail";
+  if (checks.some((check) => check.status === "warn")) return "warn";
+  return "pass";
+}
+
 function reportStatus(scenarios: readonly NamedScenarioResult[]): NamedScenarioStatus {
   if (scenarios.some((scenario) => scenario.status === "fail")) return "fail";
   if (scenarios.some((scenario) => scenario.status === "warn")) return "warn";
   return "pass";
+}
+
+function findLiveFloatSource(snapshot: unknown): Record<string, unknown> | undefined {
+  const record = asRecord(snapshot);
+  if (record === undefined) return undefined;
+
+  return arrayRecords(record.sources).find((source) => {
+    const mode = stringValue(source.mode);
+    return stringValue(source.source) === "float" && mode === "read_only_live";
+  });
+}
+
+function isFloatTargetManifestRow(row: Record<string, unknown>): boolean {
+  const identity = asRecord(row.identity);
+  const raw = asRecord(row.raw);
+
+  return (
+    stringValue(identity?.stableSourceRowKey) === "float:target-manifest" ||
+    stringValue(raw?.objectType) === "target_manifest"
+  );
+}
+
+function stringList(value: unknown): string[] {
+  if (!Array.isArray(value)) return [];
+
+  const values: string[] = [];
+  for (const item of value) {
+    const stringItem = stringValue(item);
+    if (stringItem !== undefined) addUnique(values, stringItem);
+  }
+
+  return values;
+}
+
+function resolutionList(value: unknown): NamedScenarioFloatResolution[] {
+  if (!Array.isArray(value)) return [];
+
+  const values: NamedScenarioFloatResolution[] = [];
+  const seenScenarioCodes = new Set<string>();
+  for (const item of value) {
+    const record = asRecord(item);
+    const scenarioCode = stringValue(record?.scenarioCode);
+    const floatProjectId = stringValue(record?.floatProjectId);
+
+    if (scenarioCode === undefined || floatProjectId === undefined) continue;
+
+    const normalizedScenarioCode = normalizeScenarioCode(scenarioCode);
+    if (seenScenarioCodes.has(normalizedScenarioCode)) continue;
+    seenScenarioCodes.add(normalizedScenarioCode);
+
+    values.push({
+      scenarioCode,
+      floatProjectId,
+      sourceStableSourceRowKey: stringValue(record?.sourceStableSourceRowKey) ?? `float:projects:${floatProjectId}`,
+      sourceObjectId: stringValue(record?.sourceObjectId) ?? floatProjectId
+    });
+  }
+
+  return values;
+}
+
+function arrayRecords(value: unknown): Record<string, unknown>[] {
+  return Array.isArray(value) ? value.flatMap((item) => {
+    const record = asRecord(item);
+    return record === undefined ? [] : [record];
+  }) : [];
+}
+
+function asRecord(value: unknown): Record<string, unknown> | undefined {
+  if (value === null || typeof value !== "object" || Array.isArray(value)) return undefined;
+  return value as Record<string, unknown>;
+}
+
+function stringValue(value: unknown): string | undefined {
+  if (typeof value === "string") {
+    const trimmed = value.trim();
+    return trimmed === "" ? undefined : trimmed;
+  }
+
+  if (typeof value === "number" && Number.isFinite(value)) return String(value);
+
+  return undefined;
+}
+
+function addUnique(values: string[], value: string): void {
+  if (!values.some((item) => item === value)) values.push(value);
+}
+
+function sameScenarioCode(left: string, right: string): boolean {
+  return normalizeScenarioCode(left) === normalizeScenarioCode(right);
+}
+
+function normalizeScenarioCode(value: string): string {
+  return value.trim().toUpperCase();
 }

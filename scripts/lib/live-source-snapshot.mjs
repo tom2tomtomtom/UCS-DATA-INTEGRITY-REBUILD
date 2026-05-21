@@ -312,6 +312,7 @@ async function resolveFloatTargets({ projectRecords, floatScenarioCodes, floatPr
   const requestedProjectIds = normalizeList(floatProjectIds);
   const matchedScenarioCodes = new Set();
   const resolvedProjectIds = [];
+  const resolvedScenarios = [];
   const resolvedProjectRecords = [];
   const resolutionErrors = [];
 
@@ -324,8 +325,15 @@ async function resolveFloatTargets({ projectRecords, floatScenarioCodes, floatPr
 
     if (match) {
       const projectRecord = asRecord(match);
+      const floatProjectId = sourceObjectIdFor("project", projectRecord, 0);
       matchedScenarioCodes.add(code);
-      addUnique(resolvedProjectIds, sourceObjectIdFor("project", projectRecord, 0));
+      addUnique(resolvedProjectIds, floatProjectId);
+      resolvedScenarios.push({
+        scenarioCode: code,
+        floatProjectId,
+        sourceStableSourceRowKey: `float:projects:${floatProjectId}`,
+        sourceObjectId: floatProjectId
+      });
       addUniqueProjectRecord(resolvedProjectRecords, projectRecord);
     }
   }
@@ -339,6 +347,7 @@ async function resolveFloatTargets({ projectRecords, floatScenarioCodes, floatPr
     requestedProjectIds,
     resolvedProjectRecords,
     resolvedProjectIds,
+    resolvedScenarios,
     unresolvedScenarioCodes: requestedScenarioCodes.filter((code) => !matchedScenarioCodes.has(code)),
     resolutionErrors
   };

@@ -79,6 +79,36 @@ describe("Phase 10 stakeholder approval pack", () => {
     });
     expect(pack.blockers).toEqual(expect.arrayContaining(["source_snapshot_missing"]));
   });
+
+  test("requires targeted Float manifest evidence before source approval evidence is ready", () => {
+    const snapshotFile = writeSnapshotFile({
+      ...fourStreamSnapshot(),
+      sources: fourStreamSnapshot().sources.map((source) =>
+        source.source === "float"
+          ? {
+            ...source,
+              rows: source.rows.filter((row) => !("objectType" in row.raw) || row.raw.objectType !== "target_manifest")
+            }
+          : source
+      )
+    });
+    const output = execFileSync("node", ["scripts/stakeholder-approval-pack.mjs"], {
+      encoding: "utf8",
+      env: {
+        ...process.env,
+        SOURCE_SNAPSHOT_FILE: snapshotFile
+      }
+    });
+    const pack = JSON.parse(output);
+
+    expect(pack.status).toBe("blocked");
+    expect(pack.sourceEvidence).toEqual({
+      status: "missing",
+      sourcesChecked: [],
+      blocker: "source_snapshot_missing"
+    });
+    expect(pack.blockers).toEqual(expect.arrayContaining(["source_snapshot_missing"]));
+  });
 });
 
 function writeSnapshotFile(snapshot: unknown): string {
@@ -99,16 +129,40 @@ function fourStreamSnapshot() {
       sheetSource("production_revenue", "Production Revenue", "production_revenue_sheet", "PRODUCTION ONLY"),
       {
         source: "float",
-        mode: "manual_snapshot",
-        sourceLabel: "Float API",
+        mode: "read_only_live",
+        sourceLabel: "Float API targeted evidence",
         rows: [
           {
             identity: {
-              stableSourceRowKey: "float:project:10480262",
+              stableSourceRowKey: "float:projects:10480262",
               sourceObjectId: "10480262"
             },
             raw: {
-              projectId: 10480262
+              objectType: "project",
+              project_id: 10480262,
+              project_code: "UCS04154",
+              name: "UCS04154 Float project"
+            }
+          },
+          {
+            identity: {
+              stableSourceRowKey: "float:target-manifest",
+              sourceObjectId: "target_manifest"
+            },
+            raw: {
+              objectType: "target_manifest",
+              requestedScenarioCodes: ["UCS04154", "BT"],
+              requestedProjectIds: ["10480262"],
+              resolvedProjectIds: ["10480262"],
+              resolvedScenarios: [
+                {
+                  scenarioCode: "UCS04154",
+                  floatProjectId: "10480262",
+                  sourceStableSourceRowKey: "float:projects:10480262",
+                  sourceObjectId: "10480262"
+                }
+              ],
+              unresolvedScenarioCodes: ["BT"]
             }
           }
         ]

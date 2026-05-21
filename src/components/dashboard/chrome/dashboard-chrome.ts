@@ -1,6 +1,6 @@
 import React from "react";
 
-import type { DashboardDisplayContract } from "../../../lib";
+import type { DashboardDisplayContract, DashboardOffice, DashboardScope } from "../../../lib";
 import { scopedHref } from "../../../lib";
 
 const navItems = [
@@ -11,6 +11,17 @@ const navItems = [
   { label: "Data Quality", href: "/dashboard/data-quality" },
   { label: "Glossary", href: "/dashboard/glossary" }
 ] as const;
+
+const officeOptions = [
+  { label: "All", office: "ALL", title: "Agency-wide scope" },
+  { label: "LDN", office: "LDN", title: "London office scope" },
+  { label: "UCX", office: "UCX", title: "UCX office scope" },
+  { label: "USA", office: "USA", title: "USA office scope" }
+] as const satisfies readonly {
+  label: string;
+  office: DashboardOffice;
+  title: string;
+}[];
 
 export function DashboardChrome({
   contract,
@@ -23,6 +34,7 @@ export function DashboardChrome({
 }) {
   const scope = contract.scope;
   const warningCount = contract.warnings.length + contract.reconciliation.filter((check) => check.status !== "PASS").length;
+  const activeFilterCount = countActiveFilters(scope);
 
   return React.createElement(
     "div",
@@ -32,11 +44,65 @@ export function DashboardChrome({
       { className: "dashboard-topbar" },
       React.createElement(
         "div",
-        null,
-        React.createElement("p", { className: "dashboard-kicker" }, "Source-traceable reconciliation"),
-        React.createElement("h1", null, "UCS Commercial Dashboard")
+        { className: "dashboard-brand" },
+        React.createElement("span", { className: "brand-eye", "aria-label": "Uncommon eye logo", role: "img" }),
+        React.createElement(
+          "div",
+          null,
+          React.createElement("p", { className: "dashboard-kicker" }, "Source-traceable reconciliation"),
+          React.createElement("h1", null, "UCS Commercial Dashboard")
+        )
       ),
-      React.createElement("button", { className: "chat-entry", type: "button", "aria-label": "Ask AI" }, "Ask AI")
+      React.createElement(
+        "section",
+        { className: "office-controls", "aria-label": "Office scope controls" },
+        React.createElement("span", { className: "office-label" }, "OFFICE"),
+        React.createElement(
+          "div",
+          { className: "office-pill-row" },
+          officeOptions.map((option) => officePill(activePath, scope, option))
+        ),
+        activeFilterCount > 0
+          ? React.createElement("a", { className: "clear-filters", href: clearFiltersHref(activePath, scope) }, "Clear all filters")
+          : React.createElement(
+              "span",
+              { className: "clear-filters disabled", "aria-disabled": "true" },
+              "Clear all filters"
+            )
+      ),
+      React.createElement(
+        "div",
+        { className: "dashboard-actions" },
+        React.createElement(
+          "div",
+          { className: "sync-readiness", "aria-label": "Readiness and sync status" },
+          React.createElement("span", { className: "user-email" }, "read-only@ucs.local"),
+          React.createElement("span", null, visibleRowLabel(contract.visibleRows.length)),
+          React.createElement("span", null, "No production cutover. Read-only source snapshot.")
+        ),
+        React.createElement(
+          "button",
+          {
+            className: "sync-button",
+            disabled: true,
+            title: "Sync handoff is blocked while the rebuild mutation guard is read-only.",
+            type: "button",
+            "aria-label": "Sync Now unavailable while the rebuild is read-only"
+          },
+          React.createElement("span", { className: "refresh-icon", "aria-hidden": "true" }),
+          "Sync Now unavailable"
+        ),
+        React.createElement(
+          "a",
+          {
+            className: "chat-entry",
+            href: scopedHref("/dashboard/chat-demo", scope),
+            "aria-label": "Ask AI read-only evidence assistant"
+          },
+          React.createElement("span", { className: "chat-icon", "aria-hidden": "true" }, "AI"),
+          React.createElement("span", null, "Ask AI")
+        )
+      )
     ),
     React.createElement(
       "nav",
@@ -57,13 +123,13 @@ export function DashboardChrome({
     React.createElement(
       "section",
       { className: "scope-strip", "aria-label": "Active dashboard scope" },
-      scopeChip(scope.office),
-      scopeChip(scope.from),
-      scopeChip(scope.to),
-      optionalScopeChip(scope.department),
-      optionalScopeChip(scope.role),
-      optionalScopeChip(scope.client),
-      optionalScopeChip(scope.jobNumber)
+      scopeChip("Office", displayOffice(scope.office)),
+      scopeChip("From", scope.from),
+      scopeChip("To", scope.to),
+      optionalScopeChip("Department", scope.department),
+      optionalScopeChip("Role", scope.role),
+      optionalScopeChip("Client", scope.client),
+      optionalScopeChip("Job", scope.jobNumber)
     ),
     React.createElement(
       "section",
@@ -75,10 +141,60 @@ export function DashboardChrome({
   );
 }
 
-function scopeChip(value: string) {
-  return React.createElement("span", { key: value }, value);
+function officePill(
+  activePath: string,
+  scope: DashboardScope,
+  option: (typeof officeOptions)[number]
+) {
+  const isActive = scope.office === option.office;
+
+  return React.createElement(
+    "a",
+    {
+      "aria-pressed": isActive,
+      className: isActive ? "office-pill active" : "office-pill",
+      href: scopedHref(activePath, scope, { office: option.office }),
+      key: option.office,
+      role: "button",
+      title: option.title
+    },
+    option.label
+  );
 }
 
-function optionalScopeChip(value: string | undefined) {
-  return value === undefined ? null : scopeChip(value);
+function clearFiltersHref(activePath: string, scope: DashboardScope): string {
+  return scopedHref(activePath, {
+    office: "ALL",
+    from: scope.from,
+    to: scope.to
+  });
+}
+
+function countActiveFilters(scope: DashboardScope): number {
+  const optionalFilters = [
+    scope.department,
+    scope.role,
+    scope.client,
+    scope.search,
+    scope.jobNumber,
+    scope.floatProjectId
+  ].filter((value) => value !== undefined && value.trim() !== "").length;
+
+  return optionalFilters + (scope.office === "ALL" ? 0 : 1);
+}
+
+function displayOffice(office: DashboardOffice): string {
+  return office === "ALL" ? "Agency" : office;
+}
+
+function visibleRowLabel(count: number): string {
+  return `${count} visible contract row${count === 1 ? "" : "s"}`;
+}
+
+function scopeChip(label: string, value: string) {
+  return React.createElement("span", { key: `${label}:${value}` }, `${label}: ${value}`);
+}
+
+function optionalScopeChip(label: string, value: string | undefined) {
+  return value === undefined ? null : scopeChip(label, value);
 }

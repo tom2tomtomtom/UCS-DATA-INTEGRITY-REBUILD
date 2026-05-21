@@ -3,7 +3,7 @@
 import fs from "node:fs";
 
 import { buildSourceSnapshotImportPlan } from "./lib/source-import-report.mjs";
-import { buildNamedScenarioReport } from "./lib/named-scenario-report.mjs";
+import { buildFloatTargetManifestEvidenceFromSnapshot, buildNamedScenarioReport } from "./lib/named-scenario-report.mjs";
 
 process.stdout.write(`${JSON.stringify(buildNamedScenarioReport({ sourceEvidence: readSourceEvidence() }), null, 2)}\n`);
 
@@ -17,8 +17,9 @@ function readSourceEvidence() {
     const plan = buildSourceSnapshotImportPlan(snapshot);
     const sourcesChecked = ["fee_sheet", "pipeline", "production_revenue", "float"];
     const hasAllSources = sourcesChecked.every((source) => (plan.report.bySource[source]?.rawRows ?? 0) > 0);
+    const floatTargetManifest = buildFloatTargetManifestEvidenceFromSnapshot(snapshot);
 
-    if (!hasAllSources) {
+    if (!hasAllSources || plan.report.cacheEvidenceRows > 0 || plan.report.status !== "pass" || floatTargetManifest === undefined) {
       return undefined;
     }
 
@@ -26,7 +27,8 @@ function readSourceEvidence() {
       status: "ready",
       snapshotId: plan.report.snapshotId,
       sourcesChecked,
-      rawRows: plan.report.rawRows
+      rawRows: plan.report.rawRows,
+      floatTargetManifest
     };
   } catch {
     return undefined;

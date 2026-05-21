@@ -4,7 +4,10 @@ import os from "node:os";
 import path from "node:path";
 import { describe, expect, test } from "vitest";
 
-import { buildNamedScenarioReport } from "../../src/lib/scenarios/named-scenario-report";
+import {
+  buildFloatTargetManifestEvidenceFromSnapshot,
+  buildNamedScenarioReport
+} from "../../src/lib/scenarios/named-scenario-report";
 
 const requiredScenarioIds = [
   "ldn-q1-design",
@@ -120,14 +123,89 @@ describe("P8-E named Sian Yunni Jade scenario report", () => {
     const report = JSON.parse(output);
 
     expect(report.approvalReady).toBe(false);
-    expect(report.sourceEvidence).toEqual({
+    expect(report.sourceEvidence).toMatchObject({
       status: "ready",
       snapshotId: "named-scenario-test-snapshot",
       sourcesChecked: ["fee_sheet", "pipeline", "production_revenue", "float"],
-      rawRows: 4
+      rawRows: 8,
+      floatTargetManifest: {
+        status: "ready",
+        manifestStableSourceRowKey: "float:target-manifest",
+        requestedScenarioCodes: ["UCS04787", "UCS05186", "UCS04154", "PCS00250", "BT"],
+        requestedProjectIds: ["10480262"],
+        resolvedProjectIds: ["10979146", "11413292", "10480262", "11330982"],
+        unresolvedScenarioCodes: ["BT"],
+        resolvedScenarios: expect.arrayContaining([
+          expect.objectContaining({ scenarioCode: "UCS04787", floatProjectId: "10979146" }),
+          expect.objectContaining({ scenarioCode: "UCS05186", floatProjectId: "11413292" }),
+          expect.objectContaining({ scenarioCode: "UCS04154", floatProjectId: "10480262" }),
+          expect.objectContaining({ scenarioCode: "PCS00250", floatProjectId: "11330982" })
+        ]),
+        unresolvedScenarios: ["BT"]
+      }
     });
   });
+
+  test("enriches named Float scenarios with live manifest IDs without clearing warning scenarios", () => {
+    const floatTargetManifest = buildFloatTargetManifestEvidenceFromSnapshot(fourStreamSnapshot());
+    expect(floatTargetManifest).toBeDefined();
+
+    const report = buildNamedScenarioReport({
+      sourceEvidence: {
+        status: "ready",
+        snapshotId: "named-scenario-test-snapshot",
+        sourcesChecked: ["fee_sheet", "pipeline", "production_revenue", "float"],
+        rawRows: 8,
+        floatTargetManifest: floatTargetManifest!
+      }
+    });
+
+    expect(liveCheckEvidence(report, "ucs04154")).toContain("Live Float target manifest float:target-manifest resolved UCS04154 to Float project 10480262.");
+    expect(liveCheckEvidence(report, "ucs04787")).toContain("Live Float target manifest float:target-manifest resolved UCS04787 to Float project 10979146.");
+    expect(liveCheckEvidence(report, "ucs05186")).toContain("Live Float target manifest float:target-manifest resolved UCS05186 to Float project 11413292.");
+    expect(liveCheckEvidence(report, "pcs00250")).toContain("Live Float target manifest float:target-manifest resolved PCS00250 to Float project 11330982.");
+    expect(liveCheckEvidence(report, "bt-raw-without-cache")).toContain("Live Float target manifest float:target-manifest leaves BT unresolved; no Float project ID is safe to infer.");
+    expect(report.scenarios.find((scenario) => scenario.id === "ucs04787")?.status).toBe("warn");
+    expect(report.scenarios.find((scenario) => scenario.id === "bt-raw-without-cache")?.status).toBe("warn");
+    expect(report.approvalReady).toBe(false);
+  });
+
+  test("does not let non-live Float snapshots satisfy live named Float evidence", () => {
+    expect(buildFloatTargetManifestEvidenceFromSnapshot(nonLiveSnapshot())).toBeUndefined();
+
+    const snapshotFile = writeSnapshotFile(nonLiveSnapshot());
+    const output = execFileSync("node", ["scripts/named-scenario-report.mjs"], {
+      encoding: "utf8",
+      env: {
+        ...process.env,
+        SOURCE_SNAPSHOT_FILE: snapshotFile
+      }
+    });
+    const report = JSON.parse(output);
+
+    expect(report.sourceEvidence).toEqual({
+      status: "missing",
+      sourcesChecked: [],
+      blocker: "source_snapshot_missing"
+    });
+    expect(output).not.toContain("live_float_target_manifest_resolved");
+  });
+
+  test("does not infer resolved Float scenarios from project rows without explicit manifest mappings", () => {
+    const manifest = buildFloatTargetManifestEvidenceFromSnapshot(liveSnapshotWithoutResolvedScenarios());
+
+    expect(manifest?.resolvedProjectIds).toEqual(["10979146", "11413292", "10480262", "11330982"]);
+    expect(manifest?.resolvedScenarios).toEqual([]);
+    expect(manifest?.unresolvedScenarios).toEqual(["BT", "UCS04787", "UCS05186", "UCS04154", "PCS00250"]);
+  });
 });
+
+function liveCheckEvidence(report: ReturnType<typeof buildNamedScenarioReport>, scenarioId: string): string[] {
+  return report.scenarios
+    .find((scenario) => scenario.id === scenarioId)
+    ?.checks.filter((check) => check.code.startsWith("live_float_target_manifest"))
+    .map((check) => check.evidence) ?? [];
+}
 
 function writeSnapshotFile(snapshot: unknown): string {
   const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), "named-scenario-snapshot-"));
@@ -147,21 +225,127 @@ function fourStreamSnapshot() {
       sheetSource("production_revenue", "Production Revenue", "production_revenue_sheet", "PRODUCTION ONLY"),
       {
         source: "float",
-        mode: "manual_snapshot",
-        sourceLabel: "Float API",
+        mode: "read_only_live",
+        sourceLabel: "Float API targeted evidence",
         rows: [
-          {
-            identity: {
-              stableSourceRowKey: "float:project:10480262",
-              sourceObjectId: "10480262"
-            },
-            raw: {
-              projectId: 10480262
-            }
-          }
+          floatProjectRow("UCS04787", "10979146"),
+          floatProjectRow("UCS05186", "11413292"),
+          floatProjectRow("UCS04154", "10480262"),
+          floatProjectRow("PCS00250", "11330982"),
+          floatTargetManifestRow()
         ]
       }
     ]
+  };
+}
+
+function nonLiveSnapshot() {
+  return {
+    ...fourStreamSnapshot(),
+    sources: fourStreamSnapshot().sources.map((source) =>
+      source.source === "float"
+        ? {
+            ...source,
+            mode: "manual_snapshot",
+            rows: [
+              {
+                identity: {
+                  stableSourceRowKey: "float_allocations:10480262",
+                  sourceObjectId: "10480262"
+                },
+                raw: {
+                  table: "float_allocations",
+                  projectId: 10480262
+                }
+              },
+              floatTargetManifestRow()
+            ]
+          }
+        : source
+    )
+  };
+}
+
+function liveSnapshotWithoutResolvedScenarios() {
+  const snapshot = fourStreamSnapshot();
+
+  return {
+    ...snapshot,
+    sources: snapshot.sources.map((source) =>
+      source.source === "float"
+        ? {
+            ...source,
+            rows: source.rows.map((row) =>
+              "objectType" in row.raw && row.raw.objectType === "target_manifest"
+                ? {
+                    ...row,
+                    raw: {
+                      ...row.raw,
+                      resolvedScenarios: undefined
+                    }
+                  }
+                : row
+            )
+          }
+        : source
+    )
+  };
+}
+
+function floatProjectRow(scenarioCode: string, floatProjectId: string) {
+  return {
+    identity: {
+      stableSourceRowKey: `float:projects:${floatProjectId}`,
+      sourceObjectId: floatProjectId
+    },
+    raw: {
+      objectType: "project",
+      project_id: Number(floatProjectId),
+      project_code: scenarioCode,
+      name: `${scenarioCode} Float project`
+    }
+  };
+}
+
+function floatTargetManifestRow() {
+  return {
+    identity: {
+      stableSourceRowKey: "float:target-manifest",
+      sourceObjectId: "target_manifest"
+    },
+    raw: {
+      objectType: "target_manifest",
+      requestedScenarioCodes: ["UCS04787", "UCS05186", "UCS04154", "PCS00250", "BT"],
+      requestedProjectIds: ["10480262"],
+      resolvedProjectIds: ["10979146", "11413292", "10480262", "11330982"],
+      resolvedScenarios: [
+        {
+          scenarioCode: "UCS04787",
+          floatProjectId: "10979146",
+          sourceStableSourceRowKey: "float:projects:10979146",
+          sourceObjectId: "10979146"
+        },
+        {
+          scenarioCode: "UCS05186",
+          floatProjectId: "11413292",
+          sourceStableSourceRowKey: "float:projects:11413292",
+          sourceObjectId: "11413292"
+        },
+        {
+          scenarioCode: "UCS04154",
+          floatProjectId: "10480262",
+          sourceStableSourceRowKey: "float:projects:10480262",
+          sourceObjectId: "10480262"
+        },
+        {
+          scenarioCode: "PCS00250",
+          floatProjectId: "11330982",
+          sourceStableSourceRowKey: "float:projects:11330982",
+          sourceObjectId: "11330982"
+        }
+      ],
+      unresolvedScenarioCodes: ["BT"]
+    }
   };
 }
 

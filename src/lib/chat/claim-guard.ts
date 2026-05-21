@@ -21,13 +21,10 @@ export function validateEvidenceClaims(pack: EvidencePack, draft: string): Claim
     });
   }
 
-  if (
-    matchesAny(normalised, ["dashboard bug", "dashboard error"]) &&
-    !pack.checks.some((check) => check.status === "fail")
-  ) {
+  if (matchesAny(normalised, ["dashboard bug", "dashboard error"]) && (!hasFailedCheck(pack) || pack.unresolved.length > 0)) {
     blockedClaims.push({
       code: "dashboard_bug_without_failed_check",
-      message: "The draft claims a dashboard bug without a failed evidence check."
+      message: "The draft claims a dashboard bug without complete failed-check evidence."
     });
   }
 
@@ -74,6 +71,10 @@ function hasNonzeroHoursEvidence(pack: EvidencePack): boolean {
   return pack.checks.some((check) =>
     [check.expected, check.actual].some((metric) => metric?.kind === "hours" && metric.value > 0)
   );
+}
+
+function hasFailedCheck(pack: EvidencePack): boolean {
+  return pack.checks.some((check) => check.status === "fail");
 }
 
 function hasAllFloatMismatchLayers(pack: EvidencePack): boolean {
