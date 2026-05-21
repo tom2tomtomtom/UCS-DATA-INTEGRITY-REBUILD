@@ -47,16 +47,17 @@ export function ChatShell({
 function chatForm(scope: DashboardScope) {
   return React.createElement(
     "form",
-    { action: "/api/chat", className: "chat-form", method: "post" },
+    { action: "/dashboard/chat-demo", className: "chat-form", method: "get" },
     React.createElement("textarea", {
       "aria-label": "Ask the dashboard chat",
-      name: "message",
+      name: "question",
       placeholder: "Ask a scoped evidence question...",
       rows: 4
     }),
-    React.createElement("input", { name: "scope[office]", type: "hidden", value: scope.office }),
-    React.createElement("input", { name: "scope[from]", type: "hidden", value: scope.from }),
-    React.createElement("input", { name: "scope[to]", type: "hidden", value: scope.to }),
+    React.createElement("input", { name: "office", type: "hidden", value: scope.office }),
+    React.createElement("input", { name: "from", type: "hidden", value: scope.from }),
+    React.createElement("input", { name: "to", type: "hidden", value: scope.to }),
+    React.createElement("input", { name: "state", type: "hidden", value: "working" }),
     ...optionalScopeInputs(scope),
     React.createElement("button", { type: "submit" }, "Ask read-only chat")
   );
@@ -90,7 +91,7 @@ function optionalScopeInputs(scope: DashboardScope) {
   };
 
   return Object.entries(entries).flatMap(([key, value]) =>
-    value === undefined || value.trim() === "" ? [] : React.createElement("input", { key, name: `scope[${key}]`, type: "hidden", value })
+    value === undefined || value.trim() === "" ? [] : React.createElement("input", { key, name: key, type: "hidden", value })
   );
 }
 

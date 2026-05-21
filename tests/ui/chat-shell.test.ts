@@ -28,11 +28,13 @@ describe("P6-F chat shell", () => {
     expect(html).toContain("Dashboard Chat");
     expect(html).toContain("Working");
     expect(html).toContain("Ask read-only chat");
+    expect(html).toContain("action=\"/dashboard/chat-demo\" method=\"get\"");
     expect(html).toContain("Ask a scoped evidence question");
     expect(html).toContain("What errors can you see?");
     expect(html).toContain("Why is this lower than Float?");
     expect(html).toContain("Does this need Codex?");
-    expect(html).toContain("type=\"hidden\" name=\"scope[department]\" value=\"Design\"");
+    expect(html).toContain("type=\"hidden\" name=\"department\" value=\"Design\"");
+    expect(html).toContain("type=\"hidden\" name=\"state\" value=\"working\"");
     expect(html).toContain("LDN");
     expect(html).toContain("Design");
     expect(html).toContain("display contract");
