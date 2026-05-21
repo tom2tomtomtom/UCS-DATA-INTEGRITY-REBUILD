@@ -4,6 +4,7 @@ import type { ArchivedRawSourceRow, SourceArchivePayload } from "../source-archi
 
 const DEFAULT_BATCH_LIMIT = 100;
 const MAX_BATCH_LIMIT = 500;
+const RAW_ROW_PAGE_SIZE = 1000;
 
 const SOURCE_BATCH_SELECT = [
   "id",
@@ -101,7 +102,7 @@ export async function readLatestArchivedSourceRowsFromSupabase(
     return [];
   }
 
-  const rawRows = await fetchJson<SupabaseRawSourceRow[]>({
+  const rawRows = await fetchJsonPages<SupabaseRawSourceRow>({
     supabaseUrl,
     serviceRoleKey,
     fetcher,
@@ -202,6 +203,42 @@ async function fetchJson<T>({
   }
 
   return (await response.json()) as T;
+}
+
+async function fetchJsonPages<T>({
+  supabaseUrl,
+  serviceRoleKey,
+  fetcher,
+  table,
+  params
+}: {
+  readonly supabaseUrl: string;
+  readonly serviceRoleKey: string;
+  readonly fetcher: typeof fetch;
+  readonly table: string;
+  readonly params: Readonly<Record<string, string>>;
+}): Promise<T[]> {
+  const rows: T[] = [];
+
+  for (let offset = 0; ; offset += RAW_ROW_PAGE_SIZE) {
+    const page = await fetchJson<T[]>({
+      supabaseUrl,
+      serviceRoleKey,
+      fetcher,
+      table,
+      params: {
+        ...params,
+        limit: String(RAW_ROW_PAGE_SIZE),
+        offset: String(offset)
+      }
+    });
+
+    rows.push(...page);
+
+    if (page.length < RAW_ROW_PAGE_SIZE) {
+      return rows;
+    }
+  }
 }
 
 function compareBatchesDesc(left: SupabaseSourceBatchRow, right: SupabaseSourceBatchRow): number {

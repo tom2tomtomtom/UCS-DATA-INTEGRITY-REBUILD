@@ -128,6 +128,8 @@ describe("source archive Supabase reader", () => {
 
       if (url.includes("/raw_source_rows?")) {
         expect(decodeURIComponent(url)).toContain("batch_id=in.(latest-fee,latest-float)");
+        expect(url).toContain("limit=1000");
+        expect(url).toContain("offset=0");
         return Response.json([
           rawSourceRow({
             id: "raw-fee",
@@ -167,6 +169,60 @@ describe("source archive Supabase reader", () => {
     expect(calls).toHaveLength(2);
     expect(calls.every((call) => call.method === "GET")).toBe(true);
     expect(calls.every((call) => call.cache === "no-store")).toBe(true);
+  });
+
+  test("paginates raw source rows beyond the Supabase default page size", async () => {
+    const rawRowCalls: string[] = [];
+    const firstPage = Array.from({ length: 1000 }, (_, index) =>
+      rawSourceRow({
+        id: `raw-${index}`,
+        batch_id: "latest-fee",
+        source: "fee_sheet",
+        stable_source_row_key: `fee-sheet:${index}`,
+        source_refs: [{ source: "fee_sheet", sourceLayer: "sold", batchId: "latest-fee", rawRowId: `raw-${index}` }]
+      })
+    );
+    const secondPage = [
+      rawSourceRow({
+        id: "raw-1000",
+        batch_id: "latest-fee",
+        source: "fee_sheet",
+        stable_source_row_key: "fee-sheet:1000",
+        source_refs: [{ source: "fee_sheet", sourceLayer: "sold", batchId: "latest-fee", rawRowId: "raw-1000" }]
+      })
+    ];
+    const fetcher = (async (input) => {
+      const url = String(input);
+
+      if (url.includes("/source_batches?")) {
+        return Response.json([
+          sourceBatchRow({
+            id: "latest-fee",
+            completed_at: "2026-05-21T04:00:00.000Z",
+            metadata: { snapshotId: "snapshot-latest" }
+          })
+        ]);
+      }
+
+      if (url.includes("/raw_source_rows?")) {
+        rawRowCalls.push(url);
+        return Response.json(url.includes("offset=1000") ? secondPage : firstPage);
+      }
+
+      return new Response("unexpected URL", { status: 404 });
+    }) as typeof fetch;
+
+    const rows = await readLatestArchivedSourceRowsFromSupabase({
+      env: { MUTATION_GUARD: "read_only" },
+      supabaseUrl: "https://nxrzhwqsswhjgeouxsyr.supabase.co",
+      serviceRoleKey: "service-secret",
+      fetcher
+    });
+
+    expect(rows).toHaveLength(1001);
+    expect(rawRowCalls).toHaveLength(2);
+    expect(rawRowCalls[0]).toContain("offset=0");
+    expect(rawRowCalls[1]).toContain("offset=1000");
   });
 
   test("requires the read-only mutation guard", async () => {
