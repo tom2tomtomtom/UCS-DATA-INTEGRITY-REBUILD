@@ -23,6 +23,66 @@ function factByRawRowId(facts: readonly PipelineFact[], rawRowId: string): Pipel
   return fact;
 }
 
+function pipelineSheetRow(input: {
+  readonly id: string;
+  readonly rowNumber: number;
+  readonly cells: readonly unknown[];
+}): SourceArchiveRecord {
+  return {
+    kind: "raw_source_row",
+    archiveStatus: "archived",
+    id: input.id,
+    batchId: "batch_pipeline_sheet_001",
+    source: "pipeline",
+    identity: {
+      stableSourceRowKey: `pipeline_sheet:Pipeline:${input.rowNumber}`,
+      sourceDocumentId: "pipeline_sheet",
+      sourceTab: "Pipeline",
+      sourceRowNumber: input.rowNumber
+    },
+    raw: {
+      source: "pipeline",
+      rowNumber: input.rowNumber,
+      cells: input.cells
+    },
+    contentHash: `hash_${input.id}`,
+    observedAt: "2026-05-21T00:00:00.000Z",
+    sourceRefs: [
+      {
+        source: "pipeline",
+        sourceLayer: "pipeline",
+        batchId: "batch_pipeline_sheet_001",
+        rawRowId: input.id,
+        sourceDocumentId: "pipeline_sheet",
+        sourceTab: "Pipeline",
+        sourceRowNumber: input.rowNumber
+      }
+    ]
+  };
+}
+
+const pipelineSheetHeaders = [
+  "STATUS",
+  "CLIENT",
+  "OWNER",
+  "REV",
+  "JOB NO",
+  "PROJECT",
+  "OFFICE",
+  "JAN",
+  "FEB",
+  "MAR",
+  "APR",
+  "MAY",
+  "JUN",
+  "JUL",
+  "AUG",
+  "SEP",
+  "OCT",
+  "NOV",
+  "DEC"
+];
+
 describe("P3-C pipeline parser", () => {
   test("keeps TBC rows as separate source-row identities instead of one bucket", () => {
     const result = parseFixture();
@@ -152,5 +212,75 @@ describe("P3-C pipeline parser", () => {
     expect(result.facts.some((fact) => fact.rawRowIds.includes("raw_pipeline_empty_005"))).toBe(false);
     expect(result.warnings.some((warning) => warning.rawRowIds.includes("raw_pipeline_empty_005"))).toBe(false);
     expect(result.sourceRowsSkipped).toBe(expectedFixture.skippedRows.length);
+  });
+
+  test("expands archived Pipeline sheet month cells into parser-ready facts", () => {
+    const result = parsePipelineRows([
+      pipelineSheetRow({ id: "raw_pipeline_header_001", rowNumber: 1, cells: pipelineSheetHeaders }),
+      pipelineSheetRow({
+        id: "raw_pipeline_sheet_007",
+        rowNumber: 7,
+        cells: ["Likely", "Nike ACG", "Jade", "", "UCS12345", "Trail Launch", "LDN", "£12,500", "", "(2,500)"]
+      })
+    ]);
+
+    expect(result.facts).toHaveLength(2);
+    expect(result.sourceRowsRead).toBe(1);
+    expect(result.sourceRowsSkipped).toBe(1);
+    expect(result.facts.map((fact) => fact.id)).toEqual([
+      "pipeline:batch_pipeline_sheet_001:raw_pipeline_sheet_007:2026-01",
+      "pipeline:batch_pipeline_sheet_001:raw_pipeline_sheet_007:2026-03"
+    ]);
+    expect(result.facts.map((fact) => fact.month)).toEqual(["2026-01", "2026-03"]);
+    expect(result.facts.map((fact) => fact.amount?.kind === "money" ? fact.amount.value.amountGbp : undefined)).toEqual([
+      12500,
+      -2500
+    ]);
+    expect(result.facts[0]).toMatchObject({
+      jobNumber: "UCS12345",
+      stablePipelineIdentity: "job:UCS12345",
+      sourceClient: "Nike ACG",
+      sourceProjectName: "Trail Launch",
+      status: "Likely",
+      office: "LDN",
+      rawRowIds: ["raw_pipeline_sheet_007"]
+    });
+    expect(result.facts[0]?.trace).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          rawRowId: "raw_pipeline_sheet_007",
+          sourceRowNumber: 7,
+          field: "JAN"
+        })
+      ])
+    );
+  });
+
+  test("preserves TBC and no-job identities when shaping Pipeline sheet rows", () => {
+    const result = parsePipelineRows([
+      pipelineSheetRow({ id: "raw_pipeline_header_001", rowNumber: 1, cells: pipelineSheetHeaders }),
+      pipelineSheetRow({
+        id: "raw_pipeline_sheet_008",
+        rowNumber: 8,
+        cells: ["Provisional", "Acme + Co", "Jade", "", "TBC", "Spring Launch", "USA", "900"]
+      }),
+      pipelineSheetRow({
+        id: "raw_pipeline_sheet_009",
+        rowNumber: 9,
+        cells: ["Likely", "B&Q Retail", "Yunni", "", "", "Partner Launch", "UCX", "", "1,200"]
+      })
+    ]);
+
+    expect(result.facts).toHaveLength(2);
+    expect(result.facts.map((fact) => fact.stablePipelineIdentity)).toEqual([
+      "source-row:raw_pipeline_sheet_008",
+      "source-row:raw_pipeline_sheet_009"
+    ]);
+    expect(result.facts.map((fact) => fact.jobNumber)).toEqual([undefined, undefined]);
+    expect(result.facts.map((fact) => fact.month)).toEqual(["2026-01", "2026-02"]);
+    expect(result.warnings.map((warning) => warning.code)).toEqual([
+      "PIPELINE_TBC_JOB_NUMBER",
+      "PIPELINE_NO_JOB_NUMBER"
+    ]);
   });
 });

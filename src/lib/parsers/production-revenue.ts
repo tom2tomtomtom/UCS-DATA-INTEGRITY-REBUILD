@@ -29,6 +29,13 @@ type ParsedProductionRevenueRow = {
 
 type ProductionRevenueOffice = Exclude<ProductionRevenueFact["office"], undefined>;
 
+type ShapedProductionRevenueRow = {
+  readonly row: ArchivedRawSourceRow;
+  readonly raw: ProductionRevenueRawRecord;
+  readonly sourceRefs: readonly SourceTraceRef[];
+  readonly factIdSuffix?: string;
+};
+
 const PRODUCTION_REVENUE_CAPABILITIES = [
   {
     key: "project",
@@ -69,7 +76,8 @@ export function parseProductionRevenueRows(
   rows: readonly ArchivedRawSourceRow[]
 ): ParserResult<ProductionRevenueFact> {
   const productionRows = rows.filter((row) => row.source === SOURCE);
-  const parsedRows = productionRows.map(parseProductionRevenueRow);
+  const shapedRows = shapeProductionRevenueRows(productionRows);
+  const parsedRows = shapedRows.map(parseProductionRevenueRow);
   const collisionWarnings = createStatusCollisionWarnings(parsedRows);
   const collisionWarningsByRawRowId = groupSourceWarningsByRawRowId(collisionWarnings);
 
@@ -98,9 +106,8 @@ export function parseProductionRevenueRows(
   });
 }
 
-function parseProductionRevenueRow(row: ArchivedRawSourceRow): ParsedProductionRevenueRow {
-  const raw = toRecord(row.raw);
-  const sourceRefs = ensureSourceRefs(row);
+function parseProductionRevenueRow(shapedRow: ShapedProductionRevenueRow): ParsedProductionRevenueRow {
+  const { row, raw, sourceRefs } = shapedRow;
   const evidence = createParserFactEvidence({
     batchId: row.batchId,
     rawRowIds: [row.id],
@@ -120,7 +127,7 @@ function parseProductionRevenueRow(row: ArchivedRawSourceRow): ParsedProductionR
   const productionStatusInput = readString(raw, ["status", "productionStatus", "production_status"]);
   const productionStatus = normalizeProductionStatus(productionStatusInput);
   const rowOffice = readOffice(raw, ["office", "market", "studio"]);
-  const inferredOffice = rowOffice === undefined ? inferOffice(row) : undefined;
+  const inferredOffice = rowOffice === undefined ? inferOffice(row, raw) : undefined;
   const office = rowOffice ?? inferredOffice ?? "UNKNOWN";
 
   if (isBlank(productionStatusInput)) {
@@ -198,7 +205,7 @@ function parseProductionRevenueRow(row: ArchivedRawSourceRow): ParsedProductionR
   }
 
   const fact: ProductionRevenueFact = {
-    id: `${SOURCE}:${row.batchId}:${row.id}`,
+    id: `${SOURCE}:${row.batchId}:${row.id}${shapedRow.factIdSuffix ?? ""}`,
     source: SOURCE,
     sourceLayer: SOURCE_LAYER,
     rawRowIds: [...evidence.rawRowIds],
@@ -222,6 +229,107 @@ function parseProductionRevenueRow(row: ArchivedRawSourceRow): ParsedProductionR
     fact,
     parserWarnings: warningPairs.map((warningPair) => warningPair.parserWarning),
     collisionKey: createCollisionKey(fact)
+  };
+}
+
+function shapeProductionRevenueRows(rows: readonly ArchivedRawSourceRow[]): readonly ShapedProductionRevenueRow[] {
+  const sheetRows = rows
+    .map((row) => ({ row, cells: readCells(row), rowNumber: readSourceRowNumber(row) }))
+    .filter((entry): entry is { row: ArchivedRawSourceRow; cells: readonly string[]; rowNumber: number } =>
+      entry.cells !== undefined && entry.rowNumber !== undefined
+    );
+
+  const header = sheetRows.find((entry) => isProductionRevenueHeader(entry.cells));
+  if (header === undefined) {
+    return rows.map((row) => ({
+      row,
+      raw: toRecord(row.raw),
+      sourceRefs: ensureSourceRefs(row)
+    }));
+  }
+
+  const headerByKey = createHeaderMap(header.cells);
+  const monthColumns = header.cells
+    .map((headerCell, columnIndex) => ({
+      columnIndex,
+      month: parseMonthHeader(headerCell)
+    }))
+    .filter((entry): entry is { columnIndex: number; month: string } => entry.month !== undefined);
+  const shapedRows: ShapedProductionRevenueRow[] = [];
+
+  for (const entry of sheetRows) {
+    if (entry.row.id === header.row.id) {
+      continue;
+    }
+
+    const baseRaw = createBaseRawFromCells(entry.cells, headerByKey);
+    for (const monthColumn of monthColumns) {
+      const amount = parseCellNumber(entry.cells[monthColumn.columnIndex]);
+      if (amount === undefined) {
+        continue;
+      }
+
+      shapedRows.push({
+        row: entry.row,
+        raw: {
+          ...baseRaw,
+          month: monthColumn.month,
+          amount,
+          amountGbp: amount,
+          currency: "GBP"
+        },
+        sourceRefs: sourceRefsForCell(entry.row, columnIndexToLetters(monthColumn.columnIndex), entry.rowNumber),
+        factIdSuffix: `:${monthColumn.month}`
+      });
+    }
+  }
+
+  const sheetRowIds = new Set(sheetRows.map((entry) => entry.row.id));
+  for (const row of rows) {
+    if (sheetRowIds.has(row.id)) {
+      continue;
+    }
+
+    shapedRows.push({
+      row,
+      raw: toRecord(row.raw),
+      sourceRefs: ensureSourceRefs(row)
+    });
+  }
+
+  return shapedRows;
+}
+
+function createBaseRawFromCells(
+  cells: readonly string[],
+  headerByKey: ReadonlyMap<string, number>
+): ProductionRevenueRawRecord {
+  const valueFor = (keys: readonly string[]): string | undefined => {
+    for (const key of keys) {
+      const columnIndex = headerByKey.get(key);
+      if (columnIndex === undefined) {
+        continue;
+      }
+
+      const value = nonEmptyString(cells[columnIndex]);
+      if (value !== undefined) {
+        return value;
+      }
+    }
+
+    return undefined;
+  };
+
+  return {
+    status: valueFor(["REV STATUS", "STATUS"]),
+    client: valueFor(["CLIENT"]),
+    owner: valueFor(["OWNER"]),
+    revenueCode: valueFor(["REV CODE", "REVENUE CODE"]),
+    jobNumber: valueFor(["PROJECT NO", "PROJECT NUMBER", "JOB NUMBER", "JOB NO"]),
+    projectName: valueFor(["PROJECT", "PROJECT NAME"]),
+    office: valueFor(["OFFICE", "MARKET", "STUDIO"]),
+    department: valueFor(["DEPARTMENT"]),
+    role: valueFor(["ROLE"])
   };
 }
 
@@ -386,13 +494,16 @@ function readOffice(raw: ProductionRevenueRawRecord, fieldNames: readonly string
   return undefined;
 }
 
-function inferOffice(row: ArchivedRawSourceRow): ProductionRevenueOffice | undefined {
+function inferOffice(
+  row: ArchivedRawSourceRow,
+  raw: ProductionRevenueRawRecord = toRecord(row.raw)
+): ProductionRevenueOffice | undefined {
   const identityText = [
     row.identity.sourceTab,
     row.identity.sourceDocumentId,
     row.identity.sourceObjectId,
     row.identity.stableSourceRowKey,
-    readString(toRecord(row.raw), ["jobNumber", "job number", "jobNo", "job_no", "job"])
+    readString(raw, ["jobNumber", "job number", "jobNo", "job_no", "job", "revenueCode", "revCode"])
   ]
     .filter((value): value is string => value !== undefined)
     .join(" ")
@@ -454,6 +565,111 @@ function ensureSourceRefs(row: ArchivedRawSourceRow): readonly SourceTraceRef[] 
         : {})
     }
   ];
+}
+
+function sourceRefsForCell(
+  row: ArchivedRawSourceRow,
+  columnLetters: string,
+  sourceRowNumber: number
+): readonly SourceTraceRef[] {
+  return ensureSourceRefs(row).map((sourceRef) => ({
+    ...sourceRef,
+    field: `${columnLetters}${sourceRowNumber}`
+  }));
+}
+
+function readCells(row: ArchivedRawSourceRow): readonly string[] | undefined {
+  const raw = toRecord(row.raw);
+  const cells = raw.cells;
+  if (!Array.isArray(cells)) {
+    return undefined;
+  }
+
+  return cells.map((cell) => {
+    if (cell === null || cell === undefined) {
+      return "";
+    }
+    if (typeof cell === "string") {
+      return cell.trim();
+    }
+    if (typeof cell === "number" && Number.isFinite(cell)) {
+      return String(cell);
+    }
+    return String(cell).trim();
+  });
+}
+
+function readSourceRowNumber(row: ArchivedRawSourceRow): number | undefined {
+  const raw = toRecord(row.raw);
+  const rawRowNumber = raw.rowNumber;
+  if (typeof rawRowNumber === "number" && Number.isInteger(rawRowNumber)) {
+    return rawRowNumber;
+  }
+
+  return row.identity.sourceRowNumber;
+}
+
+function isProductionRevenueHeader(cells: readonly string[]): boolean {
+  const headerKeys = new Set(cells.map(normalizeHeaderCell).filter(nonEmptyString));
+  return headerKeys.has("REV STATUS") && headerKeys.has("CLIENT") && headerKeys.has("PROJECT NO");
+}
+
+function createHeaderMap(cells: readonly string[]): ReadonlyMap<string, number> {
+  const headerByKey = new Map<string, number>();
+  cells.forEach((cell, index) => {
+    const normalized = normalizeHeaderCell(cell);
+    if (normalized !== "") {
+      headerByKey.set(normalized, index);
+    }
+  });
+  return headerByKey;
+}
+
+function normalizeHeaderCell(value: string): string {
+  return value.trim().toUpperCase().replace(/\s+/g, " ");
+}
+
+function parseMonthHeader(value: string): string | undefined {
+  const normalized = value.trim();
+  const match = /^(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)-(\d{2})$/i.exec(normalized);
+  if (match === null) {
+    return undefined;
+  }
+
+  const monthLabel = match[1];
+  const yearSuffix = match[2];
+  if (monthLabel === undefined || yearSuffix === undefined) {
+    return undefined;
+  }
+
+  const monthIndex = ["jan", "feb", "mar", "apr", "may", "jun", "jul", "aug", "sep", "oct", "nov", "dec"].indexOf(
+    monthLabel.toLowerCase()
+  );
+  if (monthIndex < 0) {
+    return undefined;
+  }
+
+  return `20${yearSuffix}-${String(monthIndex + 1).padStart(2, "0")}`;
+}
+
+function parseCellNumber(value: string | undefined): number | undefined {
+  if (value === undefined || value.trim() === "") {
+    return undefined;
+  }
+
+  const parsed = Number(value.replace(/[^0-9.-]/g, ""));
+  return Number.isFinite(parsed) ? parsed : undefined;
+}
+
+function columnIndexToLetters(columnIndex: number): string {
+  let index = columnIndex + 1;
+  let letters = "";
+  while (index > 0) {
+    const remainder = (index - 1) % 26;
+    letters = String.fromCharCode(65 + remainder) + letters;
+    index = Math.floor((index - 1) / 26);
+  }
+  return letters;
 }
 
 function readString(raw: ProductionRevenueRawRecord, fieldNames: readonly string[]): string | undefined {

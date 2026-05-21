@@ -101,4 +101,71 @@ describe("P3-B fee sheet parser", () => {
       [...expected.expectedWarningCodes].sort()
     );
   });
+
+  test("does not turn Fee Tracker master rows into sold facts before linked fee-sheet tabs are archived", () => {
+    const result = parseArchivedFeeSheetRows([
+      feeTrackerMasterRow("raw_fee_tracker_header", 2, [
+        "Created",
+        "Client",
+        "Job Number",
+        "Job Name",
+        "Fee Sheet Link"
+      ]),
+      feeTrackerMasterRow("raw_fee_tracker_project", 3, [
+        "09-06-2025, 7:26:53",
+        "British Airways",
+        "UCS04787",
+        "UCS04787 - BA_FEE_MARCH MADNESS",
+        "UCS04787 Fee Sheet"
+      ])
+    ]);
+
+    expect(result.facts).toEqual([]);
+    expect(result.warnings).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          code: "UNSUPPORTED_FEE_SHEET_ROW_SHAPE",
+          rawRowIds: ["raw_fee_tracker_header"]
+        }),
+        expect.objectContaining({
+          code: "UNSUPPORTED_FEE_SHEET_ROW_SHAPE",
+          rawRowIds: ["raw_fee_tracker_project"]
+        })
+      ])
+    );
+  });
 });
+
+function feeTrackerMasterRow(id: string, sourceRowNumber: number, cells: readonly string[]): ArchivedRawSourceRow {
+  return {
+    kind: "raw_source_row",
+    archiveStatus: "archived",
+    id,
+    batchId: "batch_fee_tracker_master",
+    source: "fee_sheet",
+    identity: {
+      stableSourceRowKey: `fee-tracker:LDN:${sourceRowNumber}`,
+      sourceDocumentId: "fee_tracker",
+      sourceTab: "LDN",
+      sourceRowNumber
+    },
+    raw: {
+      source: "fee_sheet",
+      rowNumber: sourceRowNumber,
+      cells
+    },
+    contentHash: `hash:${id}`,
+    observedAt: "2026-05-21T00:00:00.000Z",
+    sourceRefs: [
+      {
+        source: "fee_sheet",
+        sourceLayer: "fee_sheet_parser_summary",
+        batchId: "batch_fee_tracker_master",
+        rawRowId: id,
+        sourceDocumentId: "fee_tracker",
+        sourceTab: "LDN",
+        sourceRowNumber
+      }
+    ]
+  };
+}

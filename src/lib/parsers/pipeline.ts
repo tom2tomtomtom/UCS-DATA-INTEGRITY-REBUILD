@@ -5,6 +5,7 @@ import type {
   SourceTraceRef
 } from "../canon/types";
 import type { ArchivedRawSourceRow, SourceArchiveRecord } from "../source-archive/types";
+import { shapePipelineSheetCellRows } from "./sheet-cell-shapers";
 import { createParserFactEvidence, createParserResult, createParserWarning } from "./shared";
 import type { ParserResult, ParserWarning } from "./types";
 
@@ -17,6 +18,7 @@ type PipelineRawRow = {
   readonly status?: string | null;
   readonly office?: "LDN" | "USA" | "UCX" | "UNKNOWN" | string | null;
   readonly sourceLabel?: string | null;
+  readonly factIdSuffix?: string | null;
 };
 
 const PIPELINE_CAPABILITIES: readonly SourceCapability[] = [
@@ -56,12 +58,16 @@ const PIPELINE_CAPABILITIES: readonly SourceCapability[] = [
 ];
 
 export function parsePipelineRows(records: readonly SourceArchiveRecord[]): ParserResult<PipelineFact> {
+  const shaped = shapePipelineSheetCellRows(records);
   const facts: PipelineFact[] = [];
   const warnings: ParserWarning[] = [];
   let sourceRowsRead = 0;
-  let sourceRowsSkipped = 0;
+  let sourceRowsSkipped = shaped.sheetRowsSkipped;
+  const rowWarningKeys = new Set<string>();
+  const sourceRowsReadKeys = new Set<string>();
+  const sourceRowReadKeys = new Set<string>();
 
-  for (const record of records) {
+  for (const record of shaped.records) {
     if (record.source !== "pipeline") {
       throw new Error("Pipeline parser can only consume pipeline source archive records.");
     }
@@ -79,7 +85,13 @@ export function parsePipelineRows(records: readonly SourceArchiveRecord[]): Pars
       continue;
     }
 
-    sourceRowsRead += 1;
+    if (!sourceRowReadKeys.has(record.id)) {
+      sourceRowReadKeys.add(record.id);
+    if (!sourceRowsReadKeys.has(record.id)) {
+      sourceRowsReadKeys.add(record.id);
+      sourceRowsRead += 1;
+    }
+    }
 
     const raw = asPipelineRawRow(record.raw);
     const sourceRefs = sourceRefsFor(record);
@@ -88,15 +100,21 @@ export function parsePipelineRows(records: readonly SourceArchiveRecord[]): Pars
     const stablePipelineIdentity = hasUsefulJobNumber ? `job:${jobNumber}` : `source-row:${record.id}`;
 
     if (isTbc(jobNumber)) {
-      warnings.push(
+      pushRowWarningOnce(
+        rowWarningKeys,
+        warnings,
         warningFor(record, "PIPELINE_TBC_JOB_NUMBER", "Pipeline row uses TBC instead of a useful job number.", "DATA_WARN")
       );
     } else if (!hasUsefulJobNumber && hasPipelineContent(raw)) {
-      warnings.push(
+      pushRowWarningOnce(
+        rowWarningKeys,
+        warnings,
         warningFor(record, "PIPELINE_NO_JOB_NUMBER", "Pipeline row has no job number but contains source data.", "DATA_WARN")
       );
     } else if (!hasPipelineContent(raw)) {
-      warnings.push(
+      pushRowWarningOnce(
+        rowWarningKeys,
+        warnings,
         warningFor(
           record,
           "PIPELINE_EMPTY_RAW_ROW_NOT_CLASSIFIED",
@@ -144,9 +162,10 @@ function buildPipelineFact(
   const status = readText(raw, "status");
   const office = readOffice(raw);
   const amountGbp = readNumber(raw, "amountGbp");
+  const factIdSuffix = readText(raw, "factIdSuffix");
 
   return {
-    id: `pipeline:${record.batchId}:${record.id}`,
+    id: `pipeline:${record.batchId}:${record.id}${factIdSuffix === undefined ? "" : `:${factIdSuffix}`}`,
     source: "pipeline",
     sourceLayer: "pipeline",
     rawRowIds: [...evidence.rawRowIds],
@@ -164,6 +183,16 @@ function buildPipelineFact(
     warnings: [],
     trace: sourceRefs.map((sourceRef) => ({ ...sourceRef }))
   };
+}
+
+function pushRowWarningOnce(keys: Set<string>, warnings: ParserWarning[], warning: ParserWarning): void {
+  const key = `${warning.code}:${warning.batchId}:${warning.rawRowIds.join("+")}`;
+  if (keys.has(key)) {
+    return;
+  }
+
+  keys.add(key);
+  warnings.push(warning);
 }
 
 function warningFor(
