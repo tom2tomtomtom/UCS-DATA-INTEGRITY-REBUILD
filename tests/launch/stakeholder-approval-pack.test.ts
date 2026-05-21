@@ -210,6 +210,7 @@ describe("Phase 10 stakeholder approval pack", () => {
       env: {
         ...process.env,
         SOURCE_SNAPSHOT_FILE: snapshotFile,
+        UI_PARITY_SPEC_STATUS: "pending",
         STAKEHOLDER_APPROVAL_STATUS: "approved"
       }
     });
