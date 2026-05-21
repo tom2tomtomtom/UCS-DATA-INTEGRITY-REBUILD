@@ -15,6 +15,8 @@ type LiveSourceSnapshotModule = {
     readonly maxRows: number | "all";
     readonly floatScenarioCodes?: readonly string[];
     readonly floatProjectIds?: readonly string[];
+    readonly includeLinkedFeeSheets?: boolean;
+    readonly linkedFeeSheetLimit?: number | "all";
   }) => Promise<{
     readonly snapshot: {
       readonly readOnly: boolean;
@@ -172,6 +174,265 @@ describe("Phase 10 live source snapshot builder", () => {
         rowCount: 1
       })
     ]);
+  });
+
+  test("preserves Fee Tracker fee-sheet hyperlink evidence from grid cell metadata", async () => {
+    const { buildLiveSourceSnapshot } = await loadLiveSourceSnapshotModule();
+    const fetchCalls: string[] = [];
+    const fetchImpl = async (url: string) => {
+      fetchCalls.push(url);
+      const decodedUrl = decodeURIComponent(url);
+
+      if (decodedUrl.includes("fee_tracker_sheet") && decodedUrl.includes("includeGridData=true")) {
+        return ok({
+          sheets: [
+            {
+              properties: { title: "LDN" },
+              data: [
+                {
+                  startRow: 0,
+                  rowData: [
+                    {
+                      values: [
+                        { formattedValue: "Created" },
+                        { formattedValue: "Client" },
+                        { formattedValue: "Job Number" },
+                        { formattedValue: "Job Name" },
+                        { formattedValue: "Fee Sheet Link" }
+                      ]
+                    },
+                    {
+                      values: [
+                        { formattedValue: "09-06-2025" },
+                        { formattedValue: "British Airways" },
+                        { formattedValue: "UCS04787" },
+                        { formattedValue: "BA Retainer" },
+                        {
+                          formattedValue: "UCS04787 Fee Sheet",
+                          hyperlink: "https://docs.google.com/spreadsheets/d/linked-fee-sheet-id/edit"
+                        },
+                        {
+                          formattedValue: "Formula Link",
+                          userEnteredValue: {
+                            formulaValue: "=HYPERLINK(\"https://docs.google.com/spreadsheets/d/formula-linked-id/edit\",\"Formula Link\")"
+                          }
+                        },
+                        {
+                          formattedValue: "Rich Link",
+                          textFormatRuns: [
+                            {
+                              startIndex: 0,
+                              format: {
+                                link: { uri: "https://docs.google.com/spreadsheets/d/rich-linked-id/edit" }
+                              }
+                            }
+                          ]
+                        },
+                        {
+                          formattedValue: "Format Link",
+                          userEnteredFormat: {
+                            textFormat: {
+                              link: { uri: "https://docs.google.com/spreadsheets/d/format-linked-id/edit" }
+                            }
+                          }
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        });
+      }
+
+      if (url.includes("/values/")) {
+        return ok({ values: [["Header"], ["Source row"]] });
+      }
+
+      if (url.endsWith("/projects")) {
+        return ok([{ project_id: 10480262, project_code: "UCS04154" }]);
+      }
+
+      return ok({ sheets: [{ properties: { title: "Sheet1" } }] });
+    };
+
+    const { snapshot } = await buildLiveSourceSnapshot({
+      env: {
+        ...env,
+        FEE_TRACKER_SNAPSHOT_RANGE: "LDN!A1:I2"
+      },
+      fetchImpl,
+      now: "2026-05-21T00:00:00.000Z",
+      maxRows: 10
+    });
+    const feeRows = snapshot.sources.find((sourceRow) => sourceRow.source === "fee_sheet")?.rows ?? [];
+
+    expect(fetchCalls.some((url) => decodeURIComponent(url).includes("includeGridData=true"))).toBe(true);
+    expect(feeRows[1]?.raw).toMatchObject({
+      cells: [
+        "09-06-2025",
+        "British Airways",
+        "UCS04787",
+        "BA Retainer",
+        "UCS04787 Fee Sheet",
+        "Formula Link",
+        "Rich Link",
+        "Format Link"
+      ],
+      cellLinks: [
+        {
+          columnIndex: 5,
+          columnLetter: "E",
+          displayValue: "UCS04787 Fee Sheet",
+          uri: "https://docs.google.com/spreadsheets/d/linked-fee-sheet-id/edit",
+          linkSource: "hyperlink"
+        },
+        {
+          columnIndex: 6,
+          columnLetter: "F",
+          displayValue: "Formula Link",
+          uri: "https://docs.google.com/spreadsheets/d/formula-linked-id/edit",
+          linkSource: "formula"
+        },
+        {
+          columnIndex: 7,
+          columnLetter: "G",
+          displayValue: "Rich Link",
+          uri: "https://docs.google.com/spreadsheets/d/rich-linked-id/edit",
+          linkSource: "text_format_run"
+        },
+        {
+          columnIndex: 8,
+          columnLetter: "H",
+          displayValue: "Format Link",
+          uri: "https://docs.google.com/spreadsheets/d/format-linked-id/edit",
+          linkSource: "user_entered_format"
+        }
+      ]
+    });
+  });
+
+  test("optionally archives linked fee-sheet tabs as raw source evidence", async () => {
+    const { buildLiveSourceSnapshot } = await loadLiveSourceSnapshotModule();
+    const fetchCalls: string[] = [];
+    const fetchImpl = async (url: string) => {
+      fetchCalls.push(url);
+      const decodedUrl = decodeURIComponent(url);
+
+      if (decodedUrl.includes("fee_tracker_sheet") && decodedUrl.includes("includeGridData=true")) {
+        return ok({
+          sheets: [
+            {
+              properties: { title: "LDN" },
+              data: [
+                {
+                  startRow: 0,
+                  rowData: [
+                    {
+                      values: [
+                        { formattedValue: "Created" },
+                        { formattedValue: "Client" },
+                        { formattedValue: "Job Number" },
+                        { formattedValue: "Job Name" },
+                        { formattedValue: "Fee Sheet Link" }
+                      ]
+                    },
+                    {
+                      values: [
+                        { formattedValue: "09-06-2025" },
+                        { formattedValue: "British Airways" },
+                        { formattedValue: "UCS04787" },
+                        { formattedValue: "BA Retainer" },
+                        {
+                          formattedValue: "UCS04787 Fee Sheet",
+                          hyperlink: "https://docs.google.com/spreadsheets/d/linked-fee-sheet-id/edit"
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        });
+      }
+
+      if (decodedUrl.includes("linked-fee-sheet-id") && decodedUrl.includes("fields=sheets.properties")) {
+        return ok({
+          sheets: [
+            { properties: { title: "FIRST TAB", index: 0 } },
+            { properties: { title: "CLIENT SUMMARY", index: 1 } },
+            { properties: { title: "V1", index: 2 } }
+          ]
+        });
+      }
+
+      if (decodedUrl.includes("linked-fee-sheet-id") && decodedUrl.includes("includeGridData=true")) {
+        const title = decodedUrl.includes("CLIENT SUMMARY")
+          ? "CLIENT SUMMARY"
+          : decodedUrl.includes("V1")
+            ? "V1"
+            : "FIRST TAB";
+
+        return ok({
+          sheets: [
+            {
+              properties: { title },
+              data: [
+                {
+                  startRow: 0,
+                  rowData: [
+                    {
+                      values: [
+                        { formattedValue: title },
+                        { formattedValue: "UCS04787" },
+                        { formattedValue: title === "FIRST TAB" ? "Float ID 10480262" : "100" }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        });
+      }
+
+      if (url.includes("/values/")) {
+        return ok({ values: [["Header"], ["Source row"]] });
+      }
+
+      if (url.endsWith("/projects")) {
+        return ok([{ project_id: 10480262, project_code: "UCS04154" }]);
+      }
+
+      return ok({ sheets: [{ properties: { title: "Sheet1" } }] });
+    };
+
+    const { snapshot, summary } = await buildLiveSourceSnapshot({
+      env: {
+        ...env,
+        FEE_TRACKER_SNAPSHOT_RANGE: "LDN!A1:I2"
+      },
+      fetchImpl,
+      now: "2026-05-21T00:00:00.000Z",
+      maxRows: 10,
+      includeLinkedFeeSheets: true,
+      linkedFeeSheetLimit: 1
+    });
+    const feeRows = snapshot.sources.find((sourceRow) => sourceRow.source === "fee_sheet")?.rows ?? [];
+    const linkedRows = feeRows.filter((row) => row.raw?.linkedFeeSheet);
+
+    expect(summary.sourceRows.fee_sheet).toBe(5);
+    expect(linkedRows.map((row) => row.identity?.sourceTab)).toEqual(["FIRST TAB", "CLIENT SUMMARY", "V1"]);
+    expect(linkedRows[0]?.raw?.linkedFeeSheet).toMatchObject({
+      feeTrackerJobNumber: "UCS04787",
+      feeTrackerClient: "British Airways",
+      feeTrackerOffice: "LDN",
+      feeSheetSpreadsheetId: "linked-fee-sheet-id",
+      feeSheetUrl: "https://docs.google.com/spreadsheets/d/linked-fee-sheet-id/edit"
+    });
+    expect(fetchCalls.some((url) => decodeURIComponent(url).includes("linked-fee-sheet-id"))).toBe(true);
   });
 
   test("supports explicit all-row snapshots without the 1000-row approval cap", async () => {

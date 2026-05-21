@@ -10,15 +10,26 @@ const outPath = args.out ?? `test-results/source-snapshots/phase10-source-snapsh
 const maxRows = args.maxRows === "all" ? "all" : args.maxRows === undefined ? 100 : Number(args.maxRows);
 const floatScenarioCodes = parseList(args.floatScenarioCodes);
 const floatProjectIds = parseList(args.floatProjectIds);
+const includeLinkedFeeSheets = args.includeLinkedFeeSheets === true;
+const linkedFeeSheetLimit = args.linkedFeeSheetLimit === "all"
+  ? "all"
+  : args.linkedFeeSheetLimit === undefined
+    ? undefined
+    : Number(args.linkedFeeSheetLimit);
 
 if (maxRows !== "all" && (!Number.isInteger(maxRows) || maxRows < 1)) {
   throw new Error("--max-rows must be a positive integer or all.");
+}
+if (linkedFeeSheetLimit !== undefined && linkedFeeSheetLimit !== "all" && (!Number.isInteger(linkedFeeSheetLimit) || linkedFeeSheetLimit < 1)) {
+  throw new Error("--linked-fee-sheet-limit must be a positive integer or all.");
 }
 
 const { snapshot, summary } = await buildLiveSourceSnapshot({
   maxRows,
   floatScenarioCodes,
-  floatProjectIds
+  floatProjectIds,
+  includeLinkedFeeSheets,
+  linkedFeeSheetLimit
 });
 
 fs.mkdirSync(path.dirname(outPath), { recursive: true });
@@ -43,6 +54,11 @@ function parseArgs(rawArgs) {
       index += 1;
     } else if (arg === "--float-project-ids") {
       parsed.floatProjectIds = rawArgs[index + 1];
+      index += 1;
+    } else if (arg === "--include-linked-fee-sheets") {
+      parsed.includeLinkedFeeSheets = true;
+    } else if (arg === "--linked-fee-sheet-limit") {
+      parsed.linkedFeeSheetLimit = rawArgs[index + 1];
       index += 1;
     }
   }

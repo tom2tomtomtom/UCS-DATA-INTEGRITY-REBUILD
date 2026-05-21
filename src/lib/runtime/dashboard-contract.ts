@@ -5,6 +5,7 @@ import {
   buildDashboardContractFromArchiveRows,
   buildSourceFactSetFromArchiveRows
 } from "./source-archive-contract";
+import { readLatestArchivedSourceRowsFromSupabase } from "./source-archive-supabase-reader";
 
 export type DashboardDataMode = "fixture" | "source_archive";
 export type DashboardRuntimeEnv = Readonly<Record<string, string | undefined>>;
@@ -19,6 +20,20 @@ export async function getDashboardContract(
   scope: DashboardScope,
   options: DashboardContractProviderOptions = {}
 ): Promise<DashboardDisplayContract> {
+  const mode = dashboardDataMode(options.env ?? process.env);
+
+  if (mode === "source_archive" && options.sourceArchiveRows === undefined) {
+    const sourceArchiveRows = await readLatestArchivedSourceRowsFromSupabase({
+      env: options.env ?? process.env
+    });
+
+    return buildDashboardContractFromArchiveRows({
+      rows: sourceArchiveRows,
+      scope,
+      generatedAt: options.generatedAt ?? new Date().toISOString()
+    });
+  }
+
   return getDashboardContractSync(scope, options);
 }
 
@@ -30,7 +45,7 @@ export function getDashboardContractSync(
 
   if (mode === "source_archive") {
     if (options.sourceArchiveRows === undefined) {
-      throw new Error("source_archive dashboard mode requires explicit sourceArchiveRows until the DB reader is implemented.");
+      throw new Error("source_archive dashboard sync mode requires explicit sourceArchiveRows; use getDashboardContract for DB-backed reads.");
     }
 
     return buildDashboardContractFromArchiveRows({

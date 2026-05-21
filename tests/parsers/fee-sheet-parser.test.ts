@@ -134,6 +134,44 @@ describe("P3-B fee sheet parser", () => {
       ])
     );
   });
+
+  test("uses linked fee-sheet first-tab Float ID rows as the project header join key", () => {
+    const result = parseArchivedFeeSheetRows([
+      linkedFirstTabFloatIdRow(),
+      {
+        ...feeTrackerMasterRow("raw_linked_vtab_fact", 42, []),
+        identity: {
+          stableSourceRowKey: "linked-fee-sheet:V1:42",
+          sourceDocumentId: "linked-fee-sheet-id",
+          sourceTab: "V1",
+          sourceRowNumber: 42
+        },
+        raw: {
+          rowKind: "v_tab",
+          jobNumber: "UCS04787",
+          month: "2026-03",
+          department: "Design",
+          role: "Designer",
+          soldFee: 1000,
+          soldHours: 12
+        }
+      }
+    ]);
+
+    expect(result.facts).toHaveLength(1);
+    expect(result.facts[0]?.jobNumber).toBe("UCS04787");
+    expect(result.facts[0]?.feeSheetFloatId).toBe("10480262");
+    expect(result.facts[0]?.floatProjectId).toBe("10480262");
+    expect(result.facts[0]?.client).toBe("British Airways");
+    expect(result.facts[0]?.office).toBe("LDN");
+    expect(result.facts[0]?.rawRowIds).toEqual([
+      "raw_linked_first_tab_float_id",
+      "raw_linked_vtab_fact"
+    ]);
+    expect(result.warnings.map((warning) => warning.rawRowIds)).not.toContainEqual([
+      "raw_linked_first_tab_float_id"
+    ]);
+  });
 });
 
 function feeTrackerMasterRow(id: string, sourceRowNumber: number, cells: readonly string[]): ArchivedRawSourceRow {
@@ -165,6 +203,52 @@ function feeTrackerMasterRow(id: string, sourceRowNumber: number, cells: readonl
         sourceDocumentId: "fee_tracker",
         sourceTab: "LDN",
         sourceRowNumber
+      }
+    ]
+  };
+}
+
+function linkedFirstTabFloatIdRow(): ArchivedRawSourceRow {
+  return {
+    kind: "raw_source_row",
+    archiveStatus: "archived",
+    id: "raw_linked_first_tab_float_id",
+    batchId: "batch_fee_tracker_master",
+    source: "fee_sheet",
+    identity: {
+      stableSourceRowKey: "linked-fee-sheet:*ALWAYS START HERE*:15",
+      sourceDocumentId: "linked-fee-sheet-id",
+      sourceTab: "*ALWAYS START HERE*",
+      sourceRowNumber: 15
+    },
+    raw: {
+      source: "fee_sheet",
+      rowNumber: 15,
+      cells: ["", "FLOAT PROJECT ID", "10480262"],
+      linkedFeeSheet: {
+        feeTrackerStableSourceRowKey: "fee-tracker:LDN:12",
+        feeTrackerSourceDocumentId: "fee_tracker",
+        feeTrackerSourceTab: "LDN",
+        feeTrackerSourceRowNumber: 12,
+        feeTrackerOffice: "LDN",
+        feeTrackerClient: "British Airways",
+        feeTrackerJobNumber: "UCS04787",
+        feeTrackerProjectName: "UCS04787 - BA_FEE_MARCH MADNESS",
+        feeSheetSpreadsheetId: "linked-fee-sheet-id",
+        feeSheetUrl: "https://docs.google.com/spreadsheets/d/linked-fee-sheet-id/edit"
+      }
+    },
+    contentHash: "hash:raw_linked_first_tab_float_id",
+    observedAt: "2026-05-21T00:00:00.000Z",
+    sourceRefs: [
+      {
+        source: "fee_sheet",
+        sourceLayer: "fee_sheet_parser_summary",
+        batchId: "batch_fee_tracker_master",
+        rawRowId: "raw_linked_first_tab_float_id",
+        sourceDocumentId: "linked-fee-sheet-id",
+        sourceTab: "*ALWAYS START HERE*",
+        sourceRowNumber: 15
       }
     ]
   };

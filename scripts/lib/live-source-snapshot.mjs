@@ -14,7 +14,11 @@ export async function buildLiveSourceSnapshot({
   now = new Date().toISOString(),
   maxRows = 100,
   floatScenarioCodes = parseList(env.FLOAT_EVIDENCE_SCENARIO_CODES),
-  floatProjectIds = parseList(env.FLOAT_EVIDENCE_PROJECT_IDS)
+  floatProjectIds = parseList(env.FLOAT_EVIDENCE_PROJECT_IDS),
+  includeLinkedFeeSheets = env.FEE_SHEET_INCLUDE_LINKED === "1",
+  linkedFeeSheetLimit = env.FEE_SHEET_LINKED_LIMIT === "all"
+    ? "all"
+    : parsePositiveInt(env.FEE_SHEET_LINKED_LIMIT)
 } = {}) {
   if (typeof fetchImpl !== "function") {
     throw new Error("buildLiveSourceSnapshot requires fetch.");
@@ -33,6 +37,10 @@ export async function buildLiveSourceSnapshot({
         ? [env.FEE_TRACKER_SNAPSHOT_RANGE]
         : sheetRanges(["LDN", "UCX", "USA"], "A", "I", maxRows),
       collectAllRanges: true,
+      includeCellMetadata: true,
+      linkedSheetOptions: includeLinkedFeeSheets
+        ? { limit: linkedFeeSheetLimit ?? maxRows }
+        : undefined,
       maxRows
     }),
     readSheetSource({
@@ -107,6 +115,8 @@ async function readSheetSource({
   spreadsheetId,
   preferredRanges,
   collectAllRanges = false,
+  includeCellMetadata = false,
+  linkedSheetOptions,
   maxRows
 }) {
   const ranges = await resolveRanges({
@@ -122,13 +132,23 @@ async function readSheetSource({
   const collectedRanges = [];
   for (const range of ranges) {
     try {
-      const values = await fetchSheetValues({
+      const rows = includeCellMetadata
+        ? await fetchSheetRowsWithCellMetadata({
+          fetchImpl,
+          googleAccessToken,
+          spreadsheetId,
+          range,
+          source,
+          maxRows
+        })
+        : [];
+      const values = rows.length > 0 ? [] : await fetchSheetValues({
         fetchImpl,
         googleAccessToken,
         spreadsheetId,
         range
       });
-      const rows = valuesToSnapshotRows({
+      const snapshotRows = rows.length > 0 ? rows : valuesToSnapshotRows({
         source,
         spreadsheetId,
         range,
@@ -136,9 +156,9 @@ async function readSheetSource({
         maxRows
       });
 
-      if (rows.length > 0) {
+      if (snapshotRows.length > 0) {
         if (collectAllRanges) {
-          collectedRows.push(...rows);
+          collectedRows.push(...snapshotRows);
           collectedRanges.push(range);
           continue;
         }
@@ -148,7 +168,7 @@ async function readSheetSource({
           mode: "read_only_live",
           sourceLabel,
           sourceVersion: `range:${range}`,
-          rows
+          rows: snapshotRows
         };
       }
     } catch (error) {
@@ -157,16 +177,146 @@ async function readSheetSource({
   }
 
   if (collectAllRanges && collectedRows.length > 0) {
+    const linkedRows = linkedSheetOptions
+      ? await readLinkedFeeSheetRows({
+        fetchImpl,
+        googleAccessToken,
+        parentRows: collectedRows,
+        limit: linkedSheetOptions.limit,
+        maxRows
+      })
+      : [];
+
     return {
       source,
       mode: "read_only_live",
       sourceLabel,
-      sourceVersion: `ranges:${collectedRanges.join(",")}`,
-      rows: collectedRows
+      sourceVersion: `ranges:${collectedRanges.join(",")}${linkedRows.length > 0 ? " + linked fee sheets" : ""}`,
+      rows: [...collectedRows, ...linkedRows]
     };
   }
 
   throw new Error(`${sourceLabel} source snapshot produced no rows. ${errors.join(" ")}`.trim());
+}
+
+async function readLinkedFeeSheetRows({
+  fetchImpl,
+  googleAccessToken,
+  parentRows,
+  limit,
+  maxRows
+}) {
+  const links = collectLinkedFeeSheetLinks(parentRows, limit);
+  const rows = [];
+
+  for (const link of links) {
+    const tabTitles = await linkedFeeSheetTabTitles({
+      fetchImpl,
+      googleAccessToken,
+      spreadsheetId: link.feeSheetSpreadsheetId
+    });
+
+    for (const tabTitle of tabTitles) {
+      const linkedRows = await fetchSheetRowsWithCellMetadata({
+        fetchImpl,
+        googleAccessToken,
+        spreadsheetId: link.feeSheetSpreadsheetId,
+        range: rangeFor(tabTitle, "A", "AZ", maxRows),
+        source: "fee_sheet",
+        maxRows
+      });
+
+      rows.push(...linkedRows.map((row) => annotateLinkedFeeSheetRow(row, link)));
+    }
+  }
+
+  return rows;
+}
+
+function collectLinkedFeeSheetLinks(parentRows, limit) {
+  const links = [];
+  const seen = new Set();
+
+  for (const row of parentRows) {
+    const raw = asRecord(row.raw);
+    const cells = Array.isArray(raw.cells) ? raw.cells.map((cell) => String(cell ?? "")) : [];
+    const cellLinks = Array.isArray(raw.cellLinks) ? raw.cellLinks : [];
+
+    for (const cellLink of cellLinks) {
+      const link = asRecord(cellLink);
+      const uri = typeof link.uri === "string" ? link.uri : "";
+      const feeSheetSpreadsheetId = spreadsheetIdFromGoogleSheetsUrl(uri);
+
+      if (!feeSheetSpreadsheetId || seen.has(feeSheetSpreadsheetId)) continue;
+
+      seen.add(feeSheetSpreadsheetId);
+      links.push({
+        feeTrackerStableSourceRowKey: row.identity?.stableSourceRowKey,
+        feeTrackerSourceDocumentId: row.identity?.sourceDocumentId,
+        feeTrackerSourceTab: row.identity?.sourceTab,
+        feeTrackerSourceRowNumber: row.identity?.sourceRowNumber,
+        feeTrackerOffice: row.identity?.sourceTab,
+        feeTrackerClient: cells[1],
+        feeTrackerJobNumber: cells[2],
+        feeTrackerProjectName: cells[3],
+        feeTrackerLinkDisplayValue: link.displayValue,
+        feeSheetSpreadsheetId,
+        feeSheetUrl: uri
+      });
+
+      if (limit !== "all" && links.length >= limit) {
+        return links;
+      }
+    }
+  }
+
+  return links;
+}
+
+async function linkedFeeSheetTabTitles({ fetchImpl, googleAccessToken, spreadsheetId }) {
+  const metadata = await fetchJson(fetchImpl, `${GOOGLE_SHEETS_URL}/${encodeURIComponent(spreadsheetId)}?fields=sheets.properties(title,index)`, {
+    headers: {
+      Authorization: `Bearer ${googleAccessToken}`
+    }
+  });
+  const tabs = (Array.isArray(metadata.sheets) ? metadata.sheets : [])
+    .map((sheet) => asRecord(sheet).properties)
+    .map(asRecord)
+    .filter((properties) => typeof properties.title === "string")
+    .sort((left, right) => numericIndex(left.index) - numericIndex(right.index));
+  const selected = [];
+  const firstTabTitle = tabs[0]?.title;
+
+  if (typeof firstTabTitle === "string") {
+    selected.push(firstTabTitle);
+  }
+
+  for (const tab of tabs) {
+    const title = String(tab.title);
+    const normalised = title.trim().toUpperCase();
+
+    if (normalised === "CLIENT SUMMARY" || /^V\d+/i.test(title.trim())) {
+      addUnique(selected, title);
+    }
+  }
+
+  return selected;
+}
+
+function annotateLinkedFeeSheetRow(row, link) {
+  return {
+    ...row,
+    raw: {
+      ...asRecord(row.raw),
+      linkedFeeSheet: link
+    }
+  };
+}
+
+function spreadsheetIdFromGoogleSheetsUrl(uri) {
+  const match = uri.match(/\/spreadsheets\/d\/([a-zA-Z0-9-_]+)/);
+
+  return match?.[1];
 }
 
 async function resolveRanges({
@@ -206,6 +356,40 @@ async function fetchSheetValues({ fetchImpl, googleAccessToken, spreadsheetId, r
   return Array.isArray(payload.values) ? payload.values : [];
 }
 
+async function fetchSheetRowsWithCellMetadata({
+  fetchImpl,
+  googleAccessToken,
+  spreadsheetId,
+  range,
+  source,
+  maxRows
+}) {
+  const fields = [
+    "sheets(properties(title),data(startRow,startColumn,rowData(values(",
+    "formattedValue,effectiveValue,userEnteredValue,hyperlink,userEnteredFormat/textFormat/link/uri,textFormatRuns(format/link/uri)",
+    "))))"
+  ].join("");
+  const searchParams = new URLSearchParams({
+    ranges: range,
+    includeGridData: "true",
+    fields
+  });
+  const url = `${GOOGLE_SHEETS_URL}/${encodeURIComponent(spreadsheetId)}?${searchParams.toString()}`;
+  const payload = await fetchJson(fetchImpl, url, {
+    headers: {
+      Authorization: `Bearer ${googleAccessToken}`
+    }
+  });
+
+  return gridDataToSnapshotRows({
+    source,
+    spreadsheetId,
+    range,
+    payload,
+    maxRows
+  });
+}
+
 function valuesToSnapshotRows({ source, spreadsheetId, range, values, maxRows }) {
   const tab = sourceTabFromRange(range);
 
@@ -232,6 +416,145 @@ function valuesToSnapshotRows({ source, spreadsheetId, range, values, maxRows })
       }
     ];
   });
+}
+
+function gridDataToSnapshotRows({ source, spreadsheetId, range, payload, maxRows }) {
+  const tab = sourceTabFromRange(range);
+  const sheets = Array.isArray(payload?.sheets) ? payload.sheets : [];
+  const sheet = sheets.find((candidate) => candidate?.properties?.title === tab) ?? sheets[0];
+  const dataBlocks = Array.isArray(sheet?.data) ? sheet.data : [];
+  const rows = [];
+
+  for (const dataBlock of dataBlocks) {
+    const rowData = Array.isArray(dataBlock?.rowData) ? dataBlock.rowData : [];
+    const startRow = Number.isInteger(dataBlock?.startRow) ? dataBlock.startRow : 0;
+
+    for (let index = 0; index < rowData.length; index += 1) {
+      if (maxRows !== "all" && rows.length >= maxRows) return rows;
+
+      const values = Array.isArray(rowData[index]?.values) ? rowData[index].values : [];
+      const cells = trimTrailingEmptyCells(values.map(cellDisplayValue));
+
+      if (cells.every((cell) => String(cell ?? "").trim() === "")) {
+        continue;
+      }
+
+      const sourceRowNumber = startRow + index + 1;
+      const cellLinks = extractCellLinks(values, cells);
+      const raw = {
+        source,
+        rowNumber: sourceRowNumber,
+        cells,
+        ...(cellLinks.length > 0 ? { cellLinks } : {})
+      };
+
+      rows.push({
+        identity: {
+          stableSourceRowKey: `${spreadsheetId}:${tab}:${sourceRowNumber}`,
+          sourceDocumentId: spreadsheetId,
+          sourceTab: tab,
+          sourceRowNumber
+        },
+        raw
+      });
+    }
+  }
+
+  return rows;
+}
+
+function cellDisplayValue(cell) {
+  const record = asRecord(cell);
+
+  return String(
+    record.formattedValue ??
+    scalarCellValue(record.effectiveValue) ??
+    scalarCellValue(record.userEnteredValue) ??
+    ""
+  );
+}
+
+function scalarCellValue(value) {
+  const record = asRecord(value);
+
+  return record.stringValue ?? record.numberValue ?? record.boolValue ?? record.formulaValue;
+}
+
+function trimTrailingEmptyCells(cells) {
+  let end = cells.length;
+
+  while (end > 0 && String(cells[end - 1] ?? "").trim() === "") {
+    end -= 1;
+  }
+
+  return cells.slice(0, end);
+}
+
+function extractCellLinks(values, cells) {
+  const links = [];
+
+  for (let index = 0; index < values.length; index += 1) {
+    const cell = asRecord(values[index]);
+    const link = linkForCell(cell);
+
+    if (!link) continue;
+
+    links.push({
+      columnIndex: index + 1,
+      columnLetter: columnLetter(index + 1),
+      displayValue: cells[index] ?? cellDisplayValue(cell),
+      uri: link.uri,
+      linkSource: link.source
+    });
+  }
+
+  return links;
+}
+
+function linkForCell(cell) {
+  if (typeof cell.hyperlink === "string" && cell.hyperlink.trim() !== "") {
+    return { uri: cell.hyperlink.trim(), source: "hyperlink" };
+  }
+
+  const formula = asRecord(cell.userEnteredValue).formulaValue;
+  const formulaLink = typeof formula === "string" ? hyperlinkFormulaUri(formula) : undefined;
+  if (formulaLink) {
+    return { uri: formulaLink, source: "formula" };
+  }
+
+  const formatLink = asRecord(asRecord(asRecord(cell.userEnteredFormat).textFormat).link).uri;
+  if (typeof formatLink === "string" && formatLink.trim() !== "") {
+    return { uri: formatLink.trim(), source: "user_entered_format" };
+  }
+
+  const textFormatRuns = Array.isArray(cell.textFormatRuns) ? cell.textFormatRuns : [];
+  for (const run of textFormatRuns) {
+    const uri = asRecord(asRecord(run).format).link?.uri;
+    if (typeof uri === "string" && uri.trim() !== "") {
+      return { uri: uri.trim(), source: "text_format_run" };
+    }
+  }
+
+  return undefined;
+}
+
+function hyperlinkFormulaUri(formula) {
+  const match = formula.match(/^\s*=\s*HYPERLINK\s*\(\s*"([^"]+)"/i);
+
+  return match?.[1]?.trim();
+}
+
+function columnLetter(columnIndex) {
+  let value = columnIndex;
+  let label = "";
+
+  while (value > 0) {
+    const remainder = (value - 1) % 26;
+    label = String.fromCharCode(65 + remainder) + label;
+    value = Math.floor((value - 1) / 26);
+  }
+
+  return label;
 }
 
 async function readFloatSource({ env, fetchImpl, now, maxRows, floatScenarioCodes = [], floatProjectIds = [] }) {
@@ -683,6 +1006,12 @@ function parsePositiveInt(value) {
   if (typeof value !== "string") return undefined;
   const parsed = Number.parseInt(value, 10);
   return Number.isInteger(parsed) && parsed > 0 ? parsed : undefined;
+}
+
+function numericIndex(value) {
+  const parsed = Number(value);
+
+  return Number.isFinite(parsed) ? parsed : Number.MAX_SAFE_INTEGER;
 }
 
 function collectPersonIds(rows) {

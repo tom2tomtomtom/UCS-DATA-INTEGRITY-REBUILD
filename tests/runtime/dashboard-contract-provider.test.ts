@@ -3,6 +3,7 @@ import { join } from "node:path";
 import { describe, expect, test } from "vitest";
 
 import {
+  getDashboardContract,
   dashboardDataMode,
   getDashboardContractSync,
   getDashboardFactSetSync
@@ -26,12 +27,92 @@ describe("runtime dashboard contract provider", () => {
     expect(contract.visibleRows.length).toBeGreaterThan(0);
   });
 
-  test("blocks source archive mode without explicit archive rows", () => {
+  test("blocks sync source archive mode without explicit archive rows", () => {
     const env = { DASHBOARD_DATA_MODE: "source_archive" };
 
     expect(dashboardDataMode(env)).toBe("source_archive");
-    expect(() => getDashboardContractSync(baseScope, { env })).toThrow(/requires explicit sourceArchiveRows/);
+    expect(() => getDashboardContractSync(baseScope, { env })).toThrow(/sync mode requires explicit sourceArchiveRows/);
     expect(() => getDashboardFactSetSync({ env })).toThrow(/requires explicit sourceArchiveRows/);
+  });
+
+  test("async source archive mode reads latest archived rows from Supabase", async () => {
+    const calls: string[] = [];
+    const fetcher = (async (input) => {
+      const url = String(input);
+      calls.push(url);
+
+      if (url.includes("/source_batches?")) {
+        return Response.json([
+          {
+            id: "batch-fee",
+            status: "success",
+            read_only: true,
+            started_at: "2026-05-21T04:00:00.000Z",
+            completed_at: "2026-05-21T04:00:00.000Z",
+            created_at: "2026-05-21T04:00:00.000Z",
+            metadata: { snapshotId: "snapshot-latest" }
+          }
+        ]);
+      }
+
+      if (url.includes("/raw_source_rows?")) {
+        return Response.json([
+          {
+            id: "raw-fee",
+            batch_id: "batch-fee",
+            source: "fee_sheet",
+            stable_source_row_key: "fee-sheet:ucx:4",
+            source_document_id: "fee-sheet-id",
+            source_tab: "CLIENT SUMMARY",
+            source_row_number: 4,
+            source_object_id: null,
+            raw: {
+              rowKind: "v_tab",
+              jobNumber: "UCS04154",
+              client: "Acme Studios",
+              projectName: "Launch Planning",
+              office: "LDN",
+              month: "2026-03",
+              soldFee: 250,
+              soldHours: 2.5
+            },
+            content_hash: "hash-raw-fee",
+            observed_at: "2026-05-21T04:00:00.000Z",
+            source_refs: [
+              {
+                source: "fee_sheet",
+                sourceLayer: "sold",
+                batchId: "batch-fee",
+                rawRowId: "raw-fee"
+              }
+            ]
+          }
+        ]);
+      }
+
+      return new Response("unexpected URL", { status: 404 });
+    }) as typeof fetch;
+    const previousFetch = globalThis.fetch;
+
+    globalThis.fetch = fetcher;
+    try {
+      const contract = await getDashboardContract(baseScope, {
+        env: {
+          DASHBOARD_DATA_MODE: "source_archive",
+          MUTATION_GUARD: "read_only",
+          NEXT_PUBLIC_SUPABASE_URL: "https://nxrzhwqsswhjgeouxsyr.supabase.co",
+          SUPABASE_SERVICE_ROLE_KEY: "service-secret"
+        },
+        generatedAt: "2026-05-21T00:00:00.000Z"
+      });
+
+      expect(moneyNumber(contract.heroTotals.soldFee)).toBe(250);
+      expect(hoursNumber(contract.heroTotals.soldHours)).toBe(2.5);
+      expect(calls.some((url) => url.includes("/source_batches?"))).toBe(true);
+      expect(calls.some((url) => url.includes("/raw_source_rows?"))).toBe(true);
+    } finally {
+      globalThis.fetch = previousFetch;
+    }
   });
 
   test("builds a partial display contract from explicit source archive rows", () => {

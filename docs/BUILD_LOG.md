@@ -2847,6 +2847,41 @@ Boundary kept:
 - no source snapshot committed to git,
 - no stakeholder approval language.
 
+### Checkpoint: Linked Fee-Sheet Archive Path And Runtime Reader
+
+Phase: 10
+
+Tickets: `#85`, `#88`, `#89`
+
+Status: implemented locally, ready for full verification
+
+What changed:
+
+- added a read-only Supabase source archive reader for the latest successful snapshot group,
+- wired async `source_archive` dashboard mode through the runtime provider while keeping sync calls explicit-row only,
+- changed Fee Tracker snapshot collection from values-only reads to grid-data reads so hyperlink, formula, rich-text, and cell-format links are preserved,
+- added an opt-in `--include-linked-fee-sheets` snapshot mode that opens linked fee sheets and archives first tab, `CLIENT SUMMARY`, and `V*` tabs with Fee Tracker source metadata,
+- added a parser bridge so linked first-tab `FLOAT PROJECT ID` rows become project headers and propagate the fee-sheet Float ID join key into sold facts.
+
+Live smoke evidence:
+
+- `npm run source:snapshot:create -- --out test-results/source-snapshots/fee-link-smoke-2026-05-21.json --max-rows 5` captured Fee Tracker cell links,
+- `npm run source:snapshot:create -- --out test-results/source-snapshots/linked-fee-sheet-smoke-2026-05-21.json --max-rows 5 --include-linked-fee-sheets --linked-fee-sheet-limit 1` captured one linked fee sheet,
+- `npm run source:snapshot:create -- --out test-results/source-snapshots/linked-fee-sheet-smoke-30rows-2026-05-21.json --max-rows 30 --include-linked-fee-sheets --linked-fee-sheet-limit 1` found first-tab `FLOAT PROJECT ID` evidence.
+
+Verification:
+
+- `npm test -- tests/parsers/fee-sheet-parser.test.ts tests/launch/live-source-snapshot.test.ts tests/runtime/source-archive-supabase-reader.test.ts tests/runtime/dashboard-contract-provider.test.ts` passed,
+- `npm run typecheck` passed.
+
+Boundary kept:
+
+- no production cutover,
+- no source-system mutation,
+- no scheduled sync,
+- no stakeholder approval language,
+- Float API raw task rows still do not become additive dashboard hours until expansion laws are proven.
+
 ### Checkpoint: Rollup Footer And Slow Test Timeouts
 
 Phase: 9.5

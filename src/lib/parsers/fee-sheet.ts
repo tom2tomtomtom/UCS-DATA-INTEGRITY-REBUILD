@@ -61,7 +61,7 @@ export function parseArchivedFeeSheetRows(
   const warnings: ParserWarning[] = [];
 
   for (const row of feeSheetRows) {
-    const payload = parsePayload(row);
+    const payload = parsePayload(row) ?? parseLinkedFirstTabHeader(row);
     if (!payload) {
       warnings.push(
         createParserWarning({
@@ -136,6 +136,40 @@ export function parseArchivedFeeSheetRows(
     sourceRowsRead: feeSheetRows.length,
     sourceRowsSkipped: 0
   });
+}
+
+function parseLinkedFirstTabHeader(row: ArchivedRawSourceRow): FeeSheetArchivedRowPayload | undefined {
+  if (!isRecord(row.raw)) {
+    return undefined;
+  }
+
+  const cells = Array.isArray(row.raw.cells) ? row.raw.cells.map((cell) => String(cell ?? "").trim()) : [];
+  const linkedFeeSheet = isRecord(row.raw.linkedFeeSheet) ? row.raw.linkedFeeSheet : undefined;
+  const labelIndex = cells.findIndex((cell) => normaliseLabel(cell) === "FLOAT PROJECT ID");
+  const feeSheetFloatId = labelIndex >= 0 ? firstNumericId(cells[labelIndex + 1]) : undefined;
+
+  if (!linkedFeeSheet || !feeSheetFloatId) {
+    return undefined;
+  }
+
+  const jobNumber = asString(linkedFeeSheet.feeTrackerJobNumber);
+
+  if (!jobNumber) {
+    return undefined;
+  }
+
+  const client = asString(linkedFeeSheet.feeTrackerClient);
+  const projectName = asString(linkedFeeSheet.feeTrackerProjectName);
+  const office = asOffice(linkedFeeSheet.feeTrackerOffice);
+
+  return {
+    rowKind: "project_header",
+    jobNumber,
+    ...(client ? { client } : {}),
+    ...(projectName ? { projectName } : {}),
+    ...(office ? { office } : {}),
+    feeSheetFloatId
+  };
 }
 
 function createSoldFact(
@@ -460,6 +494,16 @@ function asCurrency(value: unknown): MoneyValue["currencyOriginal"] | undefined 
   }
 
   return undefined;
+}
+
+function normaliseLabel(value: string): string {
+  return value.trim().replace(/\s+/g, " ").toUpperCase();
+}
+
+function firstNumericId(value: unknown): string | undefined {
+  const match = String(value ?? "").match(/\d{4,}/);
+
+  return match?.[0];
 }
 
 function asString(value: unknown): string | undefined {
