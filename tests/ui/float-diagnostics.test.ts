@@ -23,6 +23,8 @@ describe("P6-D Float diagnostics", () => {
     expect(html).toContain("manual-ucs05186");
     expect(html).toContain("archived");
     expect(html).toContain("FLOAT_INACTIVE_VISIBLE_HOURS");
+    expect(html).toContain("Detail trace");
+    expect(html).toContain("/dashboard/projects/UCS04787?office=LDN&amp;from=2026-01-01&amp;to=2026-03-31&amp;jobNumber=UCS04787#float-trace");
     expect(html).toContain("Float Export Compare");
     expect(html).toContain("No pasted export yet");
     expect(html).toContain("Pasted sample");

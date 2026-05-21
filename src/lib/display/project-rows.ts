@@ -1,4 +1,11 @@
-import type { DashboardProjectRow, DashboardTotals } from "./contract";
+import type {
+  DashboardProjectRow,
+  DashboardTotals,
+  ProjectDetailEvidence,
+  ProjectFloatTraceRow,
+  ProjectMonthlyDetailRow,
+  ProjectRoleDetailRow
+} from "./contract";
 import type {
   CanonFact,
   DashboardScope,
@@ -37,6 +44,11 @@ export type BuildProjectRowsInput = Pick<
 type MutableProjectRow = ProjectDisplayRow & {
   factIds: Set<string>;
   rawRowIds: Set<string>;
+  detail: {
+    monthlyRows: ProjectMonthlyDetailRow[];
+    roleRows: ProjectRoleDetailRow[];
+    floatTraceRows: ProjectFloatTraceRow[];
+  };
 };
 
 export function buildProjectRows(input: BuildProjectRowsInput): ProjectDisplayRow[] {
@@ -130,6 +142,7 @@ function addFactToRow(
   appendSourceLabel(row, fact.source, fact.sourceLayer);
   appendTrace(row, fact.trace);
   appendWarnings(row, fact.warnings);
+  appendDetail(row, fact);
   row.factIds.add(fact.id);
   for (const rawRowId of fact.rawRowIds) {
     row.rawRowIds.add(rawRowId);
@@ -160,7 +173,12 @@ function createRow(id: string, scope: DashboardScope): MutableProjectRow {
     sourceLabels: [],
     confidence: "high",
     factIds: new Set<string>(),
-    rawRowIds: new Set<string>()
+    rawRowIds: new Set<string>(),
+    detail: {
+      monthlyRows: [],
+      roleRows: [],
+      floatTraceRows: []
+    }
   };
 }
 
@@ -344,8 +362,203 @@ function finalizeRow(row: MutableProjectRow, unsupportedMetrics: readonly Unsupp
     applyUnsupportedMetric(row, unsupportedMetric);
   }
 
-  const { factIds: _factIds, rawRowIds: _rawRowIds, ...publicRow } = row;
-  return publicRow;
+  const detail = finalizeProjectDetail(row.detail);
+
+  const { factIds: _factIds, rawRowIds: _rawRowIds, detail: _detail, ...publicRow } = row;
+  return {
+    ...publicRow,
+    detail
+  };
+}
+
+function appendDetail(row: MutableProjectRow, fact: CanonFact): void {
+  if (!fact.isAdditive) return;
+
+  appendMonthlyDetail(row.detail.monthlyRows, fact);
+  appendRoleDetail(row.detail.roleRows, fact);
+  appendFloatTrace(row.detail.floatTraceRows, fact);
+}
+
+function appendMonthlyDetail(rows: ProjectMonthlyDetailRow[], fact: CanonFact): void {
+  if (fact.month === undefined) return;
+  const row = findOrCreateMonthlyRow(rows, fact.month);
+
+  if (fact.source === "fee_sheet") {
+    if (fact.amount?.kind === "money") addMoney(row.soldFee, fact.amount);
+    if (fact.hours?.kind === "hours") addHours(row.soldHours, fact.hours);
+    appendDetailTrace(row.sourceTrace, fact.trace);
+  }
+
+  if (fact.source === "float" && fact.sourceLayer === "float_visible") {
+    if (fact.hours?.kind === "hours") addHours(row.allocatedHours, fact.hours);
+    appendDetailTrace(row.sourceTrace, fact.trace);
+  }
+}
+
+function appendRoleDetail(rows: ProjectRoleDetailRow[], fact: CanonFact): void {
+  if (fact.source !== "fee_sheet" && !(fact.source === "float" && fact.sourceLayer === "float_visible")) return;
+  const role = fact.role ?? fact.department ?? "_unmapped";
+  const row = findOrCreateRoleRow(rows, role);
+
+  if (fact.source === "fee_sheet") {
+    if (fact.amount?.kind === "money") addMoney(row.soldFee, fact.amount);
+    if (fact.hours?.kind === "hours") addHours(row.soldHours, fact.hours);
+    appendDetailTrace(row.sourceTrace, fact.trace);
+  }
+
+  if (fact.source === "float" && fact.hours?.kind === "hours") {
+    addHours(row.allocatedHours, fact.hours);
+    appendDetailTrace(row.sourceTrace, fact.trace);
+  }
+}
+
+function appendFloatTrace(rows: ProjectFloatTraceRow[], fact: CanonFact): void {
+  if (fact.source !== "float") return;
+
+  rows.push({
+    floatProject: fact.projectName ?? fact.sourceProjectName ?? fact.floatProjectId ?? "Unknown Float project",
+    task: fact.taskId ?? fact.rawRowIds[0] ?? fact.id,
+    person: fact.person ?? fact.personId ?? (fact.allocationClass === "placeholder" ? "Placeholder role" : "Unassigned"),
+    departmentRole: [fact.department, fact.role].filter((value): value is string => value !== undefined && value.trim() !== "").join(" / ") || "_unmapped",
+    dates: fact.from !== undefined && fact.to !== undefined ? `${fact.from} to ${fact.to}` : fact.month ?? "No source date",
+    hours: cloneMetric(fact.hours ?? zeroHours()),
+    flags: floatTraceFlags(fact),
+    sourceTrace: fact.trace.map((traceRef) => ({ ...traceRef }))
+  });
+}
+
+function findOrCreateMonthlyRow(rows: ProjectMonthlyDetailRow[], month: string): ProjectMonthlyDetailRow {
+  const existing = rows.find((row) => row.month === month);
+  if (existing !== undefined) return existing;
+
+  const row: ProjectMonthlyDetailRow = {
+    month,
+    soldFee: zeroMoney(),
+    soldHours: zeroHours(),
+    allocatedHours: zeroHours(),
+    allocatedValue: zeroMoney(),
+    varianceHours: zeroHours(),
+    sourceTrace: []
+  };
+  rows.push(row);
+  return row;
+}
+
+function findOrCreateRoleRow(rows: ProjectRoleDetailRow[], role: string): ProjectRoleDetailRow {
+  const existing = rows.find((row) => row.role === role);
+  if (existing !== undefined) return existing;
+
+  const row: ProjectRoleDetailRow = {
+    role,
+    soldHours: zeroHours(),
+    soldFee: zeroMoney(),
+    ratePerHour: zeroMoney(),
+    allocatedHours: zeroHours(),
+    allocatedValue: zeroMoney(),
+    varianceValue: zeroMoney(),
+    variancePercent: { kind: "count", value: 0 },
+    sourceTrace: []
+  };
+  rows.push(row);
+  return row;
+}
+
+function finalizeProjectDetail(detail: MutableProjectRow["detail"]): ProjectDetailEvidence {
+  for (const row of detail.monthlyRows) {
+    const rate = hourlyRate(row.soldFee, row.soldHours);
+    setMoney(row.allocatedValue, metricHours(row.allocatedHours) * rate);
+    setHours(row.varianceHours, metricHours(row.soldHours) - metricHours(row.allocatedHours));
+  }
+
+  for (const row of detail.roleRows) {
+    const rate = hourlyRate(row.soldFee, row.soldHours);
+    setMoney(row.ratePerHour, rate);
+    setMoney(row.allocatedValue, metricHours(row.allocatedHours) * rate);
+    setMoney(row.varianceValue, metricMoney(row.soldFee) - metricMoney(row.allocatedValue));
+    setCount(row.variancePercent, metricMoney(row.soldFee) === 0 ? 0 : (metricMoney(row.varianceValue) / metricMoney(row.soldFee)) * 100);
+  }
+
+  return {
+    monthlyRows: [...detail.monthlyRows].sort((left, right) => left.month.localeCompare(right.month)),
+    roleRows: [...detail.roleRows].sort((left, right) => left.role.localeCompare(right.role)),
+    floatTraceRows: [...detail.floatTraceRows]
+  };
+}
+
+function hourlyRate(fee: MetricValue, hours: MetricValue): number {
+  const hourValue = metricHours(hours);
+  return hourValue === 0 ? 0 : metricMoney(fee) / hourValue;
+}
+
+function metricMoney(metric: MetricValue): number {
+  return metric.kind === "money" ? metric.value.amountGbp : 0;
+}
+
+function metricHours(metric: MetricValue): number {
+  return metric.kind === "hours" ? metric.value : 0;
+}
+
+function setMoney(metric: MetricValue, amountGbp: number): void {
+  if (metric.kind !== "money") return;
+  metric.value.amountOriginal = amountGbp;
+  metric.value.amountGbp = amountGbp;
+  metric.value.currencyOriginal = "GBP";
+  metric.value.fxRateToGbp = 1;
+}
+
+function setHours(metric: MetricValue, value: number): void {
+  if (metric.kind === "hours") metric.value = value;
+}
+
+function setCount(metric: MetricValue, value: number): void {
+  if (metric.kind === "count") metric.value = value;
+}
+
+function appendDetailTrace(target: SourceTraceRef[], traceRefs: readonly SourceTraceRef[]): void {
+  for (const traceRef of traceRefs) {
+    if (!target.some((existing) => sameTraceRef(existing, traceRef))) {
+      target.push({ ...traceRef });
+    }
+  }
+}
+
+function floatTraceFlags(fact: FloatFact): string[] {
+  return [
+    fact.sourceLayer,
+    fact.activeState,
+    fact.allocationClass,
+    fact.tentative === true ? "tentative" : undefined,
+    fact.expansionRule
+  ].filter((value): value is string => value !== undefined && value.trim() !== "");
+}
+
+function cloneMetric(metric: MetricValue): MetricValue {
+  if (metric.kind === "money") {
+    return {
+      kind: "money",
+      value: { ...metric.value }
+    };
+  }
+
+  if (metric.kind === "hours") {
+    return {
+      kind: "hours",
+      value: metric.value,
+      unit: metric.unit
+    };
+  }
+
+  if (metric.kind === "count") {
+    return {
+      kind: "count",
+      value: metric.value
+    };
+  }
+
+  return {
+    ...metric,
+    scope: { ...metric.scope }
+  };
 }
 
 function applyUnsupportedMetric(row: MutableProjectRow, unsupportedMetric: UnsupportedMetric): void {

@@ -121,6 +121,10 @@ export type {
   DashboardDisplayContract,
   DashboardProjectRow,
   DashboardTotals,
+  ProjectDetailEvidence,
+  ProjectFloatTraceRow,
+  ProjectMonthlyDetailRow,
+  ProjectRoleDetailRow,
   RollupRow
 } from "./display/contract";
 export { buildDashboardDisplayContract } from "./display/contract";

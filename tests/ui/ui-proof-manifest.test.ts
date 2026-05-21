@@ -71,8 +71,8 @@ describe("P8-F UI proof manifest", () => {
     const float = manifest.surfaces.find((surface) => surface.id === "float-diagnostics");
     const chat = manifest.surfaces.find((surface) => surface.id === "chat-evidence");
 
-    expect(detail?.expectedText).toEqual(expect.arrayContaining(["FLOAT_VISIBLE_CACHE_MISSING_CACHE", "fixture-float-visible-ucs04787", "Back to Projects"]));
-    expect(float?.expectedText).toEqual(expect.arrayContaining(["PCS00250_RAW_CACHE_UNRESOLVED", "BT_RAW_CACHE_UNRESOLVED", "UCS05186", "archived/manual/source-only candidate"]));
+    expect(detail?.expectedText).toEqual(expect.arrayContaining(["Sold vs Allocated by Month", "Profitability by Role", "Float Trace", "FLOAT_VISIBLE_CACHE_MISSING_CACHE", "fixture-float-visible-ucs04787", "Back to Projects"]));
+    expect(float?.expectedText).toEqual(expect.arrayContaining(["Detail trace", "PCS00250_RAW_CACHE_UNRESOLVED", "BT_RAW_CACHE_UNRESOLVED", "UCS05186", "archived/manual/source-only candidate"]));
     expect(chat?.expectedText).toEqual(expect.arrayContaining(["Dashboard Chat", "Working", "Needs Codex", "browser testing"]));
   });
 

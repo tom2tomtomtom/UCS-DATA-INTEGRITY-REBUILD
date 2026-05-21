@@ -77,6 +77,9 @@ function floatRow(row: DashboardProjectRow, contract: DashboardDisplayContract) 
   const floatProjectId = row.canonicalFloatProjectId ?? row.sourceFloatProjectId ?? "No Float ID";
   const state = row.warnings.length > 0 || row.rowType === "float_only" ? "archived/manual/source-only candidate" : "active";
   const href = scopedHref(`/dashboard/float/${floatProjectId}`, contract.scope, { floatProjectId });
+  const detailHref = row.jobNumber === undefined
+    ? undefined
+    : `${scopedHref(`/dashboard/projects/${row.jobNumber}`, contract.scope, { jobNumber: row.jobNumber })}#float-trace`;
 
   return React.createElement(
     "tr",
@@ -89,7 +92,13 @@ function floatRow(row: DashboardProjectRow, contract: DashboardDisplayContract) 
     React.createElement("td", null, floatProjectId),
     React.createElement("td", null, React.createElement("span", { className: "row-type-badge" }, row.rowType)),
     React.createElement("td", null, state),
-    React.createElement("td", null, row.sourceTrace.map((ref) => ref.rawRowId ?? ref.sourceObjectId ?? ref.sourceLayer).join(" "))
+    React.createElement(
+      "td",
+      null,
+      detailHref === undefined ? null : React.createElement("a", { href: detailHref }, "Detail trace"),
+      " ",
+      row.sourceTrace.map((ref) => ref.rawRowId ?? ref.sourceObjectId ?? ref.sourceLayer).join(" ")
+    )
   );
 }
 

@@ -98,7 +98,13 @@ export function fixtureFactSet(): SourceFactSet {
         projectName: "BA March Madness",
         hoursValue: 861,
         month: "2026-02",
-        department: "Design"
+        department: "Design",
+        role: "Senior Designer",
+        person: "Shaun Rogers",
+        taskId: "fixture-task-ucs04787-design",
+        from: "2026-02-01",
+        to: "2026-02-28",
+        allocationClass: "allocated"
       }),
       floatFact({
         id: "fixture:float:ucs04787-raw",
@@ -110,7 +116,13 @@ export function fixtureFactSet(): SourceFactSet {
         projectName: "BA March Madness",
         hoursValue: 1_597.5,
         month: "2026-02",
-        department: "Design"
+        department: "Design",
+        role: "Senior Designer",
+        person: "Shaun Rogers",
+        taskId: "fixture-task-ucs04787-raw",
+        from: "2026-01-01",
+        to: "2026-12-31",
+        allocationClass: "allocated"
       }),
       floatFact({
         id: "fixture:float:pcs00250-cache",
@@ -278,6 +290,11 @@ function floatFact(input: {
   hoursValue: number;
   month: string;
   department?: string;
+  role?: string;
+  person?: string;
+  taskId?: string;
+  from?: string;
+  to?: string;
   activeState?: FloatFact["activeState"];
   allocationClass?: FloatFact["allocationClass"];
   warnings?: SourceWarning[];
@@ -296,7 +313,12 @@ function floatFact(input: {
     sourceProjectName: input.projectName,
     office: "LDN",
     month: input.month,
+    ...(input.from !== undefined ? { from: input.from } : {}),
+    ...(input.to !== undefined ? { to: input.to } : {}),
     ...(input.department !== undefined ? { department: input.department } : {}),
+    ...(input.role !== undefined ? { role: input.role } : {}),
+    ...(input.person !== undefined ? { person: input.person } : {}),
+    ...(input.taskId !== undefined ? { taskId: input.taskId } : {}),
     hours: hours(input.hoursValue),
     activeState: input.activeState ?? "active",
     allocationClass: input.allocationClass ?? (input.sourceLayer === "float_cache" ? "allocated" : "placeholder"),

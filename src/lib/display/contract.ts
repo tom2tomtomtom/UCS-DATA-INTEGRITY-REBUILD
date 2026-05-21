@@ -29,6 +29,45 @@ export type DashboardTotals = {
   floatHours: MetricValue;
 };
 
+export type ProjectMonthlyDetailRow = {
+  readonly month: string;
+  readonly soldFee: MetricValue;
+  readonly soldHours: MetricValue;
+  readonly allocatedHours: MetricValue;
+  readonly allocatedValue: MetricValue;
+  readonly varianceHours: MetricValue;
+  readonly sourceTrace: SourceTraceRef[];
+};
+
+export type ProjectRoleDetailRow = {
+  readonly role: string;
+  readonly soldHours: MetricValue;
+  readonly soldFee: MetricValue;
+  readonly ratePerHour: MetricValue;
+  readonly allocatedHours: MetricValue;
+  readonly allocatedValue: MetricValue;
+  readonly varianceValue: MetricValue;
+  readonly variancePercent: MetricValue;
+  readonly sourceTrace: SourceTraceRef[];
+};
+
+export type ProjectFloatTraceRow = {
+  readonly floatProject: string;
+  readonly task: string;
+  readonly person: string;
+  readonly departmentRole: string;
+  readonly dates: string;
+  readonly hours: MetricValue;
+  readonly flags: readonly string[];
+  readonly sourceTrace: SourceTraceRef[];
+};
+
+export type ProjectDetailEvidence = {
+  readonly monthlyRows: readonly ProjectMonthlyDetailRow[];
+  readonly roleRows: readonly ProjectRoleDetailRow[];
+  readonly floatTraceRows: readonly ProjectFloatTraceRow[];
+};
+
 export type DashboardProjectRow = {
   id: string;
   scope: DashboardScope;
@@ -43,6 +82,7 @@ export type DashboardProjectRow = {
   rowType: "matched" | "source_only" | "float_only" | "pipeline_only" | "production_revenue_only";
   warnings: SourceWarning[];
   sourceTrace: SourceTraceRef[];
+  detail?: ProjectDetailEvidence;
 };
 
 export type RollupRow = {

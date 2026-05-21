@@ -74,14 +74,14 @@ export function buildUiProofManifest(input: BuildUiProofManifestInput): UiProofM
         label: "UCS04787 scoped project detail",
         url: `${baseUrl}/dashboard/projects/UCS04787?${designScope}&jobNumber=UCS04787`,
         screenshotFile: "p8f-project-detail-ucs04787.png",
-        expectedText: ["British Airways / UCS04787", "FLOAT_VISIBLE_CACHE_MISSING_CACHE", "fixture-float-visible-ucs04787", "Back to Projects"]
+        expectedText: ["British Airways / UCS04787", "Sold vs Allocated by Month", "Profitability by Role", "Float Trace", "FLOAT_VISIBLE_CACHE_MISSING_CACHE", "fixture-float-visible-ucs04787", "Back to Projects"]
       }),
       surface({
         id: "float-diagnostics",
         label: "Float diagnostics",
         url: `${baseUrl}/dashboard/float?${scope}`,
         screenshotFile: "p8f-float-diagnostics.png",
-        expectedText: ["Float Diagnostics", "PCS00250_RAW_CACHE_UNRESOLVED", "BT_RAW_CACHE_UNRESOLVED", "UCS05186", "archived/manual/source-only candidate"]
+        expectedText: ["Float Diagnostics", "Detail trace", "PCS00250_RAW_CACHE_UNRESOLVED", "BT_RAW_CACHE_UNRESOLVED", "UCS05186", "archived/manual/source-only candidate"]
       }),
       surface({
         id: "data-quality",
