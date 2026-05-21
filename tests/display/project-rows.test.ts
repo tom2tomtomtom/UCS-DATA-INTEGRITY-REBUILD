@@ -131,6 +131,7 @@ function feeTrackerIdentityFact(input: {
   readonly jobNumber: string;
   readonly client: string;
   readonly projectName: string;
+  readonly office?: SoldFact["office"];
 }): SoldFact {
   return {
     id: input.id,
@@ -144,7 +145,7 @@ function feeTrackerIdentityFact(input: {
     canonicalClient: input.client,
     projectName: input.projectName,
     sourceProjectName: input.projectName,
-    office: "LDN",
+    office: input.office ?? "LDN",
     isAdditive: false,
     confidence: "high",
     warnings: [],
@@ -640,6 +641,50 @@ describe("P5-B project row builder", () => {
       sourceTrace: expect.arrayContaining([
         expect.objectContaining({ rawRowId: "fee-tracker-ucs04085" }),
         expect.objectContaining({ rawRowId: "float-ucs04085" })
+      ])
+    });
+  });
+
+  test("labels cross-office Float rows and surfaces the office disagreement", () => {
+    const rows = buildProjectRows({
+      scope: {
+        ...scope,
+        office: "LDN",
+        department: "Design"
+      },
+      soldFacts: [
+        feeTrackerIdentityFact({
+          id: "fee-sheet:identity:usa00280",
+          rawRowId: "fee-tracker-usa00280",
+          jobNumber: "USA00280",
+          client: "OFFF Festival",
+          projectName: "OFFF_FEE_2026_FESTIVAL_CAMPAIGN",
+          office: "USA"
+        })
+      ],
+      pipelineFacts: [],
+      productionRevenueFacts: [],
+      floatFacts: [
+        floatFact({
+          id: "float:usa00280",
+          rawRowId: "float-usa00280",
+          floatProjectId: "10810012",
+          jobNumber: "USA00280",
+          projectName: "USA00280 - OFFF_FEE_2026_FESTIVAL_CAMPAIGN",
+          hoursValue: 8,
+          department: "Design",
+          omitClient: true
+        })
+      ],
+      sourceIssues: []
+    });
+
+    expect(rows).toHaveLength(1);
+    expect(rows[0]).toMatchObject({
+      rowType: "float_only",
+      canonicalClient: "OFFF Festival",
+      warnings: expect.arrayContaining([
+        expect.objectContaining({ code: "FEE_TRACKER_IDENTITY_OFFICE_MISMATCH" })
       ])
     });
   });

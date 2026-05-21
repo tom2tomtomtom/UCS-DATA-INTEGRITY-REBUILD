@@ -120,8 +120,18 @@ export function buildProjectRows(input: BuildProjectRowsInput): ProjectDisplayRo
 }
 
 function identityLookupScope(scope: DashboardScope): DashboardScope {
-  const { department: _department, role: _role, ...identityScope } = scope;
-  return identityScope;
+  const {
+    department: _department,
+    role: _role,
+    office: _office,
+    offices: _offices,
+    ...identityScope
+  } = scope;
+
+  return {
+    ...identityScope,
+    office: "ALL"
+  };
 }
 
 function isFeeTrackerIdentityFact(fact: SoldFact): boolean {
@@ -384,7 +394,28 @@ function enrichRowsWithFeeTrackerIdentity(
       row.canonicalProjectName = identityFact.projectName;
     }
     appendTrace(row, identityFact.trace);
+
+    if (identityFact.office !== undefined && row.scope.office !== "ALL" && identityFact.office !== row.scope.office) {
+      appendWarnings(row, [identityOfficeMismatchWarning(row, identityFact)]);
+    }
   }
+}
+
+function identityOfficeMismatchWarning(row: MutableProjectRow, fact: SoldFact): SourceWarning {
+  return {
+    id: `display:${row.id}:fee-tracker-office-mismatch`,
+    status: "DATA_WARN",
+    lifecycleState: "open",
+    source: "fee_sheet",
+    sourceLayer: "fee_sheet_parser_summary",
+    code: "FEE_TRACKER_IDENTITY_OFFICE_MISMATCH",
+    message: `Fee Tracker identifies ${fact.jobNumber ?? "this job"} as ${fact.office}, but the visible row is scoped to ${row.scope.office}.`,
+    scope: { ...row.scope },
+    owner: "Project owner",
+    sourceRefs: fact.trace.map((traceRef) => ({ ...traceRef })),
+    firstSeenAt: row.sourceTrace[0]?.batchId ?? "",
+    lastSeenAt: row.sourceTrace[0]?.batchId ?? ""
+  };
 }
 
 function addMoney(target: MetricValue, amount: MetricValue): void {
