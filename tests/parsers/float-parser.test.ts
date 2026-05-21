@@ -178,6 +178,7 @@ describe("P3-E Float parser", () => {
       taskId: "3001",
       personId: "2001",
       person: "Jane Planner",
+      office: "LDN",
       department: "Strategy",
       role: "SENIOR STRATEGIST",
       from: "2026-03-02",

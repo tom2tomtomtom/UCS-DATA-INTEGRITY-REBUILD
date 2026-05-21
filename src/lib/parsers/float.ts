@@ -29,6 +29,7 @@ type FloatApiPerson = {
   readonly row: ArchivedRawSourceRow;
   readonly personId: string;
   readonly personName?: string;
+  readonly office?: FloatFact["office"];
   readonly department?: string;
   readonly role?: string;
   readonly allocationClass: FloatAllocationClass;
@@ -47,6 +48,7 @@ export type FloatArchivedTaskPayload = {
   readonly taskId?: string;
   readonly personId?: string;
   readonly personName?: string;
+  readonly office?: FloatFact["office"];
   readonly department?: string;
   readonly role?: string;
   readonly startDate?: string;
@@ -243,6 +245,9 @@ function createFloatFact(
   if (payload.personName) {
     fact.person = payload.personName;
   }
+  if (payload.office) {
+    fact.office = payload.office;
+  }
   if (payload.department) {
     fact.department = payload.department;
   }
@@ -313,6 +318,7 @@ function parsePayload(row: ArchivedRawSourceRow): FloatArchivedTaskPayload | und
   const taskId = asString(row.raw.taskId);
   const personId = asString(row.raw.personId);
   const personName = asString(row.raw.personName);
+  const office = asOffice(row.raw.office);
   const department = asString(row.raw.department);
   const role = asString(row.raw.role);
   const startDate = asString(row.raw.startDate);
@@ -336,6 +342,7 @@ function parsePayload(row: ArchivedRawSourceRow): FloatArchivedTaskPayload | und
     ...(taskId ? { taskId } : {}),
     ...(personId ? { personId } : {}),
     ...(personName ? { personName } : {}),
+    ...(office ? { office } : {}),
     ...(department ? { department } : {}),
     ...(role ? { role } : {}),
     ...(startDate ? { startDate } : {}),
@@ -442,6 +449,7 @@ function parseApiPerson(row: ArchivedRawSourceRow): FloatApiPerson | undefined {
   }
 
   const personName = asString(row.raw.name);
+  const office = officeFromFloatDepartment(row.raw.department);
   const department = departmentFromFloatDepartment(row.raw.department);
   const role = asString(row.raw.job_title) ?? asString(row.raw.role);
   const peopleTypeId = asNumber(row.raw.people_type_id);
@@ -454,6 +462,7 @@ function parseApiPerson(row: ArchivedRawSourceRow): FloatApiPerson | undefined {
     row,
     personId,
     ...(personName !== undefined ? { personName } : {}),
+    ...(office !== undefined ? { office } : {}),
     ...(department !== undefined ? { department } : {}),
     ...(role !== undefined ? { role } : {}),
     allocationClass
@@ -483,6 +492,7 @@ function shapeApiTaskRow(
     taskId: asString(raw.task_id) ?? asString(raw.taskId) ?? row.identity.sourceObjectId,
     personId: hasMultiplePeople ? undefined : firstPerson?.personId,
     personName: hasMultiplePeople ? "Multiple people" : firstPerson?.personName,
+    office: firstPerson?.office,
     department: firstPerson?.department,
     role: firstPerson?.role,
     startDate,
@@ -564,6 +574,17 @@ function departmentFromFloatDepartment(value: unknown): string | undefined {
   return rawName.replace(/^(LDN|NYC|USA|UCX)\s+/i, "").trim() || undefined;
 }
 
+function officeFromFloatDepartment(value: unknown): FloatFact["office"] | undefined {
+  const rawName = isRecord(value) ? asString(value.name) : asString(value);
+  const prefix = rawName?.trim().split(/\s+/)[0]?.toUpperCase();
+
+  if (prefix === "LDN") return "LDN";
+  if (prefix === "UCX") return "UCX";
+  if (prefix === "USA" || prefix === "NYC") return "USA";
+
+  return undefined;
+}
+
 function monthFromDate(value: string | undefined): string | undefined {
   return /^\d{4}-\d{2}-\d{2}$/.test(value ?? "") ? value?.slice(0, 7) : undefined;
 }
@@ -617,6 +638,14 @@ function asAllocationClass(value: unknown): FloatAllocationClass | undefined {
     value === "placeholder" ||
     value === "pencil"
   ) {
+    return value;
+  }
+
+  return undefined;
+}
+
+function asOffice(value: unknown): FloatFact["office"] | undefined {
+  if (value === "LDN" || value === "USA" || value === "UCX" || value === "UNKNOWN") {
     return value;
   }
 

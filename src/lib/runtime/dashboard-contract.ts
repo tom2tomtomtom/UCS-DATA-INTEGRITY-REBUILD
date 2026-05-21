@@ -1,11 +1,18 @@
 import type { DashboardDisplayContract, DashboardScope, SourceFactSet } from "../index";
+import type { SourceArchiveRecord } from "../source-archive/types";
 import { fixtureFactSet, getFixtureDashboardContract } from "../ui/fixture-contract";
+import {
+  buildDashboardContractFromArchiveRows,
+  buildSourceFactSetFromArchiveRows
+} from "./source-archive-contract";
 
 export type DashboardDataMode = "fixture" | "source_archive";
 export type DashboardRuntimeEnv = Readonly<Record<string, string | undefined>>;
 
 export type DashboardContractProviderOptions = {
   readonly env?: DashboardRuntimeEnv;
+  readonly sourceArchiveRows?: readonly SourceArchiveRecord[];
+  readonly generatedAt?: string;
 };
 
 export async function getDashboardContract(
@@ -22,7 +29,15 @@ export function getDashboardContractSync(
   const mode = dashboardDataMode(options.env ?? process.env);
 
   if (mode === "source_archive") {
-    throw new Error("source_archive dashboard mode is blocked until imported source rows are parsed into display facts.");
+    if (options.sourceArchiveRows === undefined) {
+      throw new Error("source_archive dashboard mode requires explicit sourceArchiveRows until the DB reader is implemented.");
+    }
+
+    return buildDashboardContractFromArchiveRows({
+      rows: options.sourceArchiveRows,
+      scope,
+      generatedAt: options.generatedAt ?? new Date().toISOString()
+    });
   }
 
   return getFixtureDashboardContract(scope);
@@ -32,7 +47,14 @@ export function getDashboardFactSetSync(options: DashboardContractProviderOption
   const mode = dashboardDataMode(options.env ?? process.env);
 
   if (mode === "source_archive") {
-    throw new Error("source_archive fact-set mode is blocked until imported source rows are parsed into display facts.");
+    if (options.sourceArchiveRows === undefined) {
+      throw new Error("source_archive fact-set mode requires explicit sourceArchiveRows until the DB reader is implemented.");
+    }
+
+    return buildSourceFactSetFromArchiveRows(
+      options.sourceArchiveRows,
+      options.generatedAt ?? new Date().toISOString()
+    );
   }
 
   return fixtureFactSet();
