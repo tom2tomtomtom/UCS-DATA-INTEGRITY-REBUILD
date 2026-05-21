@@ -2642,3 +2642,53 @@ Boundary kept:
 - no Supabase migrations,
 - no archive action from the UI,
 - chat remains read-only and must hand off to Codex for repo, browser, sync, deployment, mutation, or stakeholder work.
+
+### Checkpoint: Phase 9.5 UI Smoke And Phase 10 Source Snapshot
+
+Phase: 9.5 and 10
+
+Tickets: `#83`, `#84`, `#85`, `#86`, `#87`, `#88`, `#89`
+
+Status: staging UI smoke passed, source snapshot artifact ready, stakeholder approval still blocked
+
+What changed:
+
+- committed and pushed chat demo evidence execution through the read-only investigation pack,
+- deployed commit `e9afbe1` to Railway staging,
+- verified GitHub CI passed for `e9afbe1`,
+- verified Railway deployment `b333110d-3a1d-4559-8102-23739202f56a` succeeded,
+- created read-only source snapshot `phase10-live-2026-05-21T08-38-15-226Z`,
+- captured non-empty rows for all four streams: fee sheet 300, pipeline 100, production revenue 100, Float 165,
+- ran artifact-backed source approval readiness with `SOURCE_SNAPSHOT_FILE=test-results/source-snapshots/phase10-source-snapshot.json`,
+- generated the stakeholder approval pack from the snapshot.
+
+Verification:
+
+- `npm run verify:phase9` passed before push,
+- staging Playwright smoke covered Department Rollup, Projects, Project Detail, Float Export Compare, Data Quality, and Chat Demo,
+- Projects kept `office`, `from`, `to`, and `department=Design` scope through table links and filters,
+- Project Detail showed Dashboard visible Float, Trace visible rows, and Raw diagnostic rows,
+- Float Export Compare parsed pasted rows and flagged the UCS05186 duplicate as `ambiguous_dashboard_match`,
+- Data Quality showed owner chase rows and warning evidence,
+- Chat Demo answered from an EvidencePack with sources, warnings, unresolved checks, and Needs Codex handoff,
+- `npm run source:approval:readiness` passed source stream/env checks and only failed before artifact creation because source snapshots were missing,
+- artifact-backed `npm run source:approval:readiness` passed `SOURCE_SNAPSHOTS_READY` and remained blocked only on stakeholder approval,
+- `npm run stakeholder:approval:pack` returned `status: blocked`, `namedScenarioSummary: pass 7, warn 4, fail 0`.
+
+Current unresolved evidence:
+
+- UCS04787 remains a Yunni warning because live Float raw evidence is represented, cache is missing, and visible remains fixture-backed,
+- UCS05186 remains a Yunni duplicate/manual Float warning,
+- PCS00250 remains a Yunni cache/import warning because raw Float task evidence is missing,
+- BT remains unresolved in the live Float target manifest,
+- UI parity approval remains pending until the full old-site UI spec is converted into acceptance rules,
+- stakeholder approval is not recorded.
+
+Boundary kept:
+
+- no production cutover,
+- no source-system mutation,
+- no scheduled sync,
+- no Supabase migration,
+- no source snapshot committed to git,
+- no stakeholder accuracy language.

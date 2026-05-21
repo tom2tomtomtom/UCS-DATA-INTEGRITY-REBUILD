@@ -2,11 +2,11 @@
 
 ## Current Status
 
-Staging is deployed. Not ready for production cutover or stakeholder accuracy approval yet.
+Staging is deployed. A read-only Phase 10 source snapshot artifact now exists locally. Not ready for production cutover or stakeholder accuracy approval yet.
 
-Ready to start Phase 10 source approval scaffolding and source readiness checks.
+Ready to continue Phase 10 named evidence classification and Phase 9.5 UI parity acceptance work.
 
-The doctrine foundation, staged Railway deployment, health checks, and acceptance report are in place. The next work is source approval and UI parity intake, not production launch.
+The doctrine foundation, staged Railway deployment, health checks, acceptance report, and first source snapshot artifact are in place. The next work is source evidence classification, UI parity intake, and stakeholder review prep, not production launch.
 
 ## Ready To Start App Code When
 
@@ -33,7 +33,7 @@ Status: waiting for Tom's full old-site UI UX design spec. This blocks UI parity
 - `.env.local` exists locally and is ignored.
 - Old database credentials are treated as legacy comparison only.
 
-Status: staging deployed with known source-stream gaps.
+Status: staging deployed. Required source stream env is present for Sold, Pipeline, Production Revenue, and Float.
 
 ### Supabase
 
@@ -58,14 +58,14 @@ Status: staging deployed. No production cutover.
 - Fixture folder shape exists.
 - CI skeleton exists.
 
-Status: done through Phase 9. Next tests are Phase 10 source approval readiness and named evidence proof.
+Status: done through Phase 9. Artifact-backed Phase 10 source approval readiness has run. Named evidence proof still contains warnings.
 
 ## No-Go Conditions
 
 Do not start production cutover or stakeholder approval language if:
 
 - source stream env is incomplete,
-- source snapshots are missing,
+- source snapshots are missing or stale,
 - named scenario evidence is missing,
 - UI UX spec has not been converted into parity rules,
 - implementation would query legacy DB as product truth,
@@ -74,18 +74,18 @@ Do not start production cutover or stakeholder approval language if:
 
 ## First Build Task Once Ready
 
-The next coding task should be Phase 10 source approval scaffolding:
+The next coding task should continue Phase 10 source approval:
 
-1. complete staging env for Pipeline and Production Revenue sheet IDs,
-2. run `npm run source:approval:readiness`,
-3. build read-only source snapshot evidence,
-4. generate named Sian/Jade/Yunni scenario pack,
+1. classify the remaining warning scenarios from the source snapshot,
+2. tie warning scenarios to display-contract rows where currently `not_checked`,
+3. convert the old-site UI UX spec into executable parity tests,
+4. prepare the stakeholder review pack without approval language,
 5. keep production cutover blocked.
 
 Do not start with production cutover or UI redesign.
 
 ## Current Go/No-Go
 
-Go for Phase 10 source approval setup and Phase 9.5 UI spec intake.
+Go for Phase 10 warning classification and Phase 9.5 UI spec intake.
 
 No-go for production cutover, stakeholder accuracy approval, source-system mutation, scheduled sync, or UI redesign.
