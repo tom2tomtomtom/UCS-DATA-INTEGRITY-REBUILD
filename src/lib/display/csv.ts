@@ -4,7 +4,11 @@ import type {
   DashboardProjectRow,
   DashboardTotals
 } from "./contract";
-import type { MetricValue, UnsupportedMetric } from "../canon/types";
+import {
+  projectMetricCellName,
+  projectMetricCsvValue
+} from "./project-metric-format";
+import type { UnsupportedMetric } from "../canon/types";
 
 type DashboardMetricKey = keyof DashboardTotals;
 
@@ -45,7 +49,7 @@ function buildCsvCells(row: DashboardProjectRow): Record<string, string | number
   addCell(cells, "canonicalFloatProjectId", row.canonicalFloatProjectId);
 
   for (const metric of metricKeys) {
-    cells[csvMetricCellName(metric, row.totals[metric])] = csvMetricValue(row.totals[metric]);
+    cells[projectMetricCellName(row, metric)] = projectMetricCsvValue(row, metric);
   }
 
   return cells;
@@ -53,18 +57,6 @@ function buildCsvCells(row: DashboardProjectRow): Record<string, string | number
 
 function addCell(cells: Record<string, string | number>, key: string, value: string | undefined): void {
   if (value !== undefined) cells[key] = value;
-}
-
-function csvMetricCellName(metric: DashboardMetricKey, value: MetricValue): string {
-  if (value.kind === "unsupported") return metric;
-  if (value.kind === "money") return `${metric}Gbp`;
-  return metric;
-}
-
-function csvMetricValue(value: MetricValue): string | number {
-  if (value.kind === "unsupported") return value.displayLabel;
-  if (value.kind === "money") return value.value.amountGbp;
-  return value.value;
 }
 
 function unsupportedFromTotals(totals: DashboardTotals): UnsupportedMetric[] {

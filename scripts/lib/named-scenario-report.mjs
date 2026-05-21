@@ -4,10 +4,12 @@ export function buildNamedScenarioReport(input = {}) {
     check("float_layers_compared", "pass", "Raw Float, visible dashboard Float, and cache/compare layers are kept separate."),
     check("raw_cache_visible_mismatch_surfaced", "warn", "The fixture contains raw/visible Float mismatch evidence and the report leaves it as warning evidence.")
   ], sourceEvidence, "UCS04787");
+  const ucs04787Action = "Yunni or Tom should compare the current Float export settings with the scoped dashboard period before treating the delta as fixed.";
   const ucs05186Checks = withLiveFloatTargetCheck([
     check("duplicate_candidates_visible", "pass", "Canonical and manual duplicate Float candidates remain visible instead of being silently merged."),
     check("archived_duplicate_still_evidence", "warn", "Archived/manual duplicate evidence remains warning evidence until a fresh source pull proves it no longer contributes.")
   ], sourceEvidence, "UCS05186");
+  const ucs05186Action = "Keep duplicate/manual Float rows visible until Yunni confirms which source row should be fixed.";
   const ucs04154Checks = withLiveFloatTargetCheck([
     check("fee_sheet_float_id_join_key", "pass", "The fee-sheet Float ID is represented as the canonical join key for the original sold work."),
     check("manual_duplicate_not_winner", "pass", "Manual duplicates are evidence only, not automatic winners over the fee-sheet Float ID.")
@@ -16,10 +18,12 @@ export function buildNamedScenarioReport(input = {}) {
     check("cache_without_raw_warn", "warn", "Cache-only Float hours remain warning evidence when raw Float task evidence is absent."),
     check("not_green_when_cache_only", "pass", "Cache-only hours cannot be marked as pass.")
   ], sourceEvidence, "PCS00250");
+  const pcs00250Action = "A fresh Float pull must prove whether raw task rows now exist.";
   const btChecks = withLiveFloatTargetCheck([
     check("raw_without_cache_fail_class", "warn", "Raw Float hours without cache are classified as a blocking reconciliation issue in the evidence layer."),
     check("raw_not_hidden", "pass", "Raw Float task evidence remains visible even when cache evidence is absent.")
   ], sourceEvidence, "BT");
+  const btAction = "Tom should inspect the import/cache path before any dashboard approval on that Float row.";
 
   const scenarios = [
     scenario("ldn-q1-design", "LDN Q1 Design Rollup To Projects", "Sian", "pass", "display_contract_agrees", [
@@ -27,10 +31,28 @@ export function buildNamedScenarioReport(input = {}) {
       check("projects_csv_detail_parity", "pass", "Supported sold and Float metrics are compared through the display contract, not page-local totals."),
       check("pipeline_department_unsupported", "pass", "Pipeline remains unsupported in department scope rather than being attributed to Design.")
     ]),
-    scenario("ucs04787", "UCS04787 Float Mismatch", "Yunni", "warn", "source_or_cache_warning", ucs04787Checks, "Yunni or Tom should compare the current Float export settings with the scoped dashboard period before treating the delta as fixed."),
-    scenario("ucs05186", "UCS05186 Duplicate Manual Float Job", "Yunni", "warn", "source_or_cache_warning", ucs05186Checks, "Keep duplicate/manual Float rows visible until Yunni confirms which source row should be fixed."),
+    scenario("ucs04787", "UCS04787 Float Mismatch", "Yunni", "warn", "source_or_cache_warning", ucs04787Checks, ucs04787Action, warningEvidence(sourceEvidence, "UCS04787", {
+      raw: "represented",
+      cache: "missing",
+      visible: "represented",
+      classification: "cache/import issue",
+      nextHumanAction: ucs04787Action
+    })),
+    scenario("ucs05186", "UCS05186 Duplicate Manual Float Job", "Yunni", "warn", "source_or_cache_warning", ucs05186Checks, ucs05186Action, warningEvidence(sourceEvidence, "UCS05186", {
+      raw: "missing",
+      cache: "missing",
+      visible: "represented",
+      classification: "source issue",
+      nextHumanAction: ucs05186Action
+    })),
     scenario("ucs04154", "UCS04154 Fee-sheet Float ID Join", "Yunni", statusFromChecks(ucs04154Checks), "join_key_protected", ucs04154Checks),
-    scenario("pcs00250", "PCS00250 Cache Without Raw", "Yunni", "warn", "source_or_cache_warning", pcs00250Checks, "A fresh Float pull must prove whether raw task rows now exist."),
+    scenario("pcs00250", "PCS00250 Cache Without Raw", "Yunni", "warn", "source_or_cache_warning", pcs00250Checks, pcs00250Action, warningEvidence(sourceEvidence, "PCS00250", {
+      raw: "missing",
+      cache: "represented",
+      visible: "missing",
+      classification: "cache/import issue",
+      nextHumanAction: pcs00250Action
+    })),
     scenario("usa00262", "USA00262 Sold-hours False-zero Guard", "Sian", "pass", "false_zero_guarded", [
       check("sold_hours_false_zero_guard", "pass", "The scenario is guarded because source sold hours are nonzero and cannot be reported as zero."),
       check("usa_template_hours_supported", "pass", "USA fee-sheet hours must be treated as source-supported when parser evidence exists.")
@@ -39,7 +61,13 @@ export function buildNamedScenarioReport(input = {}) {
       check("sold_hours_false_zero_guard", "pass", "The scenario is guarded because source sold hours are nonzero and cannot be reported as zero."),
       check("raw_parser_not_total", "pass", "Raw parser rows are not summed unless additive status proves they are totals-safe.")
     ]),
-    scenario("bt-raw-without-cache", "BT Raw Without Cache", "Yunni", "warn", "source_or_cache_warning", btChecks, "Tom should inspect the import/cache path before any dashboard approval on that Float row."),
+    scenario("bt-raw-without-cache", "BT Raw Without Cache", "Yunni", "warn", "source_or_cache_warning", btChecks, btAction, warningEvidence(sourceEvidence, "BT", {
+      raw: "represented",
+      cache: "missing",
+      visible: "missing",
+      classification: "unresolved",
+      nextHumanAction: btAction
+    })),
     scenario("tbc-pipeline-identity", "TBC Pipeline Source Identity", "Jade", "pass", "source_only_visible", [
       check("tbc_source_row_identity", "pass", "TBC pipeline rows preserve distinct source-row identity."),
       check("pipeline_source_only_visible", "pass", "No-job pipeline rows remain visible as source-only evidence.")
@@ -156,7 +184,7 @@ function liveFloatTargetCheck(sourceEvidence, scenarioCode) {
   );
 }
 
-function scenario(id, name, owner, status, classification, checks, nextHumanAction) {
+function scenario(id, name, owner, status, classification, checks, nextHumanAction, warningEvidence) {
   return {
     id,
     name,
@@ -164,6 +192,7 @@ function scenario(id, name, owner, status, classification, checks, nextHumanActi
     status,
     classification,
     checks,
+    ...(warningEvidence === undefined ? {} : { warningEvidence }),
     ...(nextHumanAction === undefined ? {} : { nextHumanAction })
   };
 }
@@ -174,6 +203,34 @@ function check(code, status, evidence) {
     status,
     evidence
   };
+}
+
+function warningEvidence(sourceEvidence, scenarioCode, input) {
+  const isSourceSnapshotReady = sourceEvidence.status === "ready";
+
+  return {
+    evidenceStatus: isSourceSnapshotReady ? "source_snapshot_ready" : "source_snapshot_missing",
+    sourceLayersChecked: isSourceSnapshotReady
+      ? [...sourceEvidence.sourcesChecked, "live_float_manifest"]
+      : [],
+    knownFloatIdsFromLiveManifest: liveManifestFloatIds(sourceEvidence, scenarioCode),
+    rawCacheVisibleStatus: {
+      raw: input.raw,
+      cache: input.cache,
+      visible: input.visible
+    },
+    rawCacheVisibleStatusBasis: "named_scenario_fixture",
+    classification: input.classification,
+    nextHumanAction: input.nextHumanAction
+  };
+}
+
+function liveManifestFloatIds(sourceEvidence, scenarioCode) {
+  if (sourceEvidence.status !== "ready") return [];
+
+  return sourceEvidence.floatTargetManifest.resolvedScenarios
+    .filter((resolution) => sameScenarioCode(resolution.scenarioCode, scenarioCode))
+    .map((resolution) => resolution.floatProjectId);
 }
 
 function statusFromChecks(checks) {

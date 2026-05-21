@@ -149,7 +149,7 @@ describe("P5-E CSV rows", () => {
       rowType: "matched",
       soldFeeGbp: 1200,
       soldHours: 14.5,
-      pipelineFee: "Unsupported",
+      pipelineFeeGbp: "Unsupported",
       productionRevenueGbp: 300,
       floatHours: 9
     });
@@ -162,5 +162,105 @@ describe("P5-E CSV rows", () => {
     expect(csvRows[0]?.unsupported).toEqual([unsupportedPipeline]);
     expect(csvRows[0]?.warnings).toEqual([warning]);
     expect(csvRows[0]?.sourceTrace).toEqual(sourceTrace);
+  });
+
+  test("labels absent row-level source metrics instead of exporting zero", () => {
+    const {
+      jobNumber: _jobNumber,
+      sourceFloatProjectId: _sourceFloatProjectId,
+      canonicalFloatProjectId: _canonicalFloatProjectId,
+      ...baseProjectRow
+    } = projectRow;
+    const pipelineOnlyRow: DashboardProjectRow = {
+      ...baseProjectRow,
+      id: "contract-row:pipeline-only",
+      rowType: "pipeline_only",
+      sourceTrace: [
+        {
+          source: "pipeline",
+          sourceLayer: "pipeline",
+          batchId: "pipeline-batch",
+          rawRowId: "pipeline-row-1",
+          field: "pipelineFee"
+        }
+      ],
+      totals: {
+        soldFee: {
+          kind: "money",
+          value: {
+            amountOriginal: 0,
+            currencyOriginal: "GBP",
+            amountGbp: 0,
+            fxRateToGbp: 1,
+            fxSource: "fixture",
+            fxCapturedAt: "2026-05-20T00:00:00.000Z"
+          }
+        },
+        soldHours: { kind: "hours", value: 0, unit: "decimal_hours" },
+        pipelineFee: {
+          kind: "money",
+          value: {
+            amountOriginal: 75000,
+            currencyOriginal: "GBP",
+            amountGbp: 75000,
+            fxRateToGbp: 1,
+            fxSource: "fixture",
+            fxCapturedAt: "2026-05-20T00:00:00.000Z"
+          }
+        },
+        productionRevenue: {
+          kind: "money",
+          value: {
+            amountOriginal: 0,
+            currencyOriginal: "GBP",
+            amountGbp: 0,
+            fxRateToGbp: 1,
+            fxSource: "fixture",
+            fxCapturedAt: "2026-05-20T00:00:00.000Z"
+          }
+        },
+        floatHours: { kind: "hours", value: 0, unit: "decimal_hours" }
+      }
+    };
+
+    const csvRows = buildCsvRowsFromDisplayContract(contractWithRows([pipelineOnlyRow]));
+
+    expect(csvRows[0]?.cells).toMatchObject({
+      rowType: "pipeline_only",
+      soldFeeGbp: "Source-only",
+      soldHours: "Source-only",
+      pipelineFeeGbp: 75000,
+      productionRevenueGbp: "Source-only",
+      floatHours: "Source-only"
+    });
+    expect(csvRows[0]?.cells.soldFee).toBeUndefined();
+    expect(csvRows[0]?.cells.productionRevenue).toBeUndefined();
+  });
+
+  test("labels a missing matched metric when only another field from that source is evidenced", () => {
+    const matchedFeeOnlyRow: DashboardProjectRow = {
+      ...projectRow,
+      sourceTrace: [
+        {
+          source: "fee_sheet",
+          sourceLayer: "sold",
+          batchId: "batch-1",
+          rawRowId: "sold-row-1",
+          field: "soldFee"
+        }
+      ],
+      totals: {
+        ...projectRow.totals,
+        soldHours: { kind: "hours", value: 0, unit: "decimal_hours" }
+      }
+    };
+
+    const csvRows = buildCsvRowsFromDisplayContract(contractWithRows([matchedFeeOnlyRow]));
+
+    expect(csvRows[0]?.cells).toMatchObject({
+      rowType: "matched",
+      soldFeeGbp: 1200,
+      soldHours: "No source row"
+    });
   });
 });

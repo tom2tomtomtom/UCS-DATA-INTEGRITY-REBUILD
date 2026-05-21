@@ -6,7 +6,27 @@ import { DataQualityDashboard } from "../../src/components/dashboard/data-qualit
 import { buildSourceFactSetFromParserResults } from "../../src/lib/canon-queries/source-fact-set";
 import { buildDashboardDisplayContract } from "../../src/lib/display/contract";
 import { parseArchivedFeeSheetRows } from "../../src/lib/parsers/fee-sheet";
+import { parseArchivedFloatRows } from "../../src/lib/parsers/float";
+import { parseProductionRevenueRows } from "../../src/lib/parsers/production-revenue";
 import { buildSourceSnapshotImportPlan } from "../../src/lib/source-import/snapshot-import";
+import type { SourceName } from "../../src/lib/canon/types";
+import type { SourceSnapshotRow } from "../../src/lib/source-import/snapshot-import";
+
+function planRows(source: SourceName, rows: readonly SourceSnapshotRow[]) {
+  return buildSourceSnapshotImportPlan({
+    snapshotId: `law-no-silent-${source}`,
+    capturedAt: "2026-05-20T18:00:00.000Z",
+    readOnly: true,
+    sources: [
+      {
+        source,
+        mode: "manual_snapshot",
+        sourceLabel: `${source} law fixture`,
+        rows
+      }
+    ]
+  }).rawRows;
+}
 
 describe("Law 2: the dashboard spots mistakes, it does not correct them", () => {
   test("preserves, classifies, scopes, and visibly warns on CLIENT SUMMARY versus V-tab disagreement", () => {
@@ -131,8 +151,223 @@ describe("Law 2: the dashboard spots mistakes, it does not correct them", () => 
     expect(html).toContain("DATA_WARN: CLIENT_SUMMARY_VTAB_DISAGREE");
     expect(html).toContain("CLIENT SUMMARY and V-tab source summary values differ; both rows are preserved.");
   });
-  test.todo("classifies production status collisions without choosing a winner silently");
-  test.todo("surfaces duplicate Float jobs without merging them");
-  test.todo("surfaces duplicate fee tracker jobs as conflict evidence");
-  test.todo("surfaces cross-office duplicate jobs as scoped conflicts");
+  test("classifies production status collisions without choosing a winner silently", () => {
+    const parserResult = parseProductionRevenueRows(
+      planRows("production_revenue", [
+        {
+          identity: {
+            stableSourceRowKey: "production:UCS09001:confirmed",
+            sourceDocumentId: "production-sheet",
+            sourceTab: "May",
+            sourceRowNumber: 8
+          },
+          raw: {
+            jobNumber: "UCS09001",
+            client: "Collision Client",
+            projectName: "Status Collision",
+            office: "LDN",
+            month: "2026-05",
+            amount: 1200,
+            status: "CONFIRMED"
+          }
+        },
+        {
+          identity: {
+            stableSourceRowKey: "production:UCS09001:negotiating",
+            sourceDocumentId: "production-sheet",
+            sourceTab: "May",
+            sourceRowNumber: 9
+          },
+          raw: {
+            jobNumber: "UCS09001",
+            client: "Collision Client",
+            projectName: "Status Collision",
+            office: "LDN",
+            month: "2026-05",
+            amount: 1200,
+            status: "NEGOTIATING"
+          }
+        }
+      ])
+    );
+
+    expect(parserResult.facts.map((fact) => fact.productionStatus)).toEqual([
+      "CONFIRMED",
+      "NEGOTIATING"
+    ]);
+    expect(parserResult.warnings).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          code: "STATUS_COLLISION",
+          severity: "DATA_WARN",
+          rawRowIds: expect.arrayContaining(parserResult.facts.flatMap((fact) => fact.rawRowIds))
+        })
+      ])
+    );
+    expect(parserResult.facts.every((fact) => fact.warnings.some((warning) => warning.code === "STATUS_COLLISION"))).toBe(true);
+  });
+
+  test("surfaces duplicate Float jobs without merging them", () => {
+    const parserResult = parseArchivedFloatRows(
+      planRows("float", [
+        {
+          identity: {
+            stableSourceRowKey: "float:project-1:task-a",
+            sourceObjectId: "task-a"
+          },
+          raw: {
+            objectType: "task",
+            floatProjectId: "123",
+            projectCode: "UCS05186",
+            projectName: "Duplicate Float",
+            taskId: "task-a",
+            month: "2026-03",
+            hours: 10,
+            activeState: "active",
+            duplicateGroupKey: "UCS05186:duplicate",
+            duplicateCandidateType: "float_candidate"
+          }
+        },
+        {
+          identity: {
+            stableSourceRowKey: "float:project-2:task-b",
+            sourceObjectId: "task-b"
+          },
+          raw: {
+            objectType: "task",
+            floatProjectId: "456",
+            projectCode: "UCS05186",
+            projectName: "Duplicate Float Manual",
+            taskId: "task-b",
+            month: "2026-03",
+            hours: 8,
+            activeState: "archived",
+            duplicateGroupKey: "UCS05186:duplicate",
+            duplicateCandidateType: "manual_duplicate"
+          }
+        }
+      ])
+    );
+
+    expect(parserResult.facts).toHaveLength(2);
+    expect(parserResult.facts.map((fact) => fact.floatProjectId)).toEqual(["123", "456"]);
+    expect(parserResult.warnings).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          code: "DUPLICATE_FLOAT_CANDIDATE",
+          severity: "DATA_WARN"
+        }),
+        expect.objectContaining({
+          code: "MANUAL_DUPLICATE_CANDIDATE",
+          severity: "DATA_WARN"
+        })
+      ])
+    );
+  });
+
+  test("surfaces duplicate fee tracker jobs as conflict evidence", () => {
+    const parserResult = parseArchivedFeeSheetRows(
+      planRows("fee_sheet", [
+        {
+          identity: {
+            stableSourceRowKey: "fee:UCS09002:design:1",
+            sourceDocumentId: "fee-sheet",
+            sourceTab: "Design",
+            sourceRowNumber: 21
+          },
+          raw: {
+            rowKind: "v_tab",
+            jobNumber: "UCS09002",
+            client: "Duplicate Fee",
+            office: "LDN",
+            month: "2026-05",
+            department: "Design",
+            role: "Designer",
+            soldFee: 1000,
+            soldHours: 10
+          }
+        },
+        {
+          identity: {
+            stableSourceRowKey: "fee:UCS09002:design:2",
+            sourceDocumentId: "fee-sheet",
+            sourceTab: "Design",
+            sourceRowNumber: 22
+          },
+          raw: {
+            rowKind: "v_tab",
+            jobNumber: "UCS09002",
+            client: "Duplicate Fee",
+            office: "LDN",
+            month: "2026-05",
+            department: "Design",
+            role: "Designer",
+            soldFee: 1000,
+            soldHours: 10
+          }
+        }
+      ])
+    );
+
+    expect(parserResult.facts).toHaveLength(2);
+    expect(parserResult.warnings).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          code: "DUPLICATE_FEE_TRACKER_JOB",
+          severity: "DATA_WARN"
+        })
+      ])
+    );
+  });
+
+  test("surfaces cross-office duplicate jobs as scoped conflicts", () => {
+    const parserResult = parseArchivedFeeSheetRows(
+      planRows("fee_sheet", [
+        {
+          identity: {
+            stableSourceRowKey: "fee:UCS09003:ldn",
+            sourceDocumentId: "fee-sheet",
+            sourceTab: "LDN",
+            sourceRowNumber: 31
+          },
+          raw: {
+            rowKind: "v_tab",
+            jobNumber: "UCS09003",
+            client: "Cross Office",
+            office: "LDN",
+            month: "2026-05",
+            soldFee: 1000,
+            soldHours: 10
+          }
+        },
+        {
+          identity: {
+            stableSourceRowKey: "fee:UCS09003:usa",
+            sourceDocumentId: "fee-sheet",
+            sourceTab: "USA",
+            sourceRowNumber: 32
+          },
+          raw: {
+            rowKind: "v_tab",
+            jobNumber: "UCS09003",
+            client: "Cross Office",
+            office: "USA",
+            month: "2026-05",
+            soldFee: 1000,
+            soldHours: 10
+          }
+        }
+      ])
+    );
+
+    expect(parserResult.facts.map((fact) => fact.office)).toEqual(["LDN", "USA"]);
+    expect(parserResult.warnings).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          code: "CROSS_OFFICE_DUPLICATE_JOB",
+          severity: "DATA_WARN"
+        })
+      ])
+    );
+  });
 });

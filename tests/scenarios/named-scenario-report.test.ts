@@ -71,6 +71,53 @@ describe("P8-E named Sian Yunni Jade scenario report", () => {
     );
   });
 
+  test("keeps richer source-warning evidence on the four remaining warnings", () => {
+    const report = buildNamedScenarioReport();
+
+    expect(warningEvidence(report, "ucs04787")).toMatchObject({
+      evidenceStatus: "source_snapshot_missing",
+      sourceLayersChecked: [],
+      knownFloatIdsFromLiveManifest: [],
+      rawCacheVisibleStatus: {
+        raw: "represented",
+        cache: "missing",
+        visible: "represented"
+      },
+      rawCacheVisibleStatusBasis: "named_scenario_fixture",
+      classification: "cache/import issue",
+      nextHumanAction: expect.stringContaining("Float export settings")
+    });
+    expect(warningEvidence(report, "ucs05186")).toMatchObject({
+      rawCacheVisibleStatus: {
+        raw: "missing",
+        cache: "missing",
+        visible: "represented"
+      },
+      classification: "source issue",
+      nextHumanAction: expect.stringContaining("duplicate/manual Float rows")
+    });
+    expect(warningEvidence(report, "pcs00250")).toMatchObject({
+      rawCacheVisibleStatus: {
+        raw: "missing",
+        cache: "represented",
+        visible: "missing"
+      },
+      classification: "cache/import issue",
+      nextHumanAction: expect.stringContaining("fresh Float pull")
+    });
+    expect(warningEvidence(report, "bt-raw-without-cache")).toMatchObject({
+      rawCacheVisibleStatus: {
+        raw: "represented",
+        cache: "missing",
+        visible: "missing"
+      },
+      classification: "unresolved",
+      nextHumanAction: expect.stringContaining("import/cache path")
+    });
+    expect(report.status).toBe("warn");
+    expect(report.approvalReady).toBe(false);
+  });
+
   test("encodes the USA sold-hours false-zero guard as source-supported, not zero", () => {
     const report = buildNamedScenarioReport();
     const usaScenarios = report.scenarios.filter((scenario) => scenario.id === "usa00262" || scenario.id === "usa00323");
@@ -165,6 +212,15 @@ describe("P8-E named Sian Yunni Jade scenario report", () => {
     expect(liveCheckEvidence(report, "ucs05186")).toContain("Live Float target manifest float:target-manifest resolved UCS05186 to Float project 11413292.");
     expect(liveCheckEvidence(report, "pcs00250")).toContain("Live Float target manifest float:target-manifest resolved PCS00250 to Float project 11330982.");
     expect(liveCheckEvidence(report, "bt-raw-without-cache")).toContain("Live Float target manifest float:target-manifest leaves BT unresolved; no Float project ID is safe to infer.");
+    expect(warningEvidence(report, "ucs04787")?.knownFloatIdsFromLiveManifest).toEqual(["10979146"]);
+    expect(warningEvidence(report, "ucs05186")?.knownFloatIdsFromLiveManifest).toEqual(["11413292"]);
+    expect(warningEvidence(report, "pcs00250")?.knownFloatIdsFromLiveManifest).toEqual(["11330982"]);
+    expect(warningEvidence(report, "bt-raw-without-cache")?.knownFloatIdsFromLiveManifest).toEqual([]);
+    expect(warningEvidence(report, "ucs04787")).toMatchObject({
+      evidenceStatus: "source_snapshot_ready",
+      sourceLayersChecked: ["fee_sheet", "pipeline", "production_revenue", "float", "live_float_manifest"],
+      rawCacheVisibleStatusBasis: "named_scenario_fixture"
+    });
     expect(report.scenarios.find((scenario) => scenario.id === "ucs04787")?.status).toBe("warn");
     expect(report.scenarios.find((scenario) => scenario.id === "bt-raw-without-cache")?.status).toBe("warn");
     expect(report.approvalReady).toBe(false);
@@ -205,6 +261,10 @@ function liveCheckEvidence(report: ReturnType<typeof buildNamedScenarioReport>, 
     .find((scenario) => scenario.id === scenarioId)
     ?.checks.filter((check) => check.code.startsWith("live_float_target_manifest"))
     .map((check) => check.evidence) ?? [];
+}
+
+function warningEvidence(report: ReturnType<typeof buildNamedScenarioReport>, scenarioId: string) {
+  return report.scenarios.find((scenario) => scenario.id === scenarioId)?.warningEvidence;
 }
 
 function writeSnapshotFile(snapshot: unknown): string {

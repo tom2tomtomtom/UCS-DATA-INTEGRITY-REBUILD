@@ -26,6 +26,46 @@ describe("Phase 10 stakeholder approval pack", () => {
       ])
     );
     expect(pack.warnings).toEqual(["ucs04787", "ucs05186", "pcs00250", "bt-raw-without-cache"]);
+    expect(pack.warningEvidence).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          id: "ucs04787",
+          owner: "Yunni",
+          evidence: expect.objectContaining({
+            evidenceStatus: "source_snapshot_ready",
+            sourceLayersChecked: [
+              "fee_sheet",
+              "pipeline",
+              "production_revenue",
+              "float",
+              "live_float_manifest"
+            ],
+            knownFloatIdsFromLiveManifest: [],
+            rawCacheVisibleStatus: {
+              raw: "represented",
+              cache: "missing",
+              visible: "represented"
+            },
+            rawCacheVisibleStatusBasis: "named_scenario_fixture",
+            classification: "cache/import issue",
+            nextHumanAction: expect.stringContaining("Float export settings")
+          })
+        }),
+        expect.objectContaining({
+          id: "bt-raw-without-cache",
+          evidence: expect.objectContaining({
+            knownFloatIdsFromLiveManifest: [],
+            rawCacheVisibleStatus: {
+              raw: "represented",
+              cache: "missing",
+              visible: "missing"
+            },
+            classification: "unresolved",
+            nextHumanAction: expect.stringContaining("import/cache path")
+          })
+        })
+      ])
+    );
     expect(output).not.toContain("production-ready");
     expect(output).not.toContain("approved for cutover");
   });

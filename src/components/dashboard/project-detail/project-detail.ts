@@ -1,7 +1,8 @@
 import React from "react";
 
-import type { DashboardDisplayContract, DashboardProjectRow, MetricValue, ReconciliationCheck } from "../../../lib";
+import type { DashboardDisplayContract, ReconciliationCheck } from "../../../lib";
 import { scopedHref } from "../../../lib";
+import { formatProjectMetric } from "../../../lib/display/project-metric-format";
 
 const detailMetrics = [
   ["Sold (fee sheet)", "soldFee"],
@@ -42,7 +43,7 @@ export function ProjectDetail({
           "article",
           { className: "metric-card", key: metric },
           React.createElement("span", null, label),
-          React.createElement("strong", null, formatMetric(row.totals[metric]))
+          React.createElement("strong", null, formatProjectMetric(row.totals[metric], row, metric))
         )
       )
     ),
@@ -83,24 +84,4 @@ function checkItem(check: ReconciliationCheck) {
     React.createElement("strong", null, check.code),
     React.createElement("span", null, check.message ?? check.status)
   );
-}
-
-function formatMetric(value: MetricValue): string {
-  if (value.kind === "unsupported") {
-    return value.displayLabel;
-  }
-
-  if (value.kind === "money") {
-    return new Intl.NumberFormat("en-GB", {
-      style: "currency",
-      currency: "GBP",
-      maximumFractionDigits: 0
-    }).format(value.value.amountGbp);
-  }
-
-  if (value.kind === "hours") {
-    return `${new Intl.NumberFormat("en-GB", { maximumFractionDigits: 1 }).format(value.value)}h`;
-  }
-
-  return String(value.value);
 }

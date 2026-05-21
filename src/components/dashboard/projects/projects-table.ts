@@ -1,7 +1,8 @@
 import React from "react";
 
-import type { DashboardDisplayContract, DashboardProjectRow, DashboardTotals, MetricValue } from "../../../lib";
+import type { DashboardDisplayContract, DashboardProjectRow, DashboardTotals } from "../../../lib";
 import { scopedHref } from "../../../lib";
+import { formatProjectMetric, projectRowTraceabilityLabel } from "../../../lib/display/project-metric-format";
 import { buildCsvDataUriFromContract } from "../export/csv-export";
 
 const tableMetrics = [
@@ -81,8 +82,8 @@ function projectRow(row: DashboardProjectRow) {
     React.createElement("td", null, row.canonicalClient ?? row.sourceClient ?? "Unknown client"),
     React.createElement("td", null, row.canonicalProjectName ?? row.sourceProjectName ?? row.id),
     React.createElement("td", null, React.createElement("span", { className: "row-type-badge" }, row.rowType)),
-    ...tableMetrics.map(([, metric]) => React.createElement("td", { key: metric }, formatMetric(row.totals[metric]))),
-    React.createElement("td", null, row.warnings.length > 0 ? "Warn" : "Traceable")
+    ...tableMetrics.map(([, metric]) => React.createElement("td", { key: metric }, formatProjectMetric(row.totals[metric], row, metric))),
+    React.createElement("td", null, projectRowTraceabilityLabel(row))
   );
 }
 
@@ -94,7 +95,7 @@ function footerRow(contract: DashboardDisplayContract) {
     React.createElement("td", null, ""),
     React.createElement("td", null, ""),
     React.createElement("td", null, contract.visibleRows.length),
-    ...tableMetrics.map(([, metric]) => React.createElement("td", { key: metric }, formatMetric(contract.footerTotals[metric]))),
+    ...tableMetrics.map(([, metric]) => React.createElement("td", { key: metric }, formatFooterMetric(contract.footerTotals[metric]))),
     React.createElement("td", null, contract.confidence)
   );
 }
@@ -107,7 +108,7 @@ function optionalScopeChip(label: string, value: string | undefined) {
   return value === undefined || value.trim() === "" ? null : scopeChip(label, value);
 }
 
-function formatMetric(value: MetricValue): string {
+function formatFooterMetric(value: DashboardTotals[keyof DashboardTotals]): string {
   if (value.kind === "unsupported") {
     return value.displayLabel;
   }

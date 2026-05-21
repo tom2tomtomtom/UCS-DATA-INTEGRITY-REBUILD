@@ -17,6 +17,31 @@ export type NamedScenarioCheck = {
   readonly evidence: string;
 };
 
+export type NamedScenarioWarningEvidenceClassification =
+  | "source issue"
+  | "cache/import issue"
+  | "display-contract issue"
+  | "unsupported capability"
+  | "unresolved";
+
+export type NamedScenarioLayerPresence = "represented" | "missing" | "not_applicable";
+
+export type NamedScenarioRawCacheVisibleEvidence = {
+  readonly raw: NamedScenarioLayerPresence;
+  readonly cache: NamedScenarioLayerPresence;
+  readonly visible: NamedScenarioLayerPresence;
+};
+
+export type NamedScenarioWarningEvidence = {
+  readonly evidenceStatus: "source_snapshot_missing" | "source_snapshot_ready";
+  readonly sourceLayersChecked: readonly string[];
+  readonly knownFloatIdsFromLiveManifest: readonly string[];
+  readonly rawCacheVisibleStatus: NamedScenarioRawCacheVisibleEvidence;
+  readonly rawCacheVisibleStatusBasis: "named_scenario_fixture";
+  readonly classification: NamedScenarioWarningEvidenceClassification;
+  readonly nextHumanAction: string;
+};
+
 export type NamedScenarioFloatResolution = {
   readonly scenarioCode: string;
   readonly floatProjectId: string;
@@ -46,6 +71,7 @@ export type NamedScenarioResult = {
   readonly status: NamedScenarioStatus;
   readonly classification: NamedScenarioClassification;
   readonly checks: readonly NamedScenarioCheck[];
+  readonly warningEvidence?: NamedScenarioWarningEvidence;
   readonly nextHumanAction?: string;
 };
 
@@ -86,6 +112,7 @@ export function buildNamedScenarioReport(input?: {
     sourceEvidence,
     "UCS04787"
   );
+  const ucs04787Action = "Yunni or Tom should compare the current Float export settings with the scoped dashboard period before treating the delta as fixed.";
   const ucs05186Checks = withLiveFloatTargetCheck(
     [
       pass("duplicate_candidates_visible", "Canonical and manual duplicate Float candidates remain visible instead of being silently merged."),
@@ -94,6 +121,7 @@ export function buildNamedScenarioReport(input?: {
     sourceEvidence,
     "UCS05186"
   );
+  const ucs05186Action = "Keep duplicate/manual Float rows visible until Yunni confirms which source row should be fixed.";
   const ucs04154Checks = withLiveFloatTargetCheck(
     [
       pass("fee_sheet_float_id_join_key", "The fee-sheet Float ID is represented as the canonical join key for the original sold work."),
@@ -110,6 +138,7 @@ export function buildNamedScenarioReport(input?: {
     sourceEvidence,
     "PCS00250"
   );
+  const pcs00250Action = "A fresh Float pull must prove whether raw task rows now exist.";
   const btChecks = withLiveFloatTargetCheck(
     [
       warn("raw_without_cache_fail_class", "Raw Float hours without cache are classified as a blocking reconciliation issue in the evidence layer."),
@@ -118,6 +147,7 @@ export function buildNamedScenarioReport(input?: {
     sourceEvidence,
     "BT"
   );
+  const btAction = "Tom should inspect the import/cache path before any dashboard approval on that Float row.";
 
   const scenarios: NamedScenarioResult[] = [
     {
@@ -139,7 +169,14 @@ export function buildNamedScenarioReport(input?: {
       status: "warn",
       classification: "source_or_cache_warning",
       checks: ucs04787Checks,
-      nextHumanAction: "Yunni or Tom should compare the current Float export settings with the scoped dashboard period before treating the delta as fixed."
+      warningEvidence: warningEvidence(sourceEvidence, "UCS04787", {
+        raw: "represented",
+        cache: "missing",
+        visible: "represented",
+        classification: "cache/import issue",
+        nextHumanAction: ucs04787Action
+      }),
+      nextHumanAction: ucs04787Action
     },
     {
       id: "ucs05186",
@@ -148,7 +185,14 @@ export function buildNamedScenarioReport(input?: {
       status: "warn",
       classification: "source_or_cache_warning",
       checks: ucs05186Checks,
-      nextHumanAction: "Keep duplicate/manual Float rows visible until Yunni confirms which source row should be fixed."
+      warningEvidence: warningEvidence(sourceEvidence, "UCS05186", {
+        raw: "missing",
+        cache: "missing",
+        visible: "represented",
+        classification: "source issue",
+        nextHumanAction: ucs05186Action
+      }),
+      nextHumanAction: ucs05186Action
     },
     {
       id: "ucs04154",
@@ -165,7 +209,14 @@ export function buildNamedScenarioReport(input?: {
       status: "warn",
       classification: "source_or_cache_warning",
       checks: pcs00250Checks,
-      nextHumanAction: "A fresh Float pull must prove whether raw task rows now exist."
+      warningEvidence: warningEvidence(sourceEvidence, "PCS00250", {
+        raw: "missing",
+        cache: "represented",
+        visible: "missing",
+        classification: "cache/import issue",
+        nextHumanAction: pcs00250Action
+      }),
+      nextHumanAction: pcs00250Action
     },
     {
       id: "usa00262",
@@ -196,7 +247,14 @@ export function buildNamedScenarioReport(input?: {
       status: "warn",
       classification: "source_or_cache_warning",
       checks: btChecks,
-      nextHumanAction: "Tom should inspect the import/cache path before any dashboard approval on that Float row."
+      warningEvidence: warningEvidence(sourceEvidence, "BT", {
+        raw: "represented",
+        cache: "missing",
+        visible: "missing",
+        classification: "unresolved",
+        nextHumanAction: btAction
+      }),
+      nextHumanAction: btAction
     },
     {
       id: "tbc-pipeline-identity",
@@ -311,6 +369,41 @@ function withLiveFloatTargetCheck(
 ): NamedScenarioCheck[] {
   const liveCheck = liveFloatTargetCheck(sourceEvidence, scenarioCode);
   return liveCheck === undefined ? [...checks] : [...checks, liveCheck];
+}
+
+function warningEvidence(
+  sourceEvidence: NamedScenarioSourceEvidence,
+  scenarioCode: string,
+  input: NamedScenarioRawCacheVisibleEvidence & {
+    readonly classification: NamedScenarioWarningEvidenceClassification;
+    readonly nextHumanAction: string;
+  }
+): NamedScenarioWarningEvidence {
+  const isSourceSnapshotReady = sourceEvidence.status === "ready";
+
+  return {
+    evidenceStatus: isSourceSnapshotReady ? "source_snapshot_ready" : "source_snapshot_missing",
+    sourceLayersChecked: isSourceSnapshotReady
+      ? [...sourceEvidence.sourcesChecked, "live_float_manifest"]
+      : [],
+    knownFloatIdsFromLiveManifest: liveManifestFloatIds(sourceEvidence, scenarioCode),
+    rawCacheVisibleStatus: {
+      raw: input.raw,
+      cache: input.cache,
+      visible: input.visible
+    },
+    rawCacheVisibleStatusBasis: "named_scenario_fixture",
+    classification: input.classification,
+    nextHumanAction: input.nextHumanAction
+  };
+}
+
+function liveManifestFloatIds(sourceEvidence: NamedScenarioSourceEvidence, scenarioCode: string): string[] {
+  if (sourceEvidence.status !== "ready") return [];
+
+  return sourceEvidence.floatTargetManifest.resolvedScenarios
+    .filter((resolution) => sameScenarioCode(resolution.scenarioCode, scenarioCode))
+    .map((resolution) => resolution.floatProjectId);
 }
 
 function liveFloatTargetCheck(

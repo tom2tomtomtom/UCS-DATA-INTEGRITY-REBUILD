@@ -111,6 +111,8 @@ export function parseArchivedFeeSheetRows(
   });
 
   warnings.push(...clientSummaryVTabWarnings(parsedRows));
+  warnings.push(...duplicateFeeTrackerJobWarnings(parsedRows));
+  warnings.push(...crossOfficeDuplicateJobWarnings(parsedRows));
 
   return createParserResult({
     parserName: PARSER_NAME,
@@ -143,7 +145,10 @@ function createSoldFact(
 ): FeeSheetSoldFact {
   const sourceLayer = sourceLayerFor(payload.rowKind);
   const headerRefs = header ? sourceRefsFor(header.row, "fee_sheet_parser_summary") : [];
-  const rowRefs = sourceRefsFor(row, sourceLayer);
+  const rowRefs = metricSourceRefsFor(row, sourceLayer, [
+    ...(payload.soldFee !== undefined ? ["soldFee" as const] : []),
+    ...(payload.soldHours !== undefined ? ["soldHours" as const] : [])
+  ]);
   const rawRowIds = header ? [header.row.id, row.id] : [row.id];
   const trace = [...headerRefs, ...rowRefs];
   const parserEvidence = createParserFactEvidence({
@@ -221,6 +226,73 @@ function createSoldFact(
   }
 
   return fact;
+}
+
+function duplicateFeeTrackerJobWarnings(parsedRows: readonly ParsedRow[]): ParserWarning[] {
+  const groups = new Map<string, ParsedRow[]>();
+
+  for (const parsedRow of parsedRows.filter(({ payload }) => payload.rowKind === "v_tab")) {
+    const key = [
+      parsedRow.payload.jobNumber,
+      parsedRow.payload.month,
+      parsedRow.payload.department,
+      parsedRow.payload.role
+    ].join("|");
+
+    if (!parsedRow.payload.jobNumber || !parsedRow.payload.month) {
+      continue;
+    }
+
+    groups.set(key, [...(groups.get(key) ?? []), parsedRow]);
+  }
+
+  return [...groups.values()]
+    .filter((group) => group.length > 1)
+    .map((group) =>
+      createParserWarning({
+        code: "DUPLICATE_FEE_TRACKER_JOB",
+        message: "Fee tracker has duplicate rows for the same job evidence; all rows are preserved.",
+        source: FEE_SHEET_SOURCE,
+        sourceLayer: "sold",
+        batchId: group[0]?.row.batchId ?? "",
+        rawRowIds: group.map(({ row }) => row.id),
+        sourceRefs: group.flatMap(({ row }) => sourceRefsFor(row, "sold")),
+        severity: "DATA_WARN"
+      })
+    );
+}
+
+function crossOfficeDuplicateJobWarnings(parsedRows: readonly ParsedRow[]): ParserWarning[] {
+  const groups = new Map<string, ParsedRow[]>();
+
+  for (const parsedRow of parsedRows.filter(({ payload }) => payload.rowKind === "v_tab")) {
+    if (!parsedRow.payload.jobNumber || !parsedRow.payload.month) {
+      continue;
+    }
+
+    const key = [
+      parsedRow.payload.jobNumber,
+      parsedRow.payload.month,
+      parsedRow.payload.department ?? "",
+      parsedRow.payload.role ?? ""
+    ].join("|");
+    groups.set(key, [...(groups.get(key) ?? []), parsedRow]);
+  }
+
+  return [...groups.values()]
+    .filter((group) => new Set(group.map(({ payload }) => payload.office ?? "UNKNOWN")).size > 1)
+    .map((group) =>
+      createParserWarning({
+        code: "CROSS_OFFICE_DUPLICATE_JOB",
+        message: "Fee tracker has the same job number in multiple offices; scopes stay separate until source evidence resolves it.",
+        source: FEE_SHEET_SOURCE,
+        sourceLayer: "sold",
+        batchId: group[0]?.row.batchId ?? "",
+        rawRowIds: group.map(({ row }) => row.id),
+        sourceRefs: group.flatMap(({ row }) => sourceRefsFor(row, "sold")),
+        severity: "DATA_WARN"
+      })
+    );
 }
 
 function clientSummaryVTabWarnings(parsedRows: readonly ParsedRow[]): ParserWarning[] {
@@ -344,6 +416,17 @@ function sourceRefsFor(row: ArchivedRawSourceRow, sourceLayer: SourceLayer): Sou
   }
 
   return [sourceRef];
+}
+
+function metricSourceRefsFor(
+  row: ArchivedRawSourceRow,
+  sourceLayer: SourceLayer,
+  fields: readonly ("soldFee" | "soldHours")[]
+): SourceTraceRef[] {
+  const refs = sourceRefsFor(row, sourceLayer);
+  if (fields.length === 0) return refs;
+
+  return fields.flatMap((field) => refs.map((ref) => ({ ...ref, field })));
 }
 
 function isSoldRowPayload(payload: FeeSheetArchivedRowPayload): payload is FeeSheetSoldRowPayload {

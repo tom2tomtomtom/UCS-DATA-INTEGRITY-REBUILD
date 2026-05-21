@@ -21,6 +21,9 @@ describe("P6-D project detail", () => {
     expect(html).toContain("£183,947");
     expect(html).toContain("420h");
     expect(html).toContain("861h");
+    expect(html).toContain("Unsupported");
+    expect(html).not.toContain("<strong>£0</strong>");
+    expect(html).not.toContain("<strong>0h</strong>");
     expect(html).toContain("FLOAT_VISIBLE_CACHE_MISSING_CACHE");
     expect(html).toContain("Role allocation");
     expect(html).toContain("No role allocation data available for this project in the active scope.");

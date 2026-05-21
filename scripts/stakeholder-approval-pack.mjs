@@ -15,6 +15,15 @@ const blockers = buildBlockers({
 const warningScenarioIds = scenarioReport.scenarios
   .filter((scenario) => scenario.status === "warn")
   .map((scenario) => scenario.id);
+const warningEvidence = scenarioReport.scenarios
+  .filter((scenario) => scenario.status === "warn")
+  .map((scenario) => ({
+    id: scenario.id,
+    name: scenario.name,
+    owner: scenario.owner,
+    evidence: scenario.warningEvidence,
+    nextHumanAction: scenario.nextHumanAction
+  }));
 
 const pack = {
   generatedAt: new Date().toISOString(),
@@ -23,6 +32,7 @@ const pack = {
   productionCutoverAllowed: blockers.length === 0,
   blockers,
   warnings: warningScenarioIds,
+  warningEvidence,
   sourceEvidence: scenarioReport.sourceEvidence,
   namedScenarioStatus: scenarioReport.status,
   namedScenarioSummary: scenarioReport.summary,

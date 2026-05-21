@@ -18,6 +18,8 @@ describe("P6-C CSV export", () => {
     expect(csv).toContain("pipeline_only");
     expect(csv).toContain("production_revenue_only");
     expect(csv).toContain("float_only");
+    expect(csv).toContain("Source-only");
+    expect(csv).not.toContain(",0,");
     expect(csv).not.toContain("[object Object]");
   });
 

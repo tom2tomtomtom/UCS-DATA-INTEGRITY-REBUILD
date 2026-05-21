@@ -174,8 +174,8 @@ describe("P5-A display totalling laws", () => {
     );
 
     expect(contract.visibleRows[0]?.totals.pipelineFee).toEqual(unsupportedPipeline);
-    expect(contract.csvRows[0]?.cells.pipelineFee).toBe("Unsupported");
-    expect(contract.csvRows[0]?.cells.pipelineFeeGbp).toBeUndefined();
+    expect(contract.csvRows[0]?.cells.pipelineFeeGbp).toBe("Unsupported");
+    expect(contract.csvRows[0]?.cells.pipelineFee).toBeUndefined();
     expect(contract.csvRows[0]?.unsupported).toContainEqual(unsupportedPipeline);
   });
 });
