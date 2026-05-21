@@ -11,6 +11,21 @@ describe("P6-E Approval", () => {
     const html = renderToStaticMarkup(React.createElement(ApprovalDashboard, { contract }));
 
     expect(html).toContain("Approval Audit");
+    expect(html).toContain("No production cutover");
+    expect(html).toContain("Source approval: NOT APPROVED");
+    expect(html).toContain("Stakeholder approval: NOT APPROVED");
+    expect(html).toContain("WARN is not approval");
+    expect(html).toContain("PASS gates");
+    expect(html).toContain("WARN gates");
+    expect(html).toContain("FAIL gates");
+    expect(html).toContain("Named scenario evidence");
+    expect(html).toContain("Sian");
+    expect(html).toContain("Yunni");
+    expect(html).toContain("Jade");
+    expect(html).toContain("PASS: Same Scope, Same Number");
+    expect(html).toContain("WARN: Source Approval");
+    expect(html).toContain("WARN: Stakeholder Approval");
+    expect(html).toContain("FAIL: Production Cutover");
     expect(html).toContain("Rows reviewed");
     expect(html).toContain("UCS04787");
     expect(html).toContain("source trace");
