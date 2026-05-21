@@ -30,6 +30,36 @@ describe("P8-E named Sian Yunni Jade scenario report", () => {
     const report = buildNamedScenarioReport();
 
     expect(report.scenarios.map((scenario) => scenario.id)).toEqual(requiredScenarioIds);
+    for (const scenario of report.scenarios) {
+      expect(scenario.scope).toMatchObject({
+        office: expect.any(String),
+        from: expect.stringMatching(/^\d{4}-\d{2}-\d{2}$/),
+        to: expect.stringMatching(/^\d{4}-\d{2}-\d{2}$/)
+      });
+      expect(scenario.displayContractResult).toMatchObject({
+        status: expect.any(String),
+        sourceLayer: "display_contract",
+        basis: expect.any(String)
+      });
+      expect(scenario.uiSurfaceResult).toMatchObject({
+        status: "pass",
+        sourceLayer: "data_quality_ui"
+      });
+      expect(scenario.csvResult).toMatchObject({
+        status: expect.any(String),
+        sourceLayer: "display_contract_csv",
+        basis: expect.any(String)
+      });
+      expect(scenario.chatEvidenceResult).toMatchObject({
+        status: expect.any(String),
+        sourceLayer: "chat_evidence_pack",
+        basis: expect.any(String)
+      });
+      expect(Array.isArray(scenario.sourceSnapshotRefs)).toBe(true);
+      expect(Array.isArray(scenario.warnings)).toBe(true);
+      expect(Array.isArray(scenario.unresolvedConflicts)).toBe(true);
+      expect(scenario.approvalStatus).toBe("blocked_source_evidence");
+    }
     expect(report.scenarios).toEqual(
       expect.arrayContaining([
         expect.objectContaining({
@@ -158,6 +188,15 @@ describe("P8-E named Sian Yunni Jade scenario report", () => {
       const scenario = report.scenarios.find((item) => item.id === scenarioId);
       expect(scenario).toMatchObject({
         status: "warn",
+        scope: {
+          office: "USA",
+          jobNumber: scenarioId.toUpperCase()
+        },
+        approvalStatus: "blocked_warning",
+        chatEvidenceResult: {
+          status: "needs_codex",
+          sourceLayer: "chat_evidence_pack"
+        },
         nextHumanAction: expect.stringContaining("targeted USA fee-sheet source rows"),
         checks: expect.arrayContaining([
           expect.objectContaining({
@@ -224,6 +263,30 @@ describe("P8-E named Sian Yunni Jade scenario report", () => {
         ]),
         unresolvedScenarios: ["BT"]
       }
+    });
+    expect(report.scenarios.find((scenario: { id: string }) => scenario.id === "ucs04154")).toMatchObject({
+      approvalStatus: "blocked_evidence_gap",
+      displayContractResult: {
+        status: "not_checked"
+      },
+      csvResult: {
+        status: "not_applicable"
+      },
+      sourceSnapshotRefs: expect.arrayContaining([
+        { layer: "source_snapshot", ref: "named-scenario-test-snapshot" },
+        { layer: "float_manifest", ref: "float:target-manifest" },
+        { layer: "source_row", ref: "fee_tracker:CLIENT SUMMARY:1" }
+      ])
+    });
+    expect(report.scenarios.find((scenario: { id: string }) => scenario.id === "ldn-q1-design")).toMatchObject({
+      approvalStatus: "ready_for_stakeholder_review",
+      chatEvidenceResult: {
+        status: "not_applicable"
+      }
+    });
+    expect(report.scenarios.find((scenario: { id: string }) => scenario.id === "usa00262")).toMatchObject({
+      approvalStatus: "blocked_warning",
+      unresolvedConflicts: expect.arrayContaining([expect.stringContaining("source_snapshot_scenario_rows_missing")])
     });
   });
 

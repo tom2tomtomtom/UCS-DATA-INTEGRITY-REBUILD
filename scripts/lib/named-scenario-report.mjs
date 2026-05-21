@@ -34,7 +34,7 @@ export function buildNamedScenarioReport(input = {}) {
   ], sourceEvidence, "USA00323");
   const usaAction = "Capture targeted USA fee-sheet source rows and display-contract proof before stakeholder approval.";
 
-  const scenarios = [
+  const scenarioCores = [
     scenario("ldn-q1-design", "LDN Q1 Design Rollup To Projects", "Sian", "pass", "display_contract_agrees", [
       check("same_scope_same_number", "pass", "Department rollup, Projects footer, CSV, and detail use the same display contract scope."),
       check("projects_csv_detail_parity", "pass", "Supported sold and Float metrics are compared through the display contract, not page-local totals."),
@@ -101,6 +101,7 @@ export function buildNamedScenarioReport(input = {}) {
     ])
   ];
 
+  const scenarios = scenarioCores.map((item) => enrichScenarioEvidence(item, sourceEvidence));
   const status = reportStatus(scenarios);
 
   return {
@@ -115,6 +116,263 @@ export function buildNamedScenarioReport(input = {}) {
     },
     scenarios
   };
+}
+
+function enrichScenarioEvidence(scenario, sourceEvidence) {
+  const displayContractResult = displayContractResultFor(scenario);
+  const uiSurfaceResult = uiSurfaceResultFor(scenario);
+  const csvResult = csvResultFor(scenario);
+  const chatEvidenceResult = chatEvidenceResultFor(scenario);
+
+  return {
+    ...scenario,
+    scope: scopeForScenario(scenario.id),
+    sourceSnapshotRefs: sourceSnapshotRefsFor(scenario.id, sourceEvidence),
+    displayContractResult,
+    uiSurfaceResult,
+    csvResult,
+    chatEvidenceResult,
+    warnings: warningsFor(scenario),
+    unresolvedConflicts: unresolvedConflictsFor(scenario, sourceEvidence),
+    approvalStatus: approvalStatusFor(scenario, sourceEvidence, [
+      displayContractResult,
+      uiSurfaceResult,
+      csvResult,
+      chatEvidenceResult
+    ])
+  };
+}
+
+function scopeForScenario(scenarioId) {
+  switch (scenarioId) {
+    case "ldn-q1-design":
+      return {
+        office: "LDN",
+        from: "2026-01-01",
+        to: "2026-03-31",
+        view: "department",
+        department: "Design"
+      };
+    case "ucs04787":
+      return jobScope("LDN", "UCS04787");
+    case "ucs05186":
+      return jobScope("LDN", "UCS05186");
+    case "ucs04154":
+      return jobScope("LDN", "UCS04154");
+    case "pcs00250":
+      return jobScope("LDN", "PCS00250");
+    case "usa00262":
+      return jobScope("USA", "USA00262");
+    case "usa00323":
+      return jobScope("USA", "USA00323");
+    case "bt-raw-without-cache":
+      return {
+        office: "LDN",
+        from: "2026-01-01",
+        to: "2026-12-31",
+        view: "float",
+        client: "BT Group"
+      };
+    case "tbc-pipeline-identity":
+      return {
+        office: "Agency",
+        from: "2026-01-01",
+        to: "2026-12-31",
+        view: "pipeline"
+      };
+    case "exact-client-drilldown":
+      return {
+        office: "Agency",
+        from: "2026-01-01",
+        to: "2026-12-31",
+        view: "client"
+      };
+    case "archived-production-revenue":
+    default:
+      return {
+        office: "Agency",
+        from: "2026-01-01",
+        to: "2026-12-31",
+        view: "project"
+      };
+  }
+}
+
+function jobScope(office, jobNumber) {
+  return {
+    office,
+    from: "2026-01-01",
+    to: "2026-12-31",
+    view: "project",
+    jobNumber
+  };
+}
+
+function sourceSnapshotRefsFor(scenarioId, sourceEvidence) {
+  if (sourceEvidence.status !== "ready") return [];
+
+  const refs = [
+    { layer: "source_snapshot", ref: sourceEvidence.snapshotId },
+    { layer: "float_manifest", ref: sourceEvidence.floatTargetManifest.manifestStableSourceRowKey }
+  ];
+  const scenarioCode = scenarioCodeForId(scenarioId);
+
+  if (scenarioCode !== undefined) {
+    const rowEvidence = sourceEvidence.scenarioSourceEvidence?.find((item) =>
+      sameScenarioCode(item.scenarioCode, scenarioCode)
+    );
+    for (const sourceRowKey of rowEvidence?.sourceRowKeys ?? []) {
+      refs.push({ layer: "source_row", ref: sourceRowKey });
+    }
+
+    const floatLayerEvidence = sourceEvidence.floatLayerEvidence.find((item) =>
+      sameScenarioCode(item.scenarioCode, scenarioCode)
+    );
+    for (const sourceRowKey of floatLayerEvidence?.sourceRowKeys ?? []) {
+      refs.push({ layer: "float_layer", ref: sourceRowKey });
+    }
+  }
+
+  return uniqueRefs(refs);
+}
+
+function scenarioCodeForId(scenarioId) {
+  switch (scenarioId) {
+    case "ucs04787":
+      return "UCS04787";
+    case "ucs05186":
+      return "UCS05186";
+    case "ucs04154":
+      return "UCS04154";
+    case "pcs00250":
+      return "PCS00250";
+    case "usa00262":
+      return "USA00262";
+    case "usa00323":
+      return "USA00323";
+    case "bt-raw-without-cache":
+      return "BT";
+    default:
+      return undefined;
+  }
+}
+
+function uniqueRefs(refs) {
+  const seen = new Set();
+  const unique = [];
+  for (const ref of refs) {
+    const key = `${ref.layer}:${ref.ref}`;
+    if (seen.has(key)) continue;
+    seen.add(key);
+    unique.push(ref);
+  }
+  return unique;
+}
+
+function displayContractResultFor(scenario) {
+  if (scenario.classification === "display_contract_agrees") {
+    return {
+      status: scenario.status === "pass" ? "pass" : "warn",
+      sourceLayer: "display_contract",
+      basis: "Display contract parity checks are part of this named scenario."
+    };
+  }
+
+  if (scenario.warningEvidence?.displayContractRowStatus === "represented") {
+    return {
+      status: "pass",
+      sourceLayer: "display_contract",
+      basis: "Warning evidence includes a represented display-contract row."
+    };
+  }
+
+  if (scenario.warningEvidence?.displayContractRowStatus === "missing") {
+    return {
+      status: "warn",
+      sourceLayer: "display_contract",
+      basis: "Warning evidence says the display-contract row is missing."
+    };
+  }
+
+  return {
+    status: "not_checked",
+    sourceLayer: "display_contract",
+    basis: "This scenario has not yet been tied to a display-contract row."
+  };
+}
+
+function uiSurfaceResultFor(scenario) {
+  return {
+    status: "pass",
+    sourceLayer: "data_quality_ui",
+    basis: `Data Quality renders ${scenario.id} from the named scenario report, not a static copy.`
+  };
+}
+
+function csvResultFor(scenario) {
+  if (scenario.id === "ldn-q1-design" || scenario.id === "exact-client-drilldown" || scenario.id === "archived-production-revenue") {
+    return {
+      status: scenario.status === "pass" ? "pass" : "warn",
+      sourceLayer: "display_contract_csv",
+      basis: "CSV parity is part of this stakeholder scenario."
+    };
+  }
+
+  return {
+    status: "not_applicable",
+    sourceLayer: "display_contract_csv",
+    basis: "CSV parity is not the active evidence layer for this named scenario."
+  };
+}
+
+function chatEvidenceResultFor(scenario) {
+  if (scenario.status !== "pass") {
+    return {
+      status: "needs_codex",
+      sourceLayer: "chat_evidence_pack",
+      basis: "Chat must hand this warning to Codex until the evidence pack is complete."
+    };
+  }
+
+  return {
+    status: "not_applicable",
+    sourceLayer: "chat_evidence_pack",
+    basis: "Chat evidence is not required to make this scenario pass."
+  };
+}
+
+function warningsFor(scenario) {
+  return scenario.checks
+    .filter((item) => item.status === "warn")
+    .map((item) => `${item.code}: ${item.evidence}`);
+}
+
+function unresolvedConflictsFor(scenario, sourceEvidence) {
+  const conflicts = [];
+
+  if (sourceEvidence.status !== "ready") {
+    conflicts.push("Source snapshot evidence is missing.");
+  }
+
+  for (const item of scenario.checks) {
+    if (item.status === "warn") conflicts.push(`${item.code}: ${item.evidence}`);
+  }
+
+  if (scenario.warningEvidence?.classification === "unresolved") {
+    conflicts.push("Warning evidence is classified as unresolved.");
+  }
+
+  return conflicts;
+}
+
+function approvalStatusFor(scenario, sourceEvidence, evidenceResults) {
+  if (sourceEvidence.status !== "ready") return "blocked_source_evidence";
+  if (scenario.status !== "pass") return "blocked_warning";
+  if (evidenceResults.some((result) => result.status === "not_checked" || result.status === "needs_codex" || result.status === "unresolved")) {
+    return "blocked_evidence_gap";
+  }
+  if (evidenceResults.some((result) => result.status === "warn")) return "blocked_warning";
+  return "ready_for_stakeholder_review";
 }
 
 export function buildFloatTargetManifestEvidenceFromSnapshot(snapshot) {

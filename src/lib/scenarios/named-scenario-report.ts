@@ -58,6 +58,41 @@ export type NamedScenarioWarningEvidence = {
   readonly nextHumanAction: string;
 };
 
+export type NamedScenarioScope = {
+  readonly office: "Agency" | "LDN" | "UCX" | "USA";
+  readonly from: string;
+  readonly to: string;
+  readonly view?: "department" | "month" | "role" | "client" | "project" | "float" | "pipeline";
+  readonly department?: string;
+  readonly client?: string;
+  readonly jobNumber?: string;
+};
+
+export type NamedScenarioSourceSnapshotRef = {
+  readonly layer: string;
+  readonly ref: string;
+};
+
+export type NamedScenarioEvidenceResultStatus =
+  | "pass"
+  | "warn"
+  | "unresolved"
+  | "not_checked"
+  | "not_applicable"
+  | "needs_codex";
+
+export type NamedScenarioEvidenceResult = {
+  readonly status: NamedScenarioEvidenceResultStatus;
+  readonly sourceLayer: string;
+  readonly basis: string;
+};
+
+export type NamedScenarioApprovalStatus =
+  | "blocked_source_evidence"
+  | "blocked_warning"
+  | "blocked_evidence_gap"
+  | "ready_for_stakeholder_review";
+
 export type NamedScenarioFloatResolution = {
   readonly scenarioCode: string;
   readonly floatProjectId: string;
@@ -96,6 +131,15 @@ export type NamedScenarioResult = {
   readonly checks: readonly NamedScenarioCheck[];
   readonly warningEvidence?: NamedScenarioWarningEvidence;
   readonly nextHumanAction?: string;
+  readonly scope: NamedScenarioScope;
+  readonly sourceSnapshotRefs: readonly NamedScenarioSourceSnapshotRef[];
+  readonly displayContractResult: NamedScenarioEvidenceResult;
+  readonly uiSurfaceResult: NamedScenarioEvidenceResult;
+  readonly csvResult: NamedScenarioEvidenceResult;
+  readonly chatEvidenceResult: NamedScenarioEvidenceResult;
+  readonly warnings: readonly string[];
+  readonly unresolvedConflicts: readonly string[];
+  readonly approvalStatus: NamedScenarioApprovalStatus;
 };
 
 export type NamedScenarioReport = {
@@ -122,6 +166,19 @@ export type NamedScenarioSourceEvidence =
       readonly floatLayerEvidence: readonly NamedScenarioFloatLayerEvidence[];
       readonly scenarioSourceEvidence?: readonly NamedScenarioSourceRowEvidence[];
     };
+
+type NamedScenarioCoreResult = Omit<
+  NamedScenarioResult,
+  | "scope"
+  | "sourceSnapshotRefs"
+  | "displayContractResult"
+  | "uiSurfaceResult"
+  | "csvResult"
+  | "chatEvidenceResult"
+  | "warnings"
+  | "unresolvedConflicts"
+  | "approvalStatus"
+>;
 
 const generatedAt = "2026-05-20T17:59:00.000Z";
 const sourceBackedScenarioCodes = ["USA00262", "USA00323", "UCS04154", "UCS04787", "UCS05186", "PCS00250"];
@@ -192,7 +249,7 @@ export function buildNamedScenarioReport(input?: {
   );
   const usaAction = "Capture targeted USA fee-sheet source rows and display-contract proof before stakeholder approval.";
 
-  const scenarios: NamedScenarioResult[] = [
+  const scenarioCores: NamedScenarioCoreResult[] = [
     {
       id: "ldn-q1-design",
       name: "LDN Q1 Design Rollup To Projects",
@@ -330,6 +387,7 @@ export function buildNamedScenarioReport(input?: {
     }
   ];
 
+  const scenarios = scenarioCores.map((scenario) => enrichScenarioEvidence(scenario, sourceEvidence));
   const status = reportStatus(scenarios);
 
   return {
@@ -344,6 +402,276 @@ export function buildNamedScenarioReport(input?: {
     },
     scenarios
   };
+}
+
+function enrichScenarioEvidence(
+  scenario: NamedScenarioCoreResult,
+  sourceEvidence: NamedScenarioSourceEvidence
+): NamedScenarioResult {
+  const displayContractResult = displayContractResultFor(scenario);
+  const uiSurfaceResult = uiSurfaceResultFor(scenario);
+  const csvResult = csvResultFor(scenario);
+  const chatEvidenceResult = chatEvidenceResultFor(scenario);
+
+  return {
+    ...scenario,
+    scope: scopeForScenario(scenario.id),
+    sourceSnapshotRefs: sourceSnapshotRefsFor(scenario.id, sourceEvidence),
+    displayContractResult,
+    uiSurfaceResult,
+    csvResult,
+    chatEvidenceResult,
+    warnings: warningsFor(scenario),
+    unresolvedConflicts: unresolvedConflictsFor(scenario, sourceEvidence),
+    approvalStatus: approvalStatusFor(scenario, sourceEvidence, [
+      displayContractResult,
+      uiSurfaceResult,
+      csvResult,
+      chatEvidenceResult
+    ])
+  };
+}
+
+function scopeForScenario(scenarioId: string): NamedScenarioScope {
+  switch (scenarioId) {
+    case "ldn-q1-design":
+      return {
+        office: "LDN",
+        from: "2026-01-01",
+        to: "2026-03-31",
+        view: "department",
+        department: "Design"
+      };
+    case "ucs04787":
+      return jobScope("LDN", "UCS04787");
+    case "ucs05186":
+      return jobScope("LDN", "UCS05186");
+    case "ucs04154":
+      return jobScope("LDN", "UCS04154");
+    case "pcs00250":
+      return jobScope("LDN", "PCS00250");
+    case "usa00262":
+      return jobScope("USA", "USA00262");
+    case "usa00323":
+      return jobScope("USA", "USA00323");
+    case "bt-raw-without-cache":
+      return {
+        office: "LDN",
+        from: "2026-01-01",
+        to: "2026-12-31",
+        view: "float",
+        client: "BT Group"
+      };
+    case "tbc-pipeline-identity":
+      return {
+        office: "Agency",
+        from: "2026-01-01",
+        to: "2026-12-31",
+        view: "pipeline"
+      };
+    case "exact-client-drilldown":
+      return {
+        office: "Agency",
+        from: "2026-01-01",
+        to: "2026-12-31",
+        view: "client"
+      };
+    case "archived-production-revenue":
+    default:
+      return {
+        office: "Agency",
+        from: "2026-01-01",
+        to: "2026-12-31",
+        view: "project"
+      };
+  }
+}
+
+function jobScope(office: NamedScenarioScope["office"], jobNumber: string): NamedScenarioScope {
+  return {
+    office,
+    from: "2026-01-01",
+    to: "2026-12-31",
+    view: "project",
+    jobNumber
+  };
+}
+
+function sourceSnapshotRefsFor(
+  scenarioId: string,
+  sourceEvidence: NamedScenarioSourceEvidence
+): NamedScenarioSourceSnapshotRef[] {
+  if (sourceEvidence.status !== "ready") return [];
+
+  const refs: NamedScenarioSourceSnapshotRef[] = [
+    { layer: "source_snapshot", ref: sourceEvidence.snapshotId },
+    { layer: "float_manifest", ref: sourceEvidence.floatTargetManifest.manifestStableSourceRowKey }
+  ];
+  const scenarioCode = scenarioCodeForId(scenarioId);
+
+  if (scenarioCode !== undefined) {
+    const rowEvidence = sourceEvidence.scenarioSourceEvidence?.find((item) =>
+      sameScenarioCode(item.scenarioCode, scenarioCode)
+    );
+    for (const sourceRowKey of rowEvidence?.sourceRowKeys ?? []) {
+      refs.push({ layer: "source_row", ref: sourceRowKey });
+    }
+
+    const floatLayerEvidence = sourceEvidence.floatLayerEvidence.find((item) =>
+      sameScenarioCode(item.scenarioCode, scenarioCode)
+    );
+    for (const sourceRowKey of floatLayerEvidence?.sourceRowKeys ?? []) {
+      refs.push({ layer: "float_layer", ref: sourceRowKey });
+    }
+  }
+
+  return uniqueRefs(refs);
+}
+
+function scenarioCodeForId(scenarioId: string): string | undefined {
+  switch (scenarioId) {
+    case "ucs04787":
+      return "UCS04787";
+    case "ucs05186":
+      return "UCS05186";
+    case "ucs04154":
+      return "UCS04154";
+    case "pcs00250":
+      return "PCS00250";
+    case "usa00262":
+      return "USA00262";
+    case "usa00323":
+      return "USA00323";
+    case "bt-raw-without-cache":
+      return "BT";
+    default:
+      return undefined;
+  }
+}
+
+function uniqueRefs(refs: readonly NamedScenarioSourceSnapshotRef[]): NamedScenarioSourceSnapshotRef[] {
+  const seen = new Set<string>();
+  const unique: NamedScenarioSourceSnapshotRef[] = [];
+  for (const ref of refs) {
+    const key = `${ref.layer}:${ref.ref}`;
+    if (seen.has(key)) continue;
+    seen.add(key);
+    unique.push(ref);
+  }
+  return unique;
+}
+
+function displayContractResultFor(scenario: NamedScenarioCoreResult): NamedScenarioEvidenceResult {
+  if (scenario.classification === "display_contract_agrees") {
+    return {
+      status: scenario.status === "pass" ? "pass" : "warn",
+      sourceLayer: "display_contract",
+      basis: "Display contract parity checks are part of this named scenario."
+    };
+  }
+
+  if (scenario.warningEvidence?.displayContractRowStatus === "represented") {
+    return {
+      status: "pass",
+      sourceLayer: "display_contract",
+      basis: "Warning evidence includes a represented display-contract row."
+    };
+  }
+
+  if (scenario.warningEvidence?.displayContractRowStatus === "missing") {
+    return {
+      status: "warn",
+      sourceLayer: "display_contract",
+      basis: "Warning evidence says the display-contract row is missing."
+    };
+  }
+
+  return {
+    status: "not_checked",
+    sourceLayer: "display_contract",
+    basis: "This scenario has not yet been tied to a display-contract row."
+  };
+}
+
+function uiSurfaceResultFor(scenario: NamedScenarioCoreResult): NamedScenarioEvidenceResult {
+  return {
+    status: "pass",
+    sourceLayer: "data_quality_ui",
+    basis: `Data Quality renders ${scenario.id} from the named scenario report, not a static copy.`
+  };
+}
+
+function csvResultFor(scenario: NamedScenarioCoreResult): NamedScenarioEvidenceResult {
+  if (scenario.id === "ldn-q1-design" || scenario.id === "exact-client-drilldown" || scenario.id === "archived-production-revenue") {
+    return {
+      status: scenario.status === "pass" ? "pass" : "warn",
+      sourceLayer: "display_contract_csv",
+      basis: "CSV parity is part of this stakeholder scenario."
+    };
+  }
+
+  return {
+    status: "not_applicable",
+    sourceLayer: "display_contract_csv",
+    basis: "CSV parity is not the active evidence layer for this named scenario."
+  };
+}
+
+function chatEvidenceResultFor(scenario: NamedScenarioCoreResult): NamedScenarioEvidenceResult {
+  if (scenario.status !== "pass") {
+    return {
+      status: "needs_codex",
+      sourceLayer: "chat_evidence_pack",
+      basis: "Chat must hand this warning to Codex until the evidence pack is complete."
+    };
+  }
+
+  return {
+    status: "not_applicable",
+    sourceLayer: "chat_evidence_pack",
+    basis: "Chat evidence is not required to make this scenario pass."
+  };
+}
+
+function warningsFor(scenario: NamedScenarioCoreResult): string[] {
+  return scenario.checks
+    .filter((check) => check.status === "warn")
+    .map((check) => `${check.code}: ${check.evidence}`);
+}
+
+function unresolvedConflictsFor(
+  scenario: NamedScenarioCoreResult,
+  sourceEvidence: NamedScenarioSourceEvidence
+): string[] {
+  const conflicts: string[] = [];
+
+  if (sourceEvidence.status !== "ready") {
+    conflicts.push("Source snapshot evidence is missing.");
+  }
+
+  for (const check of scenario.checks) {
+    if (check.status === "warn") conflicts.push(`${check.code}: ${check.evidence}`);
+  }
+
+  if (scenario.warningEvidence?.classification === "unresolved") {
+    conflicts.push("Warning evidence is classified as unresolved.");
+  }
+
+  return conflicts;
+}
+
+function approvalStatusFor(
+  scenario: NamedScenarioCoreResult,
+  sourceEvidence: NamedScenarioSourceEvidence,
+  evidenceResults: readonly NamedScenarioEvidenceResult[]
+): NamedScenarioApprovalStatus {
+  if (sourceEvidence.status !== "ready") return "blocked_source_evidence";
+  if (scenario.status !== "pass") return "blocked_warning";
+  if (evidenceResults.some((result) => result.status === "not_checked" || result.status === "needs_codex" || result.status === "unresolved")) {
+    return "blocked_evidence_gap";
+  }
+  if (evidenceResults.some((result) => result.status === "warn")) return "blocked_warning";
+  return "ready_for_stakeholder_review";
 }
 
 export function buildFloatTargetManifestEvidenceFromSnapshot(snapshot: unknown): NamedScenarioFloatTargetManifestEvidence | undefined {

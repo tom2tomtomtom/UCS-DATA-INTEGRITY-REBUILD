@@ -4,6 +4,7 @@ import fs from "node:fs";
 
 import { buildSourceApprovalReadinessReport } from "./lib/source-approval-readiness-report.mjs";
 import { buildSourceSnapshotImportPlan } from "./lib/source-import-report.mjs";
+import { buildFloatTargetManifestEvidenceFromSnapshot } from "./lib/named-scenario-report.mjs";
 
 const envText = readEnvText();
 
@@ -61,8 +62,9 @@ function resolveSourceSnapshotStatus() {
       const requiredSources = ["fee_sheet", "pipeline", "production_revenue", "float"];
       const hasAllStreams = requiredSources.every((source) => (plan.report.bySource[source]?.rawRows ?? 0) > 0);
       const hasOnlyLiveSourceEvidence = plan.report.status === "pass" && plan.report.cacheEvidenceRows === 0;
+      const hasLiveFloatTargetManifest = buildFloatTargetManifestEvidenceFromSnapshot(snapshot) !== undefined;
 
-      return hasAllStreams && hasOnlyLiveSourceEvidence ? "ready" : "missing";
+      return hasAllStreams && hasOnlyLiveSourceEvidence && hasLiveFloatTargetManifest ? "ready" : "missing";
     } catch {
       return "missing";
     }

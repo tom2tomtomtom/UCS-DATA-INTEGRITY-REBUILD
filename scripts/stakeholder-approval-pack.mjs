@@ -15,6 +15,7 @@ const scenarioReport = buildNamedScenarioReport({ sourceEvidence });
 const blockers = buildBlockers({
   scenarioReport,
   lifecycleEvidence,
+  uiParitySpecStatus: process.env.UI_PARITY_SPEC_STATUS ?? "pending",
   stakeholderApprovalStatus: process.env.STAKEHOLDER_APPROVAL_STATUS ?? "not_approved",
   productionCutoverStatus: process.env.PRODUCTION_CUTOVER_STATUS ?? "not_cut_over"
 });
@@ -30,19 +31,42 @@ const warningEvidence = scenarioReport.scenarios
     evidence: scenario.warningEvidence,
     nextHumanAction: scenario.nextHumanAction
   }));
+const scenarioEvidence = scenarioReport.scenarios.map((scenario) => ({
+  id: scenario.id,
+  name: scenario.name,
+  owner: scenario.owner,
+  status: scenario.status,
+  classification: scenario.classification,
+  scope: scenario.scope,
+  sourceSnapshotRefs: scenario.sourceSnapshotRefs,
+  displayContractResult: scenario.displayContractResult,
+  uiSurfaceResult: scenario.uiSurfaceResult,
+  csvResult: scenario.csvResult,
+  chatEvidenceResult: scenario.chatEvidenceResult,
+  warnings: scenario.warnings,
+  unresolvedConflicts: scenario.unresolvedConflicts,
+  approvalStatus: scenario.approvalStatus,
+  nextHumanAction: scenario.nextHumanAction
+}));
 
 const pack = {
   generatedAt: new Date().toISOString(),
   status: blockers.length === 0 ? "ready_for_approval_record" : "blocked",
-  stakeholderApprovalReady: scenarioReport.sourceEvidence.status === "ready" && scenarioReport.status === "pass",
+  stakeholderApprovalReady:
+    scenarioReport.sourceEvidence.status === "ready" &&
+    scenarioReport.status === "pass" &&
+    scenarioEvidence.every((scenario) => scenario.approvalStatus === "ready_for_stakeholder_review") &&
+    (process.env.UI_PARITY_SPEC_STATUS ?? "pending") === "ready",
   productionCutoverAllowed: blockers.length === 0,
   blockers,
   warnings: warningScenarioIds,
   warningEvidence,
+  scenarioEvidence,
   lifecycleEvidence,
   sourceEvidence: scenarioReport.sourceEvidence,
   namedScenarioStatus: scenarioReport.status,
   namedScenarioSummary: scenarioReport.summary,
+  uiParitySpecStatus: process.env.UI_PARITY_SPEC_STATUS ?? "pending",
   stakeholderApprovalStatus: process.env.STAKEHOLDER_APPROVAL_STATUS ?? "not_approved",
   productionCutoverStatus: process.env.PRODUCTION_CUTOVER_STATUS ?? "not_cut_over",
   noCutoverRule: "Production cutover remains blocked until source evidence, named scenarios, UI parity, and stakeholder approval are all recorded."
@@ -50,7 +74,7 @@ const pack = {
 
 process.stdout.write(`${JSON.stringify(pack, null, 2)}\n`);
 
-function buildBlockers({ scenarioReport, lifecycleEvidence, stakeholderApprovalStatus, productionCutoverStatus }) {
+function buildBlockers({ scenarioReport, lifecycleEvidence, uiParitySpecStatus, stakeholderApprovalStatus, productionCutoverStatus }) {
   const blockers = [];
 
   if (scenarioReport.sourceEvidence.status !== "ready") {
@@ -59,6 +83,14 @@ function buildBlockers({ scenarioReport, lifecycleEvidence, stakeholderApprovalS
 
   if (scenarioReport.status !== "pass") {
     blockers.push("named_scenarios_not_fully_passed");
+  }
+
+  if (scenarioReport.scenarios.some((scenario) => scenario.approvalStatus !== "ready_for_stakeholder_review")) {
+    blockers.push("scenario_evidence_incomplete");
+  }
+
+  if (uiParitySpecStatus !== "ready") {
+    blockers.push("ui_parity_spec_not_ready");
   }
 
   if ((lifecycleEvidence?.unresolvedDisappearedRows ?? 0) > 0) {

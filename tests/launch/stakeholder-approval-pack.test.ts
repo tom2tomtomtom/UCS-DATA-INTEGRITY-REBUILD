@@ -11,7 +11,8 @@ describe("Phase 10 stakeholder approval pack", () => {
       encoding: "utf8",
       env: {
         ...process.env,
-        SOURCE_SNAPSHOT_FILE: snapshotFile
+        SOURCE_SNAPSHOT_FILE: snapshotFile,
+        UI_PARITY_SPEC_STATUS: "ready"
       }
     });
     const pack = JSON.parse(output);
@@ -81,6 +82,41 @@ describe("Phase 10 stakeholder approval pack", () => {
         })
       ])
     );
+    expect(pack.scenarioEvidence).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          id: "ucs04154",
+          status: "pass",
+          scope: expect.objectContaining({
+            office: "LDN",
+            jobNumber: "UCS04154"
+          }),
+          sourceSnapshotRefs: expect.arrayContaining([
+            { layer: "source_snapshot", ref: "stakeholder-pack-test-snapshot" },
+            { layer: "float_manifest", ref: "float:target-manifest" }
+          ]),
+          uiSurfaceResult: expect.objectContaining({
+            status: "pass",
+            sourceLayer: "data_quality_ui"
+          }),
+          displayContractResult: expect.objectContaining({
+            status: "not_checked"
+          }),
+          csvResult: expect.objectContaining({
+            status: "not_applicable"
+          }),
+          approvalStatus: "blocked_evidence_gap"
+        }),
+        expect.objectContaining({
+          id: "usa00262",
+          approvalStatus: "blocked_warning",
+          chatEvidenceResult: expect.objectContaining({
+            status: "needs_codex"
+          }),
+          unresolvedConflicts: expect.arrayContaining([expect.stringContaining("source_snapshot_scenario_rows_missing")])
+        })
+      ])
+    );
     expect(output).not.toContain("production-ready");
     expect(output).not.toContain("approved for cutover");
   });
@@ -121,7 +157,8 @@ describe("Phase 10 stakeholder approval pack", () => {
       encoding: "utf8",
       env: {
         ...process.env,
-        SOURCE_SNAPSHOT_FILE: snapshotFile
+        SOURCE_SNAPSHOT_FILE: snapshotFile,
+        UI_PARITY_SPEC_STATUS: "ready"
       }
     });
     const pack = JSON.parse(output);
@@ -151,7 +188,8 @@ describe("Phase 10 stakeholder approval pack", () => {
       encoding: "utf8",
       env: {
         ...process.env,
-        SOURCE_SNAPSHOT_FILE: snapshotFile
+        SOURCE_SNAPSHOT_FILE: snapshotFile,
+        UI_PARITY_SPEC_STATUS: "ready"
       }
     });
     const pack = JSON.parse(output);
@@ -163,6 +201,24 @@ describe("Phase 10 stakeholder approval pack", () => {
       blocker: "source_snapshot_missing"
     });
     expect(pack.blockers).toEqual(expect.arrayContaining(["source_snapshot_missing"]));
+  });
+
+  test("keeps stakeholder pack blocked when UI parity spec is not ready", () => {
+    const snapshotFile = writeSnapshotFile(fourStreamSnapshot());
+    const output = execFileSync("node", ["scripts/stakeholder-approval-pack.mjs"], {
+      encoding: "utf8",
+      env: {
+        ...process.env,
+        SOURCE_SNAPSHOT_FILE: snapshotFile,
+        STAKEHOLDER_APPROVAL_STATUS: "approved"
+      }
+    });
+    const pack = JSON.parse(output);
+
+    expect(pack.status).toBe("blocked");
+    expect(pack.stakeholderApprovalReady).toBe(false);
+    expect(pack.blockers).toEqual(expect.arrayContaining(["ui_parity_spec_not_ready"]));
+    expect(pack.uiParitySpecStatus).toBe("pending");
   });
 });
 

@@ -48,6 +48,13 @@ function namedScenarioCard(scenario: NamedScenarioResult) {
   const firstCheck = firstWarn ?? scenario.checks[0];
   const message = [
     `${scenario.owner}: ${scenario.classification}`,
+    `Approval ${scenario.approvalStatus}`,
+    `Scope ${scopeLabel(scenario)}`,
+    resultLabel("Display", scenario.displayContractResult.status),
+    resultLabel("UI", scenario.uiSurfaceResult.status),
+    resultLabel("CSV", scenario.csvResult.status),
+    resultLabel("Chat", scenario.chatEvidenceResult.status),
+    sourceRefLabel(scenario),
     firstCheck?.evidence,
     scenario.nextHumanAction
   ].filter(Boolean).join(" ");
@@ -58,6 +65,26 @@ function namedScenarioCard(scenario: NamedScenarioResult) {
     React.createElement("strong", null, `${scenario.status.toUpperCase()}: ${scenario.name}`),
     React.createElement("span", null, message)
   );
+}
+
+function scopeLabel(scenario: NamedScenarioResult): string {
+  const scope = scenario.scope;
+  const slice = [
+    scope.department === undefined ? undefined : `department=${scope.department}`,
+    scope.client === undefined ? undefined : `client=${scope.client}`,
+    scope.jobNumber === undefined ? undefined : `job=${scope.jobNumber}`
+  ].filter(Boolean).join(",");
+  return `${scope.office} ${scope.from} to ${scope.to}${slice === "" ? "" : ` ${slice}`}`;
+}
+
+function resultLabel(label: string, status: string): string {
+  return `${label} ${status}`;
+}
+
+function sourceRefLabel(scenario: NamedScenarioResult): string | undefined {
+  if (scenario.sourceSnapshotRefs.length === 0) return undefined;
+
+  return `Source refs ${scenario.sourceSnapshotRefs.length}`;
 }
 
 function isUnresolvedScenario(scenario: NamedScenarioResult): boolean {

@@ -49,7 +49,7 @@ describe("Phase 10 source approval readiness report", () => {
   test("passes when all source streams, snapshots, UI spec, and stakeholder approval are ready", () => {
     const output = runReport({
       SOURCE_APPROVAL_ENV_TEXT: fullEnv,
-      SOURCE_SNAPSHOT_FILE: writeSnapshotFile(fourStreamSnapshot()),
+      SOURCE_SNAPSHOT_FILE: writeSnapshotFile(fourStreamSnapshotWithLiveFloatManifest()),
       UI_PARITY_SPEC_STATUS: "ready",
       STAKEHOLDER_APPROVAL_STATUS: "approved"
     });
@@ -69,7 +69,7 @@ describe("Phase 10 source approval readiness report", () => {
   test("blocks production cutover before approval", () => {
     const output = runReport({
       SOURCE_APPROVAL_ENV_TEXT: fullEnv,
-      SOURCE_SNAPSHOT_FILE: writeSnapshotFile(fourStreamSnapshot()),
+      SOURCE_SNAPSHOT_FILE: writeSnapshotFile(fourStreamSnapshotWithLiveFloatManifest()),
       UI_PARITY_SPEC_STATUS: "ready",
       PRODUCTION_CUTOVER_STATUS: "cut_over"
     });
@@ -112,7 +112,7 @@ describe("Phase 10 source approval readiness report", () => {
       SOURCE_APPROVAL_ENV_FILE: envFile,
       RAILWAY_PROJECT_ID: "railway_project",
       RAILWAY_ENVIRONMENT_ID: "railway_environment",
-      SOURCE_SNAPSHOT_FILE: writeSnapshotFile(fourStreamSnapshot()),
+      SOURCE_SNAPSHOT_FILE: writeSnapshotFile(fourStreamSnapshotWithLiveFloatManifest()),
       UI_PARITY_SPEC_STATUS: "ready",
       STAKEHOLDER_APPROVAL_STATUS: "approved"
     });
@@ -127,8 +127,8 @@ describe("Phase 10 source approval readiness report", () => {
     );
   });
 
-  test("treats an importable four-stream source snapshot file as snapshot-ready", () => {
-    const snapshotFile = writeSnapshotFile(fourStreamSnapshot());
+  test("treats an importable four-stream source snapshot with live Float manifest as snapshot-ready", () => {
+    const snapshotFile = writeSnapshotFile(fourStreamSnapshotWithLiveFloatManifest());
     const output = runReport({
       SOURCE_APPROVAL_ENV_TEXT: fullEnv,
       SOURCE_SNAPSHOT_FILE: snapshotFile,
@@ -142,6 +142,23 @@ describe("Phase 10 source approval readiness report", () => {
       expect.arrayContaining([expect.objectContaining({ code: "SOURCE_SNAPSHOTS_READY", status: "pass" })])
     );
     expect(report.summary.sourceSnapshotStatus).toBe("ready");
+  });
+
+  test("does not mark four-stream snapshots ready without live Float target manifest evidence", () => {
+    const snapshotFile = writeSnapshotFile(fourStreamSnapshot());
+    const output = runReport({
+      SOURCE_APPROVAL_ENV_TEXT: fullEnv,
+      SOURCE_SNAPSHOT_FILE: snapshotFile,
+      UI_PARITY_SPEC_STATUS: "ready",
+      STAKEHOLDER_APPROVAL_STATUS: "approved"
+    });
+    const report = JSON.parse(output);
+
+    expect(report.status).toBe("fail");
+    expect(report.blockers).toEqual(
+      expect.arrayContaining([expect.objectContaining({ code: "SOURCE_SNAPSHOTS_READY_BLOCKED" })])
+    );
+    expect(report.summary.sourceSnapshotStatus).toBe("missing");
   });
 
   test("does not mark incomplete source snapshots as ready", () => {
@@ -259,6 +276,55 @@ function fourStreamSnapshot() {
         ]
       }
     ]
+  };
+}
+
+function fourStreamSnapshotWithLiveFloatManifest() {
+  return {
+    ...fourStreamSnapshot(),
+    sources: fourStreamSnapshot().sources.map((source) =>
+      source.source === "float"
+        ? {
+            ...source,
+            mode: "read_only_live",
+            rows: [
+              {
+                identity: {
+                  stableSourceRowKey: "float:projects:10480262",
+                  sourceObjectId: "10480262"
+                },
+                raw: {
+                  objectType: "project",
+                  project_id: 10480262,
+                  project_code: "UCS04154",
+                  name: "UCS04154 Float project"
+                }
+              },
+              {
+                identity: {
+                  stableSourceRowKey: "float:target-manifest",
+                  sourceObjectId: "target_manifest"
+                },
+                raw: {
+                  objectType: "target_manifest",
+                  requestedScenarioCodes: ["UCS04154", "BT"],
+                  requestedProjectIds: ["10480262"],
+                  resolvedProjectIds: ["10480262"],
+                  resolvedScenarios: [
+                    {
+                      scenarioCode: "UCS04154",
+                      floatProjectId: "10480262",
+                      sourceStableSourceRowKey: "float:projects:10480262",
+                      sourceObjectId: "10480262"
+                    }
+                  ],
+                  unresolvedScenarioCodes: ["BT"]
+                }
+              }
+            ]
+          }
+        : source
+    )
   };
 }
 

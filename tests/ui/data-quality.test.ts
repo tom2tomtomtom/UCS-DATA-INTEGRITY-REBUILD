@@ -24,6 +24,10 @@ describe("P6-E Data Quality", () => {
     expect(html).toContain("Sian");
     expect(html).toContain("Jade");
     expect(html).toContain("Needs Codex");
+    expect(html).toContain("Approval blocked_source_evidence");
+    expect(html).toContain("Display");
+    expect(html).toContain("CSV");
+    expect(html).toContain("Chat");
   });
 
   test("surfaces USA warnings from the named scenario report when source rows are missing", () => {
@@ -71,5 +75,9 @@ describe("P6-E Data Quality", () => {
     expect(html).toContain("contains no raw rows for USA00262");
     expect(html).toContain("contains no raw rows for USA00323");
     expect(html).toContain("Capture targeted USA fee-sheet source rows");
+    expect(html).toContain("Approval blocked_warning");
+    expect(html).toContain("Scope USA 2026-01-01 to 2026-12-31 job=USA00262");
+    expect(html).toContain("Source refs 2");
+    expect(html).toContain("Chat needs_codex");
   });
 });
