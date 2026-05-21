@@ -24,11 +24,6 @@ function readEnvText() {
     return process.env.SOURCE_APPROVAL_ENV_TEXT;
   }
 
-  const envFile = process.env.SOURCE_APPROVAL_ENV_FILE ?? ".env.local";
-  if (fs.existsSync(envFile)) {
-    return fs.readFileSync(envFile, "utf8");
-  }
-
   const keys = [
     "APP_ENV",
     "MUTATION_GUARD",
@@ -44,6 +39,15 @@ function readEnvText() {
     "FLOAT_API_KEY",
     "ANTHROPIC_API_KEY"
   ];
+
+  if (process.env.RAILWAY_PROJECT_ID || process.env.RAILWAY_ENVIRONMENT_ID) {
+    return keys.map((key) => `${key}=${process.env[key] ?? ""}`).join("\n");
+  }
+
+  const envFile = process.env.SOURCE_APPROVAL_ENV_FILE ?? ".env.local";
+  if (fs.existsSync(envFile)) {
+    return fs.readFileSync(envFile, "utf8");
+  }
 
   return keys.map((key) => `${key}=${process.env[key] ?? ""}`).join("\n");
 }

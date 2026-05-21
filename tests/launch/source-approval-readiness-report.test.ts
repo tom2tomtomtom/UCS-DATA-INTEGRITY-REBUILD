@@ -1,4 +1,7 @@
 import { execFileSync } from "node:child_process";
+import fs from "node:fs";
+import os from "node:os";
+import path from "node:path";
 
 import { describe, expect, test } from "vitest";
 
@@ -77,6 +80,36 @@ describe("Phase 10 source approval readiness report", () => {
       expect.arrayContaining([expect.objectContaining({ code: "PRODUCTION_CUTOVER_BEFORE_APPROVAL" })])
     );
   });
+
+  test("uses Railway-injected env instead of stale local env text", () => {
+    const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), "source-approval-env-"));
+    const envFile = path.join(tempDir, ".env.local");
+    fs.writeFileSync(
+      envFile,
+      fullEnv
+        .replace("PIPELINE_SHEET_ID=pipeline_sheet_id", "PIPELINE_SHEET_ID=")
+        .replace("PRODUCTION_REVENUE_SHEET_ID=production_revenue_sheet_id", "PRODUCTION_REVENUE_SHEET_ID=")
+    );
+
+    const output = runReport({
+      ...envObjectFromText(fullEnv),
+      SOURCE_APPROVAL_ENV_FILE: envFile,
+      RAILWAY_PROJECT_ID: "railway_project",
+      RAILWAY_ENVIRONMENT_ID: "railway_environment",
+      SOURCE_SNAPSHOT_STATUS: "ready",
+      UI_PARITY_SPEC_STATUS: "ready",
+      STAKEHOLDER_APPROVAL_STATUS: "approved"
+    });
+    const report = JSON.parse(output);
+
+    expect(report.status).toBe("pass");
+    expect(report.sources).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ name: "pipeline", status: "pass" }),
+        expect.objectContaining({ name: "production_revenue", status: "pass" })
+      ])
+    );
+  });
 });
 
 function runReport(env: Record<string, string>): string {
@@ -87,4 +120,13 @@ function runReport(env: Record<string, string>): string {
       ...env
     }
   });
+}
+
+function envObjectFromText(text: string): Record<string, string> {
+  return Object.fromEntries(
+    text.split("\n").map((line) => {
+      const [key, ...value] = line.split("=");
+      return [key, value.join("=")];
+    })
+  );
 }
