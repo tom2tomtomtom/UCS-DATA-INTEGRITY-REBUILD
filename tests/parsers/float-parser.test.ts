@@ -133,4 +133,156 @@ describe("P3-E Float parser", () => {
     expect(result.facts.some((fact) => "dashboardHours" in fact)).toBe(false);
     expect(result.facts.some((fact) => "correctedFloatProjectId" in fact)).toBe(false);
   });
+
+  test("shapes live Float API project task and person rows into non-additive raw task facts", () => {
+    const result = parseArchivedFloatRows([
+      floatApiRow("raw_float_project_001", "10480262", {
+        objectType: "project",
+        project_id: 10480262,
+        project_code: "UCS04154",
+        name: "UCS04154 - Acme Launch Planning",
+        active: 1,
+        status: 2,
+        tentative: 0
+      }),
+      floatApiRow("raw_float_person_001", "2001", {
+        objectType: "person",
+        people_id: 2001,
+        name: "Jane Planner",
+        job_title: "SENIOR STRATEGIST",
+        department: { name: "LDN Strategy" },
+        people_type_id: 1,
+        active: 1
+      }),
+      floatApiRow("raw_float_task_001", "3001", {
+        objectType: "task",
+        task_id: 3001,
+        project_id: 10480262,
+        start_date: "2026-03-02",
+        end_date: "2026-03-04",
+        hours: 6,
+        people_id: 2001,
+        status: 2,
+        billable: 1
+      })
+    ]);
+
+    expect(result.facts).toHaveLength(1);
+    expect(result.sourceRowsRead).toBe(3);
+    expect(result.sourceRowsSkipped).toBe(2);
+    expect(result.facts[0]).toMatchObject({
+      sourceLayer: "float_raw",
+      floatProjectId: "10480262",
+      jobNumber: "UCS04154",
+      projectName: "UCS04154 - Acme Launch Planning",
+      taskId: "3001",
+      personId: "2001",
+      person: "Jane Planner",
+      department: "Strategy",
+      role: "SENIOR STRATEGIST",
+      from: "2026-03-02",
+      to: "2026-03-04",
+      month: "2026-03",
+      allocationClass: "allocated",
+      activeState: "active",
+      expansionRule: "float_api_daily_hours_not_calendar_expanded"
+    });
+    expect(hoursValue(result.facts[0]!)).toBe(6);
+    expect(result.facts[0]?.isAdditive).toBe(false);
+    expect(result.facts[0]?.trace).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ rawRowId: "raw_float_task_001", sourceObjectId: "3001" }),
+        expect.objectContaining({ rawRowId: "raw_float_project_001", sourceObjectId: "10480262" }),
+        expect.objectContaining({ rawRowId: "raw_float_person_001", sourceObjectId: "2001" })
+      ])
+    );
+  });
+
+  test("keeps live Float API multi-person task hours raw and warns instead of splitting invisibly", () => {
+    const result = parseArchivedFloatRows([
+      floatApiRow("raw_float_project_002", "11048595", {
+        objectType: "project",
+        project_id: 11048595,
+        project_code: "UCS04787",
+        name: "UCS04787 - BA March Madness",
+        active: 1,
+        status: 2
+      }),
+      floatApiRow("raw_float_person_002", "18699903", {
+        objectType: "person",
+        people_id: 18699903,
+        name: "Carlos Alija-Villanueva",
+        job_title: "CREATIVE DIRECTOR",
+        department: { name: "NYC Creative" },
+        people_type_id: 2,
+        active: 1
+      }),
+      floatApiRow("raw_float_person_003", "18699904", {
+        objectType: "person",
+        people_id: 18699904,
+        name: "Laura Sampedro-Ibanez",
+        job_title: "CREATIVE DIRECTOR",
+        department: { name: "NYC Creative" },
+        people_type_id: 2,
+        active: 1
+      }),
+      floatApiRow("raw_float_task_002", "1709937673", {
+        objectType: "task",
+        task_id: 1709937673,
+        project_id: 11048595,
+        start_date: "2026-06-03",
+        end_date: "2026-06-05",
+        hours: 8,
+        people_id: null,
+        people_ids: [18699903, 18699904],
+        status: 2,
+        billable: 1
+      })
+    ]);
+
+    expect(result.facts).toHaveLength(1);
+    expect(result.facts[0]).toMatchObject({
+      floatProjectId: "11048595",
+      jobNumber: "UCS04787",
+      taskId: "1709937673",
+      person: "Multiple people",
+      allocationClass: "pencil",
+      expansionRule: "float_api_daily_hours_not_calendar_expanded"
+    });
+    expect(hoursValue(result.facts[0]!)).toBe(8);
+    expect(result.warnings).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          code: "MULTI_PERSON_SPLIT_AMBIGUITY",
+          rawRowIds: ["raw_float_task_002"]
+        })
+      ])
+    );
+  });
 });
+
+function floatApiRow(id: string, sourceObjectId: string, raw: Readonly<Record<string, unknown>>): ArchivedRawSourceRow {
+  return {
+    kind: "raw_source_row",
+    archiveStatus: "archived",
+    id,
+    batchId: "batch_float_api",
+    source: "float",
+    identity: {
+      stableSourceRowKey: `float:${raw.objectType}:${sourceObjectId}`,
+      sourceObjectId
+    },
+    raw,
+    contentHash: `hash:${id}`,
+    observedAt: "2026-05-21T00:00:00.000Z",
+    sourceRefs: [
+      {
+        source: "float",
+        sourceLayer: "float_raw",
+        batchId: "batch_float_api",
+        rawRowId: id,
+        sourceObjectId
+      }
+    ]
+  };
+}
