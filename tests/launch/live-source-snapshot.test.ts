@@ -17,6 +17,7 @@ type LiveSourceSnapshotModule = {
     readonly floatProjectIds?: readonly string[];
     readonly includeLinkedFeeSheets?: boolean;
     readonly linkedFeeSheetLimit?: number | "all";
+    readonly linkedFeeSheetOffset?: number;
   }) => Promise<{
     readonly snapshot: {
       readonly readOnly: boolean;
@@ -536,6 +537,129 @@ describe("Phase 10 live source snapshot builder", () => {
       feeSheetUrl: "https://docs.google.com/spreadsheets/d/linked-fee-sheet-id/edit"
     });
     expect(fetchCalls.some((url) => decodeURIComponent(url).includes("linked-fee-sheet-id"))).toBe(true);
+  });
+
+  test("can offset linked fee-sheet reads for resumable chunk collection", async () => {
+    const { buildLiveSourceSnapshot } = await loadLiveSourceSnapshotModule();
+    const fetchCalls: string[] = [];
+    const fetchImpl = async (url: string) => {
+      fetchCalls.push(url);
+      const decodedUrl = decodeURIComponent(url);
+
+      if (decodedUrl.includes("fee_tracker_sheet") && decodedUrl.includes("includeGridData=true")) {
+        return ok({
+          sheets: [
+            {
+              properties: { title: "LDN" },
+              data: [
+                {
+                  startRow: 0,
+                  rowData: [
+                    {
+                      values: [
+                        { formattedValue: "Created" },
+                        { formattedValue: "Client" },
+                        { formattedValue: "Job Number" },
+                        { formattedValue: "Job Name" },
+                        { formattedValue: "Fee Sheet Link" }
+                      ]
+                    },
+                    {
+                      values: [
+                        { formattedValue: "09-06-2025" },
+                        { formattedValue: "Skipped Client" },
+                        { formattedValue: "UCS00001" },
+                        { formattedValue: "Skipped Project" },
+                        {
+                          formattedValue: "UCS00001 Fee Sheet",
+                          hyperlink: "https://docs.google.com/spreadsheets/d/skipped-linked-id/edit"
+                        }
+                      ]
+                    },
+                    {
+                      values: [
+                        { formattedValue: "09-06-2025" },
+                        { formattedValue: "Loaded Client" },
+                        { formattedValue: "UCS00002" },
+                        { formattedValue: "Loaded Project" },
+                        {
+                          formattedValue: "UCS00002 Fee Sheet",
+                          hyperlink: "https://docs.google.com/spreadsheets/d/loaded-linked-id/edit"
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        });
+      }
+
+      if (decodedUrl.includes("fee_tracker_sheet") && decodedUrl.includes("/values/")) {
+        return ok({
+          values: [
+            ["Created", "Client", "Job Number", "Job Name", "Fee Sheet Link"],
+            ["09-06-2025", "Skipped Client", "UCS00001", "Skipped Project", "UCS00001 Fee Sheet"],
+            ["09-06-2025", "Loaded Client", "UCS00002", "Loaded Project", "UCS00002 Fee Sheet"]
+          ]
+        });
+      }
+
+      if (decodedUrl.includes("loaded-linked-id") && decodedUrl.includes("fields=sheets.properties")) {
+        return ok({ sheets: [{ properties: { title: "FIRST TAB", index: 0 } }] });
+      }
+
+      if (decodedUrl.includes("loaded-linked-id") && decodedUrl.includes("includeGridData=true")) {
+        return ok({
+          sheets: [
+            {
+              properties: { title: "FIRST TAB" },
+              data: [{ startRow: 0, rowData: [{ values: [{ formattedValue: "FLOAT PROJECT ID" }, { formattedValue: "10480262" }] }] }]
+            }
+          ]
+        });
+      }
+
+      if (decodedUrl.includes("loaded-linked-id") && decodedUrl.includes("/values/")) {
+        return ok({ values: [["FLOAT PROJECT ID", "10480262"]] });
+      }
+
+      if (url.includes("/values/")) {
+        return ok({ values: [["Header"], ["Source row"]] });
+      }
+
+      if (url.endsWith("/projects")) {
+        return ok([{ project_id: 10480262, project_code: "UCS04154" }]);
+      }
+
+      return ok({ sheets: [{ properties: { title: "Sheet1" } }] });
+    };
+
+    const { snapshot } = await buildLiveSourceSnapshot({
+      env: {
+        ...env,
+        FEE_TRACKER_SNAPSHOT_RANGE: "LDN!A1:I3"
+      },
+      fetchImpl,
+      now: "2026-05-21T00:00:00.000Z",
+      maxRows: 10,
+      includeLinkedFeeSheets: true,
+      linkedFeeSheetLimit: 1,
+      linkedFeeSheetOffset: 1
+    });
+
+    const feeRows = snapshot.sources.find((sourceRow) => sourceRow.source === "fee_sheet")?.rows ?? [];
+    const linkedRows = feeRows.filter((row) => row.raw?.linkedFeeSheet);
+
+    expect(linkedRows).toHaveLength(1);
+    expect(linkedRows[0]?.raw?.linkedFeeSheet).toMatchObject({
+      feeTrackerJobNumber: "UCS00002",
+      feeTrackerClient: "Loaded Client",
+      feeSheetSpreadsheetId: "loaded-linked-id"
+    });
+    expect(fetchCalls.some((url) => decodeURIComponent(url).includes("skipped-linked-id"))).toBe(false);
+    expect(fetchCalls.some((url) => decodeURIComponent(url).includes("loaded-linked-id"))).toBe(true);
   });
 
   test("preserves inaccessible linked fee sheets as read-error evidence instead of aborting", async () => {

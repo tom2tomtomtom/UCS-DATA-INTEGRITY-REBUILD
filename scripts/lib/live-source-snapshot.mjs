@@ -18,7 +18,8 @@ export async function buildLiveSourceSnapshot({
   includeLinkedFeeSheets = env.FEE_SHEET_INCLUDE_LINKED === "1",
   linkedFeeSheetLimit = env.FEE_SHEET_LINKED_LIMIT === "all"
     ? "all"
-    : parsePositiveInt(env.FEE_SHEET_LINKED_LIMIT)
+    : parsePositiveInt(env.FEE_SHEET_LINKED_LIMIT),
+  linkedFeeSheetOffset = parseNonNegativeInt(env.FEE_SHEET_LINKED_OFFSET) ?? 0
 } = {}) {
   if (typeof fetchImpl !== "function") {
     throw new Error("buildLiveSourceSnapshot requires fetch.");
@@ -39,7 +40,7 @@ export async function buildLiveSourceSnapshot({
       collectAllRanges: true,
       includeCellMetadata: true,
       linkedSheetOptions: includeLinkedFeeSheets
-        ? { limit: linkedFeeSheetLimit ?? maxRows }
+        ? { limit: linkedFeeSheetLimit ?? maxRows, offset: linkedFeeSheetOffset }
         : undefined,
       maxRows
     }),
@@ -188,6 +189,7 @@ async function readSheetSource({
         googleAccessToken,
         parentRows: collectedRows,
         limit: linkedSheetOptions.limit,
+        offset: linkedSheetOptions.offset,
         maxRows
       })
       : [];
@@ -209,9 +211,10 @@ async function readLinkedFeeSheetRows({
   googleAccessToken,
   parentRows,
   limit,
+  offset = 0,
   maxRows
 }) {
-  const links = collectLinkedFeeSheetLinks(parentRows, limit);
+  const links = collectLinkedFeeSheetLinks(parentRows, { limit, offset });
   const rows = [];
 
   for (const link of links) {
@@ -249,9 +252,10 @@ async function readLinkedFeeSheetRows({
   return rows;
 }
 
-function collectLinkedFeeSheetLinks(parentRows, limit) {
+function collectLinkedFeeSheetLinks(parentRows, { limit, offset = 0 } = {}) {
   const links = [];
   const seen = new Set();
+  let seenUniqueLinks = 0;
 
   for (const row of parentRows) {
     const raw = asRecord(row.raw);
@@ -266,6 +270,12 @@ function collectLinkedFeeSheetLinks(parentRows, limit) {
       if (!feeSheetSpreadsheetId || seen.has(feeSheetSpreadsheetId)) continue;
 
       seen.add(feeSheetSpreadsheetId);
+      seenUniqueLinks += 1;
+
+      if (seenUniqueLinks <= offset) {
+        continue;
+      }
+
       links.push({
         feeTrackerStableSourceRowKey: row.identity?.stableSourceRowKey,
         feeTrackerSourceDocumentId: row.identity?.sourceDocumentId,
@@ -1088,6 +1098,12 @@ function parsePositiveInt(value) {
   if (typeof value !== "string") return undefined;
   const parsed = Number.parseInt(value, 10);
   return Number.isInteger(parsed) && parsed > 0 ? parsed : undefined;
+}
+
+function parseNonNegativeInt(value) {
+  if (typeof value !== "string" || value.trim() === "") return undefined;
+  const parsed = Number(value);
+  return Number.isInteger(parsed) && parsed >= 0 ? parsed : undefined;
 }
 
 function numericIndex(value) {
