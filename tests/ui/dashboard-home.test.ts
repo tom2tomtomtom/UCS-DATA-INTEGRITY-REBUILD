@@ -73,6 +73,23 @@ describe("P6-B dashboard home rollups", () => {
     expect(html).toContain("1,051.4h + unclassified");
   });
 
+  test("renders the legacy Sheet Health diagnostic groups without hiding rows", () => {
+    const contract = getFixtureDashboardContract({
+      office: "LDN",
+      from: "2026-01-01",
+      to: "2026-03-31"
+    });
+    const html = renderToStaticMarkup(React.createElement(DashboardHome, { contract }));
+
+    expect(html).toContain("read/source warnings - sheet unreachable, layout drift, or source evidence gaps");
+    expect(html).toContain("monthly/source reconciliation warnings - source totals disagree across layers");
+    expect(html).toContain("role-section reconciliation warnings - role-detail rows or attribution limits need review");
+    expect(html).toContain("These rows still surface.");
+    expect(html).toContain("Review evidence");
+    expect(html).toContain("Open evidence");
+    expect(html).toContain("href=\"/dashboard/projects/UCS04787?office=LDN&amp;from=2026-01-01&amp;to=2026-03-31&amp;jobNumber=UCS04787&amp;floatProjectId=11413929\"");
+  });
+
   test("uses the URL-selected rollup view for the primary table", () => {
     const contract = getFixtureDashboardContract({
       office: "LDN",

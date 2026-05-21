@@ -1,6 +1,14 @@
 import React from "react";
 
-import type { DashboardDisplayContract, DashboardTotals, MetricValue, RollupDimension, RollupRow } from "../../../lib";
+import type {
+  DashboardDisplayContract,
+  DashboardTotals,
+  MetricValue,
+  ReconciliationCheck,
+  RollupDimension,
+  RollupRow,
+  SourceWarning
+} from "../../../lib";
 import { scopedHref } from "../../../lib";
 import { TimeFilterControls } from "../time-filter-controls";
 
@@ -111,6 +119,7 @@ function freshnessCard(contract: DashboardDisplayContract) {
 
 function sheetHealthPanel(contract: DashboardDisplayContract) {
   const reconciliationWarnings = contract.reconciliation.filter((check) => check.status !== "PASS");
+  const roleSectionWarnings = roleSectionHealthWarnings(contract);
 
   return React.createElement(
     "section",
@@ -121,18 +130,54 @@ function sheetHealthPanel(contract: DashboardDisplayContract) {
       `Sheet health - ${contract.warnings.length + reconciliationWarnings.length} source checks need attention`
     ),
     React.createElement(
-      "details",
+      "p",
       null,
-      React.createElement("summary", null, `${contract.warnings.length} source warnings`),
-      healthList(contract.warnings.map((warning) => `${warning.code}: ${warning.message}`))
+      "Source-sheet health is diagnostic only. Flagged rows still surface, and unsupported checks stay visible as traceability evidence."
     ),
     React.createElement(
       "details",
       null,
-      React.createElement("summary", null, `${reconciliationWarnings.length} Float reconciliation warnings`),
-      healthList(reconciliationWarnings.map((check) => `${check.code}: ${check.message ?? check.label}`))
+      React.createElement(
+        "summary",
+        null,
+        `${contract.warnings.length} read/source warnings - sheet unreachable, layout drift, or source evidence gaps`
+      ),
+      healthWarningList(contract, contract.warnings)
+    ),
+    React.createElement(
+      "details",
+      null,
+      React.createElement(
+        "summary",
+        null,
+        `${reconciliationWarnings.length} monthly/source reconciliation warnings - source totals disagree across layers`
+      ),
+      healthCheckList(contract, reconciliationWarnings)
+    ),
+    React.createElement(
+      "details",
+      null,
+      React.createElement(
+        "summary",
+        null,
+        `${roleSectionWarnings.length} role-section reconciliation warnings - role-detail rows or attribution limits need review`
+      ),
+      healthList(roleSectionWarnings)
+    ),
+    React.createElement(
+      "p",
+      { className: "detail-scope" },
+      "These rows still surface. Treat this as a traceability warning: either the source layout needs fixing, or the parser/check is looking at the wrong source range."
     )
   );
+}
+
+function roleSectionHealthWarnings(contract: DashboardDisplayContract): string[] {
+  const roleWarnings = contract.rollups.byRole.flatMap((row) =>
+    row.unsupported.map((unsupported) => `${row.label}: ${unsupported.metric} ${unsupported.displayLabel}`)
+  );
+
+  return [...new Set(roleWarnings)];
 }
 
 function soldAllocatedHeader(contract: DashboardDisplayContract, view: RollupDimension) {
@@ -421,13 +466,46 @@ function unsupportedMetric(metric: string, row: RollupRow): MetricValue {
   };
 }
 
-function healthList(items: readonly string[]) {
+function healthWarningList(contract: DashboardDisplayContract, warnings: readonly SourceWarning[]) {
+  return healthList(warnings.map((warning) => healthWarningItem(contract, warning)));
+}
+
+function healthCheckList(contract: DashboardDisplayContract, checks: readonly ReconciliationCheck[]) {
+  return healthList(checks.map((check) => healthCheckItem(contract, check)));
+}
+
+function healthWarningItem(contract: DashboardDisplayContract, warning: SourceWarning) {
+  return React.createElement(
+    React.Fragment,
+    null,
+    React.createElement("strong", null, warning.code),
+    `: ${warning.message} `,
+    React.createElement("a", { href: scopedHref("/dashboard/data-quality", contract.scope) }, "Review evidence")
+  );
+}
+
+function healthCheckItem(contract: DashboardDisplayContract, check: ReconciliationCheck) {
+  const href =
+    check.scope.jobNumber === undefined
+      ? scopedHref("/dashboard/data-quality", contract.scope)
+      : scopedHref(`/dashboard/projects/${check.scope.jobNumber}`, check.scope);
+
+  return React.createElement(
+    React.Fragment,
+    null,
+    React.createElement("strong", null, check.code),
+    `: ${check.message ?? check.label} `,
+    React.createElement("a", { href }, "Open evidence")
+  );
+}
+
+function healthList(items: readonly React.ReactNode[]) {
   return React.createElement(
     "ul",
     null,
     items.length === 0
       ? React.createElement("li", null, "No warnings for this source layer.")
-      : items.map((item) => React.createElement("li", { key: item }, item))
+      : items.map((item, index) => React.createElement("li", { key: index }, item))
   );
 }
 
