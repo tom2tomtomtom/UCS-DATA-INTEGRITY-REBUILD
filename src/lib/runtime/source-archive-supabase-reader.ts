@@ -186,6 +186,7 @@ async function fetchJson<T>({
 
   const response = await fetcher(url, {
     method: "GET",
+    cache: "no-store",
     headers: {
       accept: "application/json",
       apikey: serviceRoleKey,

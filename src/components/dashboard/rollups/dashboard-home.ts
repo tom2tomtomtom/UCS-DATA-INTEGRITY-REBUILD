@@ -129,7 +129,7 @@ function freshnessCard(contract: DashboardDisplayContract) {
     React.createElement(
       "span",
       null,
-      `Display contract generated ${formatGeneratedAt(contract.generatedAt)} from fixture source evidence.`
+      `Display contract generated ${formatGeneratedAt(contract.generatedAt)} from source archive evidence.`
     )
   );
 }

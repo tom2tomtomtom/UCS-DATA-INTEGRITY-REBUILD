@@ -101,10 +101,10 @@ describe("source archive Supabase reader", () => {
   });
 
   test("reads latest snapshot raw rows with GET requests only", async () => {
-    const calls: Array<{ url: string; method: string | undefined }> = [];
+    const calls: Array<{ url: string; method: string | undefined; cache: RequestCache | undefined }> = [];
     const fetcher = (async (input, init) => {
       const url = String(input);
-      calls.push({ url, method: init?.method });
+      calls.push({ url, method: init?.method, cache: init?.cache });
 
       if (url.includes("/source_batches?")) {
         return Response.json([
@@ -166,6 +166,7 @@ describe("source archive Supabase reader", () => {
     expect(rows[1]?.identity).toMatchObject({ sourceObjectId: "10480262" });
     expect(calls).toHaveLength(2);
     expect(calls.every((call) => call.method === "GET")).toBe(true);
+    expect(calls.every((call) => call.cache === "no-store")).toBe(true);
   });
 
   test("requires the read-only mutation guard", async () => {
