@@ -12,7 +12,7 @@ type LiveSourceSnapshotModule = {
     readonly env: Record<string, string>;
     readonly fetchImpl: (url: string, init?: unknown) => Promise<{ ok: boolean; status: number; json: () => Promise<unknown> }>;
     readonly now: string;
-    readonly maxRows: number;
+    readonly maxRows: number | "all";
     readonly floatScenarioCodes?: readonly string[];
     readonly floatProjectIds?: readonly string[];
   }) => Promise<{
@@ -150,7 +150,7 @@ describe("Phase 10 live source snapshot builder", () => {
     const scenarioEvidence = buildScenarioSourceEvidenceFromSnapshot(snapshot, ["USA00262", "USA00323"]);
 
     expect(summary.sourceRows.fee_sheet).toBe(7);
-    expect(feeTracker?.sourceVersion).toBe("ranges:LDN!A1:I1000,UCX!A1:I1000,USA!A1:I1000");
+    expect(feeTracker?.sourceVersion).toBe("ranges:LDN!A1:I10,UCX!A1:I10,USA!A1:I10");
     expect(feeTracker?.rows?.map((row) => row.identity?.sourceTab)).toEqual([
       "LDN",
       "LDN",
@@ -172,6 +172,54 @@ describe("Phase 10 live source snapshot builder", () => {
         rowCount: 1
       })
     ]);
+  });
+
+  test("supports explicit all-row snapshots without the 1000-row approval cap", async () => {
+    const { buildLiveSourceSnapshot } = await loadLiveSourceSnapshotModule();
+    const fetchCalls: string[] = [];
+    const fetchImpl = async (url: string) => {
+      fetchCalls.push(url);
+
+      if (url.includes("/values/")) {
+        return ok({ values: [["Header"], ["Row 1"], ["Row 2"], ["Row 3"]] });
+      }
+
+      if (url.endsWith("/projects")) {
+        return ok([
+          { project_id: 1, project_code: "FLOAT001" },
+          { project_id: 2, project_code: "FLOAT002" },
+          { project_id: 3, project_code: "FLOAT003" }
+        ]);
+      }
+
+      return ok({ sheets: [{ properties: { title: "Sheet1" } }] });
+    };
+
+    const { snapshot, summary } = await buildLiveSourceSnapshot({
+      env,
+      fetchImpl,
+      now: "2026-05-21T00:00:00.000Z",
+      maxRows: "all"
+    });
+    const decodedCalls = fetchCalls.map((url) => decodeURIComponent(url));
+
+    expect(summary.sourceRows).toMatchObject({
+      fee_sheet: 12,
+      pipeline: 4,
+      production_revenue: 4,
+      float: 3
+    });
+    expect(snapshot.sources.find((sourceRow) => sourceRow.source === "fee_sheet")?.sourceVersion).toBe(
+      "ranges:'LDN'!A:I,'UCX'!A:I,'USA'!A:I"
+    );
+    expect(decodedCalls).toEqual(expect.arrayContaining([
+      expect.stringContaining("'LDN'!A:I"),
+      expect.stringContaining("'UCX'!A:I"),
+      expect.stringContaining("'USA'!A:I"),
+      expect.stringContaining("'PRODUCTION ONLY'!A:U")
+    ]));
+    expect(decodedCalls.some((url) => url.includes("A1:I1000"))).toBe(false);
+    expect(decodedCalls.some((url) => url.includes("A1:U1000"))).toBe(false);
   });
 
   test("summary is not ready when any required source has no rows", async () => {

@@ -30,7 +30,7 @@ export async function buildLiveSourceSnapshot({
       spreadsheetId: requiredEnv(env, "FEE_TRACKER_SPREADSHEET_ID"),
       preferredRanges: env.FEE_TRACKER_SNAPSHOT_RANGE
         ? [env.FEE_TRACKER_SNAPSHOT_RANGE]
-        : ["LDN!A1:I1000", "UCX!A1:I1000", "USA!A1:I1000"],
+        : sheetRanges(["LDN", "UCX", "USA"], "A", "I", maxRows),
       collectAllRanges: true,
       maxRows
     }),
@@ -41,7 +41,7 @@ export async function buildLiveSourceSnapshot({
       source: "pipeline",
       sourceLabel: "Pipeline",
       spreadsheetId: requiredEnv(env, "PIPELINE_SHEET_ID"),
-      preferredRanges: env.PIPELINE_SNAPSHOT_RANGE ? [env.PIPELINE_SNAPSHOT_RANGE] : ["Sheet1!A1:U1000"],
+      preferredRanges: env.PIPELINE_SNAPSHOT_RANGE ? [env.PIPELINE_SNAPSHOT_RANGE] : sheetRanges(["Sheet1"], "A", "U", maxRows),
       maxRows
     }),
     readSheetSource({
@@ -53,7 +53,7 @@ export async function buildLiveSourceSnapshot({
       spreadsheetId: requiredEnv(env, "PRODUCTION_REVENUE_SHEET_ID"),
       preferredRanges: env.PRODUCTION_REVENUE_SNAPSHOT_RANGE
         ? [env.PRODUCTION_REVENUE_SNAPSHOT_RANGE]
-        : ["PRODUCTION ONLY!A1:U1000", "Sheet1!A1:U1000"],
+        : sheetRanges(["PRODUCTION ONLY", "Sheet1"], "A", "U", maxRows),
       maxRows
     })
   ]);
@@ -190,7 +190,7 @@ async function resolveRanges({
     throw new Error(`No readable tabs found for sheet ${spreadsheetId}.`);
   }
 
-  return [`${quoteSheetName(title)}!A1:Z${maxRows}`];
+  return [rangeFor(title, "A", "Z", maxRows)];
 }
 
 async function fetchSheetValues({ fetchImpl, googleAccessToken, spreadsheetId, range }) {
@@ -208,7 +208,7 @@ async function fetchSheetValues({ fetchImpl, googleAccessToken, spreadsheetId, r
 function valuesToSnapshotRows({ source, spreadsheetId, range, values, maxRows }) {
   const tab = sourceTabFromRange(range);
 
-  return values.slice(0, maxRows).flatMap((cells, index) => {
+  return limitRows(values, maxRows).flatMap((cells, index) => {
     if (!Array.isArray(cells) || cells.every((cell) => String(cell ?? "").trim() === "")) {
       return [];
     }
@@ -242,7 +242,7 @@ async function readFloatSource({ env, fetchImpl, now, maxRows, floatScenarioCode
     }
   });
   const projectRecords = asArray(projects, "projects");
-  const rows = projectRecords.slice(0, maxRows).map((project, index) => floatProjectRow(asRecord(project), index));
+  const rows = limitRows(projectRecords, maxRows).map((project, index) => floatProjectRow(asRecord(project), index));
 
   const targetManifest = await resolveFloatTargets({
     projectRecords,
@@ -310,7 +310,7 @@ async function readTargetedFloatRows({ fetchImpl, apiKey, projectIds, taskWindow
 }
 
 function floatRowsFor(objectType, collectionName, values, maxRows) {
-  return values.slice(0, maxRows).map((value, index) => {
+  return limitRows(values, maxRows).map((value, index) => {
     const record = asRecord(value);
     const sourceObjectId = sourceObjectIdFor(objectType, record, index);
 
@@ -454,7 +454,7 @@ function addTargetProjectRows(rows, projectRecords, maxRows) {
       added += 1;
     }
 
-    if (added >= maxRows) return;
+    if (maxRows !== "all" && added >= maxRows) return;
   }
 }
 
@@ -673,6 +673,22 @@ function sourceTabFromRange(range) {
 
 function quoteSheetName(title) {
   return `'${title.replace(/'/g, "''")}'`;
+}
+
+function sheetRanges(tabs, startColumn, endColumn, maxRows) {
+  return tabs.map((tab) => rangeFor(tab, startColumn, endColumn, maxRows));
+}
+
+function rangeFor(tab, startColumn, endColumn, maxRows) {
+  const quotedTab = quoteSheetName(tab);
+
+  return maxRows === "all"
+    ? `${quotedTab}!${startColumn}:${endColumn}`
+    : `${tab}!${startColumn}1:${endColumn}${maxRows}`;
+}
+
+function limitRows(values, maxRows) {
+  return maxRows === "all" ? values : values.slice(0, maxRows);
 }
 
 function safeTimestamp(value) {
