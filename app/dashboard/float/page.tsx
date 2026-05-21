@@ -8,11 +8,16 @@ export default async function FloatPage({
 }: {
   searchParams?: Promise<UiSearchParams>;
 }) {
-  const contract = getFixtureDashboardContract(scopeFromSearchParams((await searchParams) ?? {}));
+  const params = (await searchParams) ?? {};
+  const contract = getFixtureDashboardContract(scopeFromSearchParams(params));
 
   return (
     <DashboardChrome contract={contract} activePath="/dashboard/float">
-      <FloatDiagnostics contract={contract} />
+      <FloatDiagnostics contract={contract} pastedFloatExport={scalarParam(params.floatExport)} />
     </DashboardChrome>
   );
+}
+
+function scalarParam(value: string | string[] | undefined): string | undefined {
+  return Array.isArray(value) ? value[0] : value;
 }

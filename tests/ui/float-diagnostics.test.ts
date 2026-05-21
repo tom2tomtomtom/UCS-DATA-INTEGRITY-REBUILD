@@ -32,7 +32,8 @@ describe("P6-D Float diagnostics", () => {
     expect(html).toContain("/dashboard/projects/UCS04787?office=LDN&amp;from=2026-01-01&amp;to=2026-03-31&amp;jobNumber=UCS04787#float-trace");
     expect(html).toContain("Float Export Compare");
     expect(html).toContain("No pasted export yet");
-    expect(html).toContain("Pasted sample");
+    expect(html).toContain("Compare export");
+    expect(html).toContain("Fixed-width Hours");
     expect(html).toContain("Ambiguous match");
     expect(html).toContain("Dashboard-only rows missing from pasted export");
   });
@@ -49,5 +50,27 @@ describe("P6-D Float diagnostics", () => {
     expect(html).toContain("Focused Float ID: 11413929");
     expect(html).toContain("UCS04787");
     expect(html).toContain("11413929");
+  });
+
+  test("renders pasted Float export comparison results without writing data", () => {
+    const contract = getFixtureDashboardContract({
+      office: "LDN",
+      from: "2026-01-01",
+      to: "2026-03-31"
+    });
+    const html = renderToStaticMarkup(
+      React.createElement(FloatDiagnostics, {
+        contract,
+        pastedFloatExport: "Project Code,Project,Hours\nUCS05186,Boldbean,2102.4"
+      })
+    );
+
+    expect(html).toContain("2 dashboard rows matched");
+    expect(html).toContain("ambiguous_dashboard_match");
+    expect(html).toContain("dashboard_missing_from_export");
+    expect(html).toContain("Export hours");
+    expect(html).toContain("Dashboard hours");
+    expect(html).toContain("Delta");
+    expect(html).toContain("Compare export");
   });
 });

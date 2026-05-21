@@ -11,12 +11,17 @@ export default async function FloatTracePage({
   searchParams?: Promise<UiSearchParams>;
 }) {
   const { floatProjectId } = await params;
-  const scope = scopeFromSearchParams((await searchParams) ?? {}, { floatProjectId });
+  const query = (await searchParams) ?? {};
+  const scope = scopeFromSearchParams(query, { floatProjectId });
   const contract = getFixtureDashboardContract(scope);
 
   return (
     <DashboardChrome contract={contract} activePath="/dashboard/float">
-      <FloatDiagnostics contract={contract} />
+      <FloatDiagnostics contract={contract} pastedFloatExport={scalarParam(query.floatExport)} />
     </DashboardChrome>
   );
+}
+
+function scalarParam(value: string | string[] | undefined): string | undefined {
+  return Array.isArray(value) ? value[0] : value;
 }
