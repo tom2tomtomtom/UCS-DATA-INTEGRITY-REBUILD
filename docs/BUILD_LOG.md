@@ -2729,6 +2729,36 @@ Boundary kept:
 - no source snapshot committed to git,
 - no stakeholder approval language.
 
+### Checkpoint: Named Scenario Warnings No Longer Borrow Fixture Evidence
+
+Phase: 10
+
+Tickets: `#85`, `#88`, `#89`
+
+Status: implemented, local verification passed
+
+What changed:
+
+- changed named Float warning evidence so live source snapshots do not inherit fixture-only raw/cache/visible layer claims,
+- live snapshot warnings now distinguish `derived_source_snapshot`, `partial_source_snapshot`, and `source_snapshot_ready_missing_layer_evidence`,
+- `BT` now remains fully unresolved when the live Float target manifest has no safe project mapping,
+- `PCS00250`, `UCS04787`, and `UCS05186` now show exactly which Float layers were live-derived and which still need cache/visible evidence.
+
+Verification:
+
+- `npm test -- tests/scenarios/named-scenario-report.test.ts tests/launch/stakeholder-approval-pack.test.ts tests/launch/source-approval-readiness-report.test.ts` passed,
+- `SOURCE_SNAPSHOT_FILE=test-results/source-snapshots/phase10-source-snapshot.json UI_PARITY_SPEC_STATUS=ready node scripts/stakeholder-approval-pack.mjs` stayed blocked and showed partial/no live layer evidence for the four warning scenarios,
+- `npm run verify:phase9` passed with 78 test files, 313 tests, typecheck, Next build, Phase 8 verifier, and Phase 9 verifier.
+
+Boundary kept:
+
+- no production cutover,
+- no source-system mutation,
+- no scheduled sync,
+- no Supabase migration,
+- no source snapshot committed to git,
+- no stakeholder approval language.
+
 ### Checkpoint: Approval Page Shows Named Scenario Blockers
 
 Phase: 9.5 and 10

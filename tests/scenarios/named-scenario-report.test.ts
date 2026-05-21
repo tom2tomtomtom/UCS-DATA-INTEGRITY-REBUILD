@@ -440,7 +440,22 @@ describe("P8-E named Sian Yunni Jade scenario report", { timeout: 15000 }, () =>
     expect(warningEvidence(report, "ucs04787")).toMatchObject({
       evidenceStatus: "source_snapshot_ready",
       sourceLayersChecked: ["fee_sheet", "pipeline", "production_revenue", "float", "live_float_manifest"],
-      rawCacheVisibleStatusBasis: "named_scenario_fixture"
+      rawCacheVisibleStatus: {
+        raw: "not_applicable",
+        cache: "not_applicable",
+        visible: "not_applicable"
+      },
+      rawCacheVisibleStatusBasis: "source_snapshot_ready_missing_layer_evidence",
+      fixtureLayers: ["raw", "cache", "visible"]
+    });
+    expect(warningEvidence(report, "bt-raw-without-cache")).toMatchObject({
+      rawCacheVisibleStatus: {
+        raw: "not_applicable",
+        cache: "not_applicable",
+        visible: "not_applicable"
+      },
+      rawCacheVisibleStatusBasis: "source_snapshot_ready_missing_layer_evidence",
+      fixtureLayers: ["raw", "cache", "visible"]
     });
     expect(report.scenarios.find((scenario) => scenario.id === "ucs04787")?.status).toBe("warn");
     expect(report.scenarios.find((scenario) => scenario.id === "bt-raw-without-cache")?.status).toBe("warn");
@@ -501,10 +516,10 @@ describe("P8-E named Sian Yunni Jade scenario report", { timeout: 15000 }, () =>
     expect(warningEvidence(report, "pcs00250")).toMatchObject({
       rawCacheVisibleStatus: {
         raw: "missing",
-        cache: "represented",
-        visible: "missing"
+        cache: "not_applicable",
+        visible: "not_applicable"
       },
-      rawCacheVisibleStatusBasis: "mixed_source_snapshot_and_fixture",
+      rawCacheVisibleStatusBasis: "partial_source_snapshot",
       derivedLayers: ["raw"],
       fixtureLayers: ["cache", "visible"]
     });

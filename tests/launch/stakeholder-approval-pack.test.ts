@@ -50,11 +50,11 @@ describe("Phase 10 stakeholder approval pack", { timeout: 15000 }, () => {
             ],
             knownFloatIdsFromLiveManifest: [],
             rawCacheVisibleStatus: {
-              raw: "represented",
-              cache: "missing",
-              visible: "represented"
+              raw: "not_applicable",
+              cache: "not_applicable",
+              visible: "not_applicable"
             },
-            rawCacheVisibleStatusBasis: "named_scenario_fixture",
+            rawCacheVisibleStatusBasis: "source_snapshot_ready_missing_layer_evidence",
             classification: "cache/import issue",
             nextHumanAction: expect.stringContaining("Float export settings")
           })
@@ -64,10 +64,11 @@ describe("Phase 10 stakeholder approval pack", { timeout: 15000 }, () => {
           evidence: expect.objectContaining({
             knownFloatIdsFromLiveManifest: [],
             rawCacheVisibleStatus: {
-              raw: "represented",
-              cache: "missing",
-              visible: "missing"
+              raw: "not_applicable",
+              cache: "not_applicable",
+              visible: "not_applicable"
             },
+            rawCacheVisibleStatusBasis: "source_snapshot_ready_missing_layer_evidence",
             classification: "unresolved",
             nextHumanAction: expect.stringContaining("import/cache path")
           })

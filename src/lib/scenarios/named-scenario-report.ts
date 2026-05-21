@@ -50,7 +50,8 @@ export type NamedScenarioWarningEvidence = {
   readonly rawCacheVisibleStatusBasis:
     | "named_scenario_fixture"
     | "derived_source_snapshot"
-    | "mixed_source_snapshot_and_fixture";
+    | "partial_source_snapshot"
+    | "source_snapshot_ready_missing_layer_evidence";
   readonly derivedLayers: readonly NamedScenarioLayerKey[];
   readonly fixtureLayers: readonly NamedScenarioLayerKey[];
   readonly displayContractRowStatus: NamedScenarioLayerPresence;
@@ -934,11 +935,11 @@ function warningEvidence(
 ): NamedScenarioWarningEvidence {
   const isSourceSnapshotReady = sourceEvidence.status === "ready";
   const layerEvidence = floatLayerEvidenceFor(sourceEvidence, scenarioCode);
-  const raw = layerEvidence?.derivedLayers.includes("raw") === true ? layerEvidence.raw : input.raw;
-  const cache = layerEvidence?.derivedLayers.includes("cache") === true ? layerEvidence.cache : input.cache;
-  const visible = layerEvidence?.derivedLayers.includes("visible") === true ? layerEvidence.visible : input.visible;
   const derivedLayers = layerEvidence?.derivedLayers ?? [];
   const fixtureLayers = (["raw", "cache", "visible"] as const).filter((layer) => !derivedLayers.includes(layer));
+  const raw = warningLayerPresence(sourceEvidence, derivedLayers, layerEvidence?.raw, input.raw, "raw");
+  const cache = warningLayerPresence(sourceEvidence, derivedLayers, layerEvidence?.cache, input.cache, "cache");
+  const visible = warningLayerPresence(sourceEvidence, derivedLayers, layerEvidence?.visible, input.visible, "visible");
 
   return {
     evidenceStatus: isSourceSnapshotReady ? "source_snapshot_ready" : "source_snapshot_missing",
@@ -949,7 +950,7 @@ function warningEvidence(
       cache,
       visible
     },
-    rawCacheVisibleStatusBasis: rawCacheVisibleStatusBasis(derivedLayers),
+    rawCacheVisibleStatusBasis: rawCacheVisibleStatusBasis(sourceEvidence, derivedLayers),
     derivedLayers,
     fixtureLayers,
     displayContractRowStatus:
@@ -976,12 +977,26 @@ function sourceLayersCheckedFor(
 }
 
 function rawCacheVisibleStatusBasis(
+  sourceEvidence: NamedScenarioSourceEvidence,
   derivedLayers: readonly NamedScenarioLayerKey[]
 ): NamedScenarioWarningEvidence["rawCacheVisibleStatusBasis"] {
   const derivedSourceLayers = derivedLayers.filter((layer) => layer !== "display_contract");
-  if (derivedSourceLayers.length === 0) return "named_scenario_fixture";
+  if (sourceEvidence.status !== "ready") return "named_scenario_fixture";
+  if (derivedSourceLayers.length === 0) return "source_snapshot_ready_missing_layer_evidence";
   if (derivedSourceLayers.length === 3) return "derived_source_snapshot";
-  return "mixed_source_snapshot_and_fixture";
+  return "partial_source_snapshot";
+}
+
+function warningLayerPresence(
+  sourceEvidence: NamedScenarioSourceEvidence,
+  derivedLayers: readonly NamedScenarioLayerKey[],
+  derivedPresence: NamedScenarioLayerPresence | undefined,
+  fixturePresence: NamedScenarioLayerPresence,
+  layer: NamedScenarioLayerKey
+): NamedScenarioLayerPresence {
+  if (derivedLayers.includes(layer)) return derivedPresence ?? "missing";
+  if (sourceEvidence.status !== "ready") return fixturePresence;
+  return "not_applicable";
 }
 
 function floatLayerEvidenceFor(
