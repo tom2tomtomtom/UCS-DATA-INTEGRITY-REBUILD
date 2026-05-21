@@ -31,6 +31,32 @@ Additional approval guard:
 - real full snapshot now reports source streams as ready but display facts as blocked,
 - this prevents archive counts from being mistaken for a source-backed rendered dashboard.
 
+### Checkpoint: First Archive Rows Parse Into Partial Display Contract
+
+Phase: End game parser readiness
+
+Status: implemented locally, awaiting full verify before push
+
+What changed:
+
+- Pipeline archive sheet rows shaped from `{ cells }` into month facts for non-empty `JAN..DEC` columns,
+- Production Revenue archive sheet rows shaped from `{ cells }` into month facts for non-empty `Jan-26..Dec-26` columns,
+- Fee Tracker master rows are tested not to become Sold facts before linked fee-sheet tabs are archived,
+- Float API project/task/person rows shape into non-additive `float_raw` task evidence with project and person trace refs,
+- source-archive runtime mode can build a partial display contract only when explicit archive rows are provided.
+
+Important boundary:
+
+- raw Float facts are still not visible allocated hours,
+- source archive mode still cannot be flipped on in the app without a DB reader providing archive rows,
+- Sold is still incomplete until linked fee-sheet tabs are pulled and parsed.
+
+Verification:
+
+- `npm test -- tests/parsers/float-parser.test.ts tests/parsers/pipeline-parser.test.ts tests/parsers/production-revenue-parser.test.ts tests/parsers/fee-sheet-parser.test.ts tests/launch/source-approval-readiness-report.test.ts` passed,
+- `npm test -- tests/runtime/dashboard-contract-provider.test.ts tests/parsers/float-parser.test.ts tests/parsers/pipeline-parser.test.ts tests/parsers/production-revenue-parser.test.ts tests/parsers/fee-sheet-parser.test.ts` passed,
+- `npm run typecheck` passed.
+
 Current blockers:
 
 - parsed facts and the display contract are still not generated from the imported source archive,
