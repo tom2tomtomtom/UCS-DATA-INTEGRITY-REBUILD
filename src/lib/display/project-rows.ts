@@ -408,12 +408,44 @@ function finalizeRow(row: MutableProjectRow, unsupportedMetrics: readonly Unsupp
     applyUnsupportedMetric(row, unsupportedMetric);
   }
 
+  if (hasFeeSheetIdentityOnly(row)) {
+    applyUnsupportedMetric(row, unsupportedProjectMetric(row, "soldFee", "Fee Tracker identifies this project, but no additive sold fee row is archived for this scope."));
+    applyUnsupportedMetric(row, unsupportedProjectMetric(row, "soldHours", "Fee Tracker identifies this project, but no additive sold hours row is archived for this scope."));
+  }
+
   const detail = finalizeProjectDetail(row.detail);
 
   const { factIds: _factIds, rawRowIds: _rawRowIds, detail: _detail, ...publicRow } = row;
   return {
     ...publicRow,
     detail
+  };
+}
+
+function hasFeeSheetIdentityOnly(row: MutableProjectRow): boolean {
+  const hasFeeSheetSummary = row.sourceLabels.some(
+    (sourceLabel) => sourceLabel.source === "fee_sheet" && sourceLabel.sourceLayer === "fee_sheet_parser_summary"
+  );
+  const hasAdditiveSold = row.sourceLabels.some(
+    (sourceLabel) => sourceLabel.source === "fee_sheet" && sourceLabel.sourceLayer === "sold"
+  );
+
+  return hasFeeSheetSummary && !hasAdditiveSold;
+}
+
+function unsupportedProjectMetric(
+  row: MutableProjectRow,
+  metric: keyof DashboardTotals,
+  reason: string
+): UnsupportedMetric {
+  return {
+    kind: "unsupported",
+    metric,
+    scope: { ...row.scope },
+    source: "fee_sheet",
+    reason,
+    displayLabel: "Unsupported",
+    severity: "warn"
   };
 }
 

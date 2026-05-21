@@ -125,6 +125,40 @@ function soldFact(input: {
   return fact;
 }
 
+function feeTrackerIdentityFact(input: {
+  readonly id: string;
+  readonly rawRowId: string;
+  readonly jobNumber: string;
+  readonly client: string;
+  readonly projectName: string;
+}): SoldFact {
+  return {
+    id: input.id,
+    source: "fee_sheet",
+    sourceLayer: "fee_sheet_parser_summary",
+    rawRowIds: [input.rawRowId],
+    batchId: "fee_sheet:batch",
+    jobNumber: input.jobNumber,
+    client: input.client,
+    sourceClient: input.client,
+    canonicalClient: input.client,
+    projectName: input.projectName,
+    sourceProjectName: input.projectName,
+    office: "LDN",
+    isAdditive: false,
+    confidence: "high",
+    warnings: [],
+    trace: [
+      {
+        source: "fee_sheet",
+        sourceLayer: "fee_sheet_parser_summary",
+        batchId: "fee_sheet:batch",
+        rawRowId: input.rawRowId
+      }
+    ]
+  };
+}
+
 function pipelineFact(input: {
   readonly id: string;
   readonly rawRowId: string;
@@ -505,5 +539,56 @@ describe("P5-B project row builder", () => {
       value: { amountGbp: 100 }
     });
     expect(rows[0]?.sourceTrace.map((ref) => ref.rawRowId)).toEqual(["sold-in-scope"]);
+  });
+
+  test("renders Fee Tracker identity rows without inventing sold totals", () => {
+    const rows = buildProjectRows({
+      scope,
+      soldFacts: [
+        feeTrackerIdentityFact({
+          id: "fee-sheet:identity:ucs04787",
+          rawRowId: "fee-tracker-ucs04787",
+          jobNumber: "UCS04787",
+          client: "British Airways",
+          projectName: "UCS04787 - BA_FEE_MARCH MADNESS"
+        })
+      ],
+      pipelineFacts: [],
+      productionRevenueFacts: [],
+      floatFacts: [
+        floatFact({
+          id: "float:manual-copy",
+          rawRowId: "float-manual-copy",
+          floatProjectId: "manual-copy",
+          jobNumber: "UCS04787",
+          projectName: "UCS04787 - BA_FEE_MARCH MADNESS Manual Copy",
+          hoursValue: 12
+        })
+      ],
+      sourceIssues: []
+    });
+
+    const identityRow = rows.find((row) => row.id === "project:sold:ucs04787");
+    const floatRow = rows.find((row) => row.id === "project:float:manual-copy");
+
+    expect(identityRow).toMatchObject({
+      jobNumber: "UCS04787",
+      canonicalClient: "British Airways",
+      canonicalProjectName: "UCS04787 - BA_FEE_MARCH MADNESS",
+      totals: {
+        soldFee: { kind: "unsupported", displayLabel: "Unsupported" },
+        soldHours: { kind: "unsupported", displayLabel: "Unsupported" }
+      }
+    });
+    expect(floatRow).toMatchObject({
+      rowType: "float_only",
+      jobNumber: "UCS04787",
+      totals: {
+        floatHours: {
+          kind: "hours",
+          value: 12
+        }
+      }
+    });
   });
 });

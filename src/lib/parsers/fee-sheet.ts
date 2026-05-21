@@ -62,7 +62,7 @@ export function parseArchivedFeeSheetRows(
   const warnings: ParserWarning[] = [];
 
   for (const row of feeSheetRows) {
-    const payload = parsePayload(row) ?? parseLinkedFirstTabHeader(row);
+    const payload = parsePayload(row) ?? parseLinkedFirstTabHeader(row) ?? parseFeeTrackerProjectIdentity(row);
     if (!payload) {
       warnings.push(
         createParserWarning({
@@ -174,6 +174,31 @@ function parseLinkedFirstTabHeader(row: ArchivedRawSourceRow): FeeSheetArchivedR
   };
 }
 
+function parseFeeTrackerProjectIdentity(row: ArchivedRawSourceRow): FeeSheetSoldRowPayload | undefined {
+  if (!isRecord(row.raw) || isRecord(row.raw.linkedFeeSheet)) {
+    return undefined;
+  }
+
+  const cells = Array.isArray(row.raw.cells) ? row.raw.cells.map((cell) => String(cell ?? "").trim()) : [];
+  const client = cells[1];
+  const jobNumber = cells[2]?.toUpperCase();
+  const projectName = cells[3];
+  const office = officeFromFeeTrackerRow(row);
+
+  if (!isFeeTrackerJobNumber(jobNumber)) {
+    return undefined;
+  }
+
+  return {
+    rowKind: "source_summary",
+    sourceFactSuffix: "fee-tracker-project",
+    jobNumber,
+    ...(client ? { client } : {}),
+    ...(projectName ? { projectName } : {}),
+    ...(office ? { office } : {})
+  };
+}
+
 function createSoldFact(
   row: ArchivedRawSourceRow,
   payload: FeeSheetSoldRowPayload,
@@ -195,7 +220,6 @@ function createSoldFact(
   });
   const currency = payload.currency ?? header?.payload.currency ?? "UNKNOWN";
   const fxRateToGbp = payload.fxRateToGbp ?? header?.payload.fxRateToGbp ?? 1;
-  const fee = payload.soldFee ?? 0;
 
   const fact: FeeSheetSoldFact = {
     id: `${FEE_SHEET_SOURCE}:${row.batchId}:${row.id}${payload.sourceFactSuffix ? `:${payload.sourceFactSuffix}` : ""}`,
@@ -203,22 +227,6 @@ function createSoldFact(
     sourceLayer,
     rawRowIds,
     batchId: row.batchId,
-    amount: {
-      kind: "money",
-      value: {
-        amountOriginal: fee,
-        currencyOriginal: currency,
-        amountGbp: fee * fxRateToGbp,
-        fxRateToGbp,
-        fxSource: "fee_sheet_fixture",
-        fxCapturedAt: payload.fxCapturedAt ?? header?.payload.fxCapturedAt ?? DEFAULT_FX_CAPTURED_AT
-      }
-    },
-    hours: {
-      kind: "hours",
-      value: payload.soldHours ?? 0,
-      unit: "decimal_hours"
-    },
     isAdditive: parserEvidence.isAdditive,
     confidence: "high",
     warnings: [],
@@ -226,6 +234,28 @@ function createSoldFact(
     parserEvidence,
     feeSheetRowKind: payload.rowKind
   };
+
+  if (payload.soldFee !== undefined) {
+    fact.amount = {
+      kind: "money",
+      value: {
+        amountOriginal: payload.soldFee,
+        currencyOriginal: currency,
+        amountGbp: payload.soldFee * fxRateToGbp,
+        fxRateToGbp,
+        fxSource: "fee_sheet_fixture",
+        fxCapturedAt: payload.fxCapturedAt ?? header?.payload.fxCapturedAt ?? DEFAULT_FX_CAPTURED_AT
+      }
+    };
+  }
+
+  if (payload.soldHours !== undefined) {
+    fact.hours = {
+      kind: "hours",
+      value: payload.soldHours,
+      unit: "decimal_hours"
+    };
+  }
 
   const jobNumber = payload.jobNumber ?? header?.payload.jobNumber;
   const feeSheetFloatId = header?.payload.feeSheetFloatId;
@@ -688,6 +718,22 @@ function asOffice(value: unknown): FeeSheetArchivedRowPayload["office"] | undefi
   }
 
   return undefined;
+}
+
+function officeFromFeeTrackerRow(row: ArchivedRawSourceRow): FeeSheetArchivedRowPayload["office"] | undefined {
+  return asOfficeLabel(row.identity.sourceTab) ?? asOfficeLabel(cellsForRow(row)[0]);
+}
+
+function asOfficeLabel(value: unknown): FeeSheetArchivedRowPayload["office"] | undefined {
+  const label = normaliseLabel(String(value ?? ""));
+  if (label === "LDN" || label === "LONDON") return "LDN";
+  if (label === "USA" || label === "US" || label === "NEW YORK") return "USA";
+  if (label === "UCX") return "UCX";
+  return undefined;
+}
+
+function isFeeTrackerJobNumber(value: string | undefined): value is string {
+  return value !== undefined && /^(UCS|USA|PCS|UCX|UCG)\d{3,}$/i.test(value.trim());
 }
 
 function asCurrency(value: unknown): MoneyValue["currencyOriginal"] | undefined {

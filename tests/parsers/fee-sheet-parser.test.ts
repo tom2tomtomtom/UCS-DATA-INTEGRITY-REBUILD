@@ -102,7 +102,7 @@ describe("P3-B fee sheet parser", () => {
     );
   });
 
-  test("does not turn Fee Tracker master rows into sold facts before linked fee-sheet tabs are archived", () => {
+  test("turns Fee Tracker master rows into non-additive identity facts only", () => {
     const result = parseArchivedFeeSheetRows([
       feeTrackerMasterRow("raw_fee_tracker_header", 2, [
         "Created",
@@ -120,19 +120,32 @@ describe("P3-B fee sheet parser", () => {
       ])
     ]);
 
-    expect(result.facts).toEqual([]);
+    expect(result.facts).toHaveLength(1);
+    expect(result.facts[0]).toMatchObject({
+      id: "fee_sheet:batch_fee_tracker_master:raw_fee_tracker_project:fee-tracker-project",
+      sourceLayer: "fee_sheet_parser_summary",
+      feeSheetRowKind: "source_summary",
+      jobNumber: "UCS04787",
+      client: "British Airways",
+      sourceClient: "British Airways",
+      projectName: "UCS04787 - BA_FEE_MARCH MADNESS",
+      sourceProjectName: "UCS04787 - BA_FEE_MARCH MADNESS",
+      office: "LDN",
+      isAdditive: false
+    });
+    expect(result.facts[0]?.amount).toBeUndefined();
+    expect(result.facts[0]?.hours).toBeUndefined();
     expect(result.warnings).toEqual(
       expect.arrayContaining([
         expect.objectContaining({
           code: "UNSUPPORTED_FEE_SHEET_ROW_SHAPE",
           rawRowIds: ["raw_fee_tracker_header"]
-        }),
-        expect.objectContaining({
-          code: "UNSUPPORTED_FEE_SHEET_ROW_SHAPE",
-          rawRowIds: ["raw_fee_tracker_project"]
         })
       ])
     );
+    expect(result.warnings.map((warning) => warning.rawRowIds)).not.toContainEqual([
+      "raw_fee_tracker_project"
+    ]);
   });
 
   test("uses linked fee-sheet first-tab Float ID rows as the project header join key", () => {
