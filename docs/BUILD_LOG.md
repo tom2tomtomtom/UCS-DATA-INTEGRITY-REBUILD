@@ -2729,6 +2729,34 @@ Boundary kept:
 - no source snapshot committed to git,
 - no stakeholder approval language.
 
+### Checkpoint: Rollup Footer And Slow Test Timeouts
+
+Phase: 9.5
+
+Tickets: `#83`, `#88`
+
+Status: implemented, local verification passed
+
+What changed:
+
+- primary rollup table now has a display-layer footer,
+- primary rollup table now exposes a rollup CSV generated from the same rollup rows,
+- two existing slow launch/source-import tests now declare a 15s timeout instead of racing Vitest's 5s default.
+
+Verification:
+
+- `npm test -- tests/launch/live-source-snapshot.test.ts tests/source-import/snapshot-import.test.ts tests/ui/dashboard-home.test.ts` passed,
+- `npm run verify:phase9` passed with 79 test files, 331 tests, typecheck, Next build, Phase 8 verifier, and Phase 9 verifier.
+
+Boundary kept:
+
+- no production cutover,
+- no source-system mutation,
+- no scheduled sync,
+- no Supabase migration,
+- no source snapshot committed to git,
+- no stakeholder approval language.
+
 ### Checkpoint: Float And Warning Review Controls
 
 Phase: 9.5

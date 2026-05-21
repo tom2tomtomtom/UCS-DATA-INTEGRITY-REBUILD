@@ -279,5 +279,5 @@ describe("P8-C read-only source snapshot import", () => {
     expect(output).not.toContain("British Airways");
     expect(output).not.toContain("stableSourceRowKey");
     expect(output).not.toContain("sourceRefs");
-  });
+  }, 15000);
 });

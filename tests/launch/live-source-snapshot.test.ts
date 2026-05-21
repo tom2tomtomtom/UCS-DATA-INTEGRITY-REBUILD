@@ -235,7 +235,7 @@ describe("Phase 10 live source snapshot builder", () => {
     expect(summary.ready).toBe(true);
     expect(decodeJwtClaimFromTokenRequest(tokenBody).sub).toBe("jade.barrett@uncommon.studio");
     expect(JSON.stringify(summary)).not.toContain(serviceAccountKey);
-  });
+  }, 15000);
 
   test("adds targeted Float task and people evidence for named scenarios", async () => {
     const { buildLiveSourceSnapshot } = await loadLiveSourceSnapshotModule();

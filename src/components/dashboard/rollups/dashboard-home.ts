@@ -10,6 +10,7 @@ import type {
   SourceWarning
 } from "../../../lib";
 import { scopedHref } from "../../../lib";
+import { buildRollupCsvDataUri, buildRollupFooter, type RollupFooter } from "../../../lib/display/rollup-export";
 import { TimeFilterControls } from "../time-filter-controls";
 
 const heroMetrics = [
@@ -353,11 +354,26 @@ function primaryRollupTable(
   sortKey: RollupSortKey,
   sortDir: "asc" | "desc"
 ) {
+  const sortedRows = sortRollupRows(rows, sortKey, sortDir);
+
   return React.createElement(
     "section",
     { className: "rollup-table primary-rollup-table", "aria-label": `${title} table` },
-    React.createElement("div", { className: "table-title" }, React.createElement("h2", null, title)),
-    rollupTableElement(sortRollupRows(rows, sortKey, sortDir), firstColumnLabel, { contract, view, sortKey, sortDir })
+    React.createElement(
+      "div",
+      { className: "table-title" },
+      React.createElement("h2", null, title),
+      React.createElement(
+        "a",
+        {
+          className: "download-link",
+          download: `ucs-dashboard-${view}-rollup.csv`,
+          href: buildRollupCsvDataUri(sortedRows)
+        },
+        "Download rollup CSV"
+      )
+    ),
+    rollupTableElement(sortedRows, firstColumnLabel, { contract, view, sortKey, sortDir, footer: buildRollupFooter(sortedRows) })
   );
 }
 
@@ -391,6 +407,7 @@ function rollupTableElement(
     readonly view: RollupDimension;
     readonly sortKey: RollupSortKey;
     readonly sortDir: "asc" | "desc";
+    readonly footer?: RollupFooter;
   }
 ) {
   return React.createElement(
@@ -420,7 +437,8 @@ function rollupTableElement(
       rows.length === 0
         ? React.createElement("tr", null, React.createElement("td", { colSpan: 10 }, "No rows for this scope"))
         : rows.map((row) => rollupRow(row))
-    )
+    ),
+    sortState?.footer === undefined ? null : rollupFooterElement(sortState.footer)
   );
 }
 
@@ -531,6 +549,33 @@ function rollupRow(row: RollupRow) {
     React.createElement("td", null, variancePercent(soldHours, totalHours)),
     React.createElement("td", null, statusBadge(soldHours, totalHours, row.unsupported.length))
   );
+}
+
+function rollupFooterElement(footer: RollupFooter) {
+  return React.createElement(
+    "tfoot",
+    null,
+    React.createElement(
+      "tr",
+      { className: "projects-footer" },
+      React.createElement("td", null, "Total"),
+      React.createElement("td", null, formatMetric(footer.pipelineFee)),
+      React.createElement("td", null, formatMetric(footer.soldFee)),
+      React.createElement("td", null, formatMetric(footer.soldHours)),
+      React.createElement("td", null, formatMetric(footer.allocatedHours)),
+      React.createElement("td", null, formatMetric(footer.unallocatedHours)),
+      React.createElement("td", null, formatMetric(footer.totalHours)),
+      React.createElement("td", null, formatMetric(footer.allocatedValue)),
+      React.createElement("td", null, formatFooterVariance(footer.variancePercent)),
+      React.createElement("td", null, React.createElement("span", { className: `status-badge ${footer.status.toLowerCase()}` }, footer.status))
+    )
+  );
+}
+
+function formatFooterVariance(value: MetricValue): string {
+  if (value.kind === "count" && !Number.isFinite(value.value)) return "Uncosted";
+  if (value.kind === "count") return `${formatNumber(value.value)}%`;
+  return formatMetric(value);
 }
 
 function allocatedHoursMetric(row: RollupRow): MetricValue {

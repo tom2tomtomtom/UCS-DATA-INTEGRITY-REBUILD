@@ -3,6 +3,8 @@ import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, test } from "vitest";
 
 import { DashboardHome } from "../../src/components/dashboard/rollups/dashboard-home";
+import { buildRollupCsvText, buildRollupFooter } from "../../src/lib/display/rollup-export";
+import type { MetricValue } from "../../src/lib";
 import { getFixtureDashboardContract } from "../../src/lib/ui/fixture-contract";
 
 describe("P6-B dashboard home rollups", () => {
@@ -24,9 +26,32 @@ describe("P6-B dashboard home rollups", () => {
     expect(html).toContain("Client Rollup");
     expect(html).toContain("href=\"/dashboard/projects?office=LDN&amp;from=2026-01-01&amp;to=2026-03-31&amp;department=Design\"");
     expect(html).toContain("Allocated (hrs)");
+    expect(html).toContain("Download rollup CSV");
+    expect(html).toContain("download=\"ucs-dashboard-department-rollup.csv\"");
     expect(html).toContain("Sold (£) ▼");
     expect(html).toContain("href=\"/dashboard?office=LDN&amp;from=2026-01-01&amp;to=2026-03-31&amp;view=department&amp;sort=soldFee&amp;dir=asc\"");
     expect(html).toContain("Confidence");
+  });
+
+  test("renders primary rollup footer and CSV from the same rollup rows", () => {
+    const contract = getFixtureDashboardContract({
+      office: "LDN",
+      from: "2026-01-01",
+      to: "2026-03-31"
+    });
+    const html = renderToStaticMarkup(React.createElement(DashboardHome, { contract }));
+    const footer = buildRollupFooter(contract.rollups.byDepartment);
+    const csv = buildRollupCsvText(contract.rollups.byDepartment);
+
+    expect(html).toContain("<tfoot>");
+    expect(html).toContain("<td>Total</td>");
+    expect(html).toContain("£275,947");
+    expect(html).toContain("540h");
+    expect(html).toContain("2,963.4h");
+    expect(csv).toContain("label,pipelineGbp,soldGbp,soldHours,allocatedHours,unallocatedHours,totalHours");
+    expect(csv).toContain("Total");
+    expect(csv).toContain(String(metricNumber(footer.soldFee)));
+    expect(csv).toContain(String(metricNumber(footer.totalHours)));
   });
 
   test("surfaces approval state, source evidence, and no-cutover status without changing granularity", () => {
@@ -121,3 +146,9 @@ describe("P6-B dashboard home rollups", () => {
     expect(html.indexOf("Design")).toBeLessThan(html.indexOf("Strategy"));
   });
 });
+
+function metricNumber(value: MetricValue): number {
+  if (value.kind === "money") return value.value.amountGbp;
+  if (value.kind === "hours" || value.kind === "count") return value.value;
+  return 0;
+}
