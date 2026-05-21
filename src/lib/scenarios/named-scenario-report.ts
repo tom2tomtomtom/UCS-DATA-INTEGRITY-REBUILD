@@ -30,13 +30,30 @@ export type NamedScenarioResult = {
 export type NamedScenarioReport = {
   readonly generatedAt: string;
   readonly status: NamedScenarioStatus;
+  readonly approvalReady: boolean;
+  readonly sourceEvidence: NamedScenarioSourceEvidence;
   readonly summary: Record<NamedScenarioStatus, number>;
   readonly scenarios: readonly NamedScenarioResult[];
 };
 
+export type NamedScenarioSourceEvidence =
+  | {
+      readonly status: "missing";
+      readonly sourcesChecked: readonly [];
+      readonly blocker: "source_snapshot_missing";
+    }
+  | {
+      readonly status: "ready";
+      readonly snapshotId: string;
+      readonly sourcesChecked: readonly ["fee_sheet", "pipeline", "production_revenue", "float"];
+      readonly rawRows: number;
+    };
+
 const generatedAt = "2026-05-20T17:59:00.000Z";
 
-export function buildNamedScenarioReport(): NamedScenarioReport {
+export function buildNamedScenarioReport(input?: {
+  readonly sourceEvidence?: NamedScenarioSourceEvidence;
+}): NamedScenarioReport {
   const scenarios: NamedScenarioResult[] = [
     {
       id: "ldn-q1-design",
@@ -166,15 +183,28 @@ export function buildNamedScenarioReport(): NamedScenarioReport {
     }
   ];
 
+  const status = reportStatus(scenarios);
+  const sourceEvidence = input?.sourceEvidence ?? missingSourceEvidence();
+
   return {
     generatedAt,
-    status: reportStatus(scenarios),
+    status,
+    approvalReady: sourceEvidence.status === "ready" && status === "pass",
+    sourceEvidence,
     summary: {
       pass: scenarios.filter((scenario) => scenario.status === "pass").length,
       warn: scenarios.filter((scenario) => scenario.status === "warn").length,
       fail: scenarios.filter((scenario) => scenario.status === "fail").length
     },
     scenarios
+  };
+}
+
+function missingSourceEvidence(): NamedScenarioSourceEvidence {
+  return {
+    status: "missing",
+    sourcesChecked: [],
+    blocker: "source_snapshot_missing"
   };
 }
 

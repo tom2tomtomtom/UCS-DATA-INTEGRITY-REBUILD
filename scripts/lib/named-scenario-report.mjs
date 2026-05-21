@@ -1,4 +1,4 @@
-export function buildNamedScenarioReport() {
+export function buildNamedScenarioReport(input = {}) {
   const scenarios = [
     scenario("ldn-q1-design", "LDN Q1 Design Rollup To Projects", "Sian", "pass", "display_contract_agrees", [
       check("same_scope_same_number", "pass", "Department rollup, Projects footer, CSV, and detail use the same display contract scope."),
@@ -47,15 +47,28 @@ export function buildNamedScenarioReport() {
     ])
   ];
 
+  const status = reportStatus(scenarios);
+  const sourceEvidence = input.sourceEvidence ?? missingSourceEvidence();
+
   return {
     generatedAt: "2026-05-20T17:59:00.000Z",
-    status: reportStatus(scenarios),
+    status,
+    approvalReady: sourceEvidence.status === "ready" && status === "pass",
+    sourceEvidence,
     summary: {
       pass: scenarios.filter((item) => item.status === "pass").length,
       warn: scenarios.filter((item) => item.status === "warn").length,
       fail: scenarios.filter((item) => item.status === "fail").length
     },
     scenarios
+  };
+}
+
+function missingSourceEvidence() {
+  return {
+    status: "missing",
+    sourcesChecked: [],
+    blocker: "source_snapshot_missing"
   };
 }
 
