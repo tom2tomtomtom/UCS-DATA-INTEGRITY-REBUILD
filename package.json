@@ -6,7 +6,7 @@
     "node": "20.x"
   },
   "scripts": {
-    "test": "vitest run",
+    "test": "APP_ENV=test DASHBOARD_DATA_MODE=fixture vitest run",
     "typecheck": "tsc --noEmit",
     "build": "npm run verify:phase8",
     "start": "next start",
