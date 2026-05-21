@@ -16,6 +16,9 @@ describe("P9.5-E Projects presentation controls parity", () => {
     expect(html).toContain("aria-selected=\"true\" class=\"active\" href=\"/dashboard/projects?office=LDN&amp;from=2026-01-01&amp;to=2026-03-31&amp;pview=list\" role=\"tab\">List");
     expect(html).toContain("href=\"/dashboard/projects?office=LDN&amp;from=2026-01-01&amp;to=2026-03-31&amp;pview=calendar\" role=\"tab\">Calendar");
     expect(html).toContain("placeholder=\"Search by job number or client name...\"");
+    expect(html).toContain("method=\"get\"");
+    expect(html).toContain("Search</button>");
+    expect(html).not.toMatch(/class="projects-search"[^>]*readOnly/);
     expect(html).toContain("Quick");
     expect(html).toContain("Full year");
     expect(html).toContain("Q1");

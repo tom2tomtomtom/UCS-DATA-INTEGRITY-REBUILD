@@ -45,15 +45,7 @@ export function ProjectsControls({
         presentationLink("List", "list", params, viewState.presentationView === "list"),
         presentationLink("Calendar", "calendar", params, viewState.presentationView === "calendar")
       ),
-      React.createElement("input", {
-        className: "projects-search",
-        name: "search",
-        placeholder: PROJECTS_SEARCH_PLACEHOLDER,
-        readOnly: true,
-        type: "search",
-        value: scalarParam(params.search) ?? "",
-        "aria-label": "Search projects"
-      }),
+      searchForm(params),
       React.createElement(
         "details",
         { className: "add-filter-control" },
@@ -73,6 +65,33 @@ export function ProjectsControls({
       mutationBar("Project bulk archive", "Unavailable while MUTATION_GUARD is read_only.")
     )
   );
+}
+
+function searchForm(params: UiSearchParams) {
+  return React.createElement(
+    "form",
+    { action: "/dashboard/projects", className: "projects-search-form", method: "get" },
+    ...hiddenSearchInputs(params),
+    React.createElement("input", {
+      className: "projects-search",
+      defaultValue: scalarParam(params.search) ?? "",
+      name: "search",
+      placeholder: PROJECTS_SEARCH_PLACEHOLDER,
+      type: "search",
+      "aria-label": "Search projects"
+    }),
+    React.createElement("button", { type: "submit" }, "Search")
+  );
+}
+
+function hiddenSearchInputs(params: UiSearchParams) {
+  const keys = ["office", "from", "to", "department", "role", "client", "jobNumber", "floatProjectId", "pview", "view"] as const;
+
+  return keys.flatMap((key) => {
+    const value = scalarParam(params[key]);
+    if (value === undefined || value.trim() === "") return [];
+    return React.createElement("input", { key, name: key, type: "hidden", value });
+  });
 }
 
 export function ProjectsBreakdownControls({

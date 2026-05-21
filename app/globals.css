@@ -888,6 +888,22 @@ select {
   color: var(--ink);
 }
 
+.projects-search-form {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.projects-search-form button {
+  min-height: 34px;
+  border: 1px solid var(--ink);
+  border-radius: 6px;
+  background: var(--ink);
+  padding: 0 10px;
+  color: white;
+  font-weight: 800;
+}
+
 .add-filter-control {
   position: relative;
 }
