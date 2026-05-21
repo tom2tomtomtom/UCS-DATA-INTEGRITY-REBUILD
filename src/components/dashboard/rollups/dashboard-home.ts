@@ -1,6 +1,6 @@
 import React from "react";
 
-import type { DashboardDisplayContract, DashboardTotals, MetricValue, RollupRow } from "../../../lib";
+import type { DashboardDisplayContract, DashboardTotals, MetricValue, RollupDimension, RollupRow } from "../../../lib";
 import { scopedHref } from "../../../lib";
 import { TimeFilterControls } from "../time-filter-controls";
 
@@ -19,14 +19,32 @@ const rollupSections = [
   ["Client Rollup", "byClient"]
 ] as const;
 
-export function DashboardHome({ contract }: { contract: DashboardDisplayContract }) {
+const activeRollupConfig = {
+  department: { key: "byDepartment", label: "Department", title: "Department Rollup" },
+  month: { key: "byMonth", label: "Month", title: "Month Rollup" },
+  role: { key: "byRole", label: "Role", title: "Role Rollup" },
+  client: { key: "byClient", label: "Client", title: "Client Rollup" }
+} as const satisfies Record<
+  RollupDimension,
+  { key: keyof DashboardDisplayContract["rollups"]; label: string; title: string }
+>;
+
+export function DashboardHome({
+  contract,
+  view = "department"
+}: {
+  contract: DashboardDisplayContract;
+  view?: RollupDimension;
+}) {
+  const activeRollup = activeRollupConfig[view];
+
   return React.createElement(
     "div",
     { className: "dashboard-home" },
     approvalStateCard(contract),
     freshnessCard(contract),
     sheetHealthPanel(contract),
-    soldAllocatedHeader(contract),
+    soldAllocatedHeader(contract, view),
     React.createElement(
       "section",
       { className: "kpi-grid", "aria-label": "Headline KPIs" },
@@ -37,7 +55,7 @@ export function DashboardHome({ contract }: { contract: DashboardDisplayContract
     floatWarningsCard(contract),
     lowerThanFloatDisclosure(contract),
     departmentHoursChart(contract),
-    primaryDepartmentTable(contract),
+    primaryRollupTable(contract, activeRollup.title, activeRollup.label, contract.rollups[activeRollup.key]),
     React.createElement(
       "section",
       { className: "metric-grid", "aria-label": "Source stream metrics" },
@@ -117,7 +135,7 @@ function sheetHealthPanel(contract: DashboardDisplayContract) {
   );
 }
 
-function soldAllocatedHeader(contract: DashboardDisplayContract) {
+function soldAllocatedHeader(contract: DashboardDisplayContract, view: RollupDimension) {
   return React.createElement(
     "section",
     { className: "sold-allocated-header" },
@@ -135,10 +153,10 @@ function soldAllocatedHeader(contract: DashboardDisplayContract) {
     React.createElement(
       "nav",
       { className: "view-toggle-row", "aria-label": "Rollup view" },
-      viewToggle("By Department", "department", contract, true),
-      viewToggle("By Month", "month", contract),
-      viewToggle("By Role", "role", contract),
-      viewToggle("By Client", "client", contract)
+      viewToggle("By Department", "department", contract, view),
+      viewToggle("By Month", "month", contract, view),
+      viewToggle("By Role", "role", contract, view),
+      viewToggle("By Client", "client", contract, view)
     ),
     React.createElement(TimeFilterControls, { basePath: "/dashboard", scope: contract.scope })
   );
@@ -265,12 +283,17 @@ function chartRow(row: RollupRow, maxHours: number) {
   );
 }
 
-function primaryDepartmentTable(contract: DashboardDisplayContract) {
+function primaryRollupTable(
+  contract: DashboardDisplayContract,
+  title: string,
+  firstColumnLabel: string,
+  rows: readonly RollupRow[]
+) {
   return React.createElement(
     "section",
-    { className: "rollup-table primary-rollup-table", "aria-label": "Department Rollup table" },
-    React.createElement("div", { className: "table-title" }, React.createElement("h2", null, "Department Rollup")),
-    rollupTableElement(contract.rollups.byDepartment)
+    { className: "rollup-table primary-rollup-table", "aria-label": `${title} table` },
+    React.createElement("div", { className: "table-title" }, React.createElement("h2", null, title)),
+    rollupTableElement(rows, firstColumnLabel)
   );
 }
 
@@ -292,11 +315,11 @@ function rollupTable(title: string, rows: readonly RollupRow[]) {
     "article",
     { className: "rollup-table", key: title },
     React.createElement("div", { className: "table-title" }, React.createElement("h2", null, title)),
-    rollupTableElement(rows)
+    rollupTableElement(rows, "Name")
   );
 }
 
-function rollupTableElement(rows: readonly RollupRow[]) {
+function rollupTableElement(rows: readonly RollupRow[], firstColumnLabel: string) {
   return React.createElement(
     "table",
     null,
@@ -306,7 +329,7 @@ function rollupTableElement(rows: readonly RollupRow[]) {
       React.createElement(
         "tr",
         null,
-        React.createElement("th", null, "Name"),
+        React.createElement("th", null, firstColumnLabel),
         React.createElement("th", null, "Pipeline (£)"),
         React.createElement("th", null, "Sold (£)"),
         React.createElement("th", null, "Sold (hrs)"),
@@ -356,7 +379,13 @@ function healthList(items: readonly string[]) {
   );
 }
 
-function viewToggle(label: string, view: string, contract: DashboardDisplayContract, active = false) {
+function viewToggle(
+  label: string,
+  view: RollupDimension,
+  contract: DashboardDisplayContract,
+  activeView: RollupDimension
+) {
+  const active = view === activeView;
   const baseHref = scopedHref("/dashboard", contract.scope);
   const separator = baseHref.includes("?") ? "&" : "?";
 

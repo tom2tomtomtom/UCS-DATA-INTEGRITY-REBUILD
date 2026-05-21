@@ -68,4 +68,19 @@ describe("P6-B dashboard home rollups", () => {
     expect(html).toContain("Variance %");
     expect(html).toContain("861h");
   });
+
+  test("uses the URL-selected rollup view for the primary table", () => {
+    const contract = getFixtureDashboardContract({
+      office: "LDN",
+      from: "2026-01-01",
+      to: "2026-03-31"
+    });
+    const html = renderToStaticMarkup(React.createElement(DashboardHome, { contract, view: "client" }));
+
+    expect(html).toContain("aria-label=\"Client Rollup table\"");
+    expect(html).toContain("<th>Client</th>");
+    expect(html).toContain("aria-current=\"page\">By Client");
+    expect(html).toContain("href=\"/dashboard/projects?office=LDN&amp;from=2026-01-01&amp;to=2026-03-31&amp;client=British+Airways\"");
+    expect(html).toContain("href=\"/dashboard?office=LDN&amp;from=2026-01-01&amp;to=2026-03-31&amp;view=department\"");
+  });
 });
