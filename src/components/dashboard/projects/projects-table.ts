@@ -49,7 +49,7 @@ export function ProjectsTable({
         "Download CSV"
       )
     ),
-    React.createElement(ProjectsControls, { params, viewState }),
+    React.createElement(ProjectsControls, { contract, params, viewState }),
     React.createElement(
       "div",
       { className: "active-filter-row", "aria-label": "Active filters" },

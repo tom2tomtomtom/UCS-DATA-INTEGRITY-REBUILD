@@ -25,6 +25,12 @@ describe("P6-C Projects table", () => {
     expect(html).toContain("Actions");
     expect(html).toContain("Sold (fee sheet) ▼");
     expect(html).toContain("href=\"/dashboard/projects?sort=client&amp;dir=asc\"");
+    expect(html).toContain("+ Add filter");
+    expect(html).toContain("Display-contract backed filters");
+    expect(html).toContain("href=\"/dashboard/projects?office=LDN&amp;from=2026-01-01&amp;to=2026-03-31&amp;department=Design\"");
+    expect(html).toContain("href=\"/dashboard/projects?office=LDN&amp;from=2026-01-01&amp;to=2026-03-31&amp;role=Senior+Designer\"");
+    expect(html).toContain("href=\"/dashboard/projects?office=LDN&amp;from=2026-01-01&amp;to=2026-03-31&amp;client=British+Airways\"");
+    expect(html).toContain("href=\"/dashboard/projects?office=LDN&amp;from=2026-01-01&amp;to=2026-03-31&amp;floatProjectId=11413929\"");
     expect(html).toContain("British Airways");
     expect(html).toContain("UCS04787");
     expect(html).toContain("pipeline_only");
@@ -61,6 +67,7 @@ describe("P6-C Projects table", () => {
           office: "LDN",
           from: "2026-01-01",
           to: "2026-03-31",
+          department: "Design",
           pview: "list",
           sort: "client",
           dir: "asc"
@@ -69,7 +76,8 @@ describe("P6-C Projects table", () => {
     );
 
     expect(html).toContain("Client ▲");
-    expect(html).toContain("href=\"/dashboard/projects?office=LDN&amp;from=2026-01-01&amp;to=2026-03-31&amp;pview=list&amp;sort=client&amp;dir=desc\"");
+    expect(html).toContain("href=\"/dashboard/projects?office=LDN&amp;from=2026-01-01&amp;to=2026-03-31&amp;department=Design&amp;pview=list&amp;sort=client&amp;dir=desc\"");
+    expect(html).toContain("href=\"/dashboard/projects?office=LDN&amp;from=2026-01-01&amp;to=2026-03-31&amp;pview=list&amp;sort=client&amp;dir=asc\" class=\"filter-clear-link\">Clear project filters");
     expect(html).toContain("Total");
     expect(html).toContain("£275,947");
   });
