@@ -184,12 +184,22 @@ describe("Phase 10 live source snapshot builder", () => {
         return ok({ values: [["Header"], ["Row 1"], ["Row 2"], ["Row 3"]] });
       }
 
-      if (url.endsWith("/projects")) {
-        return ok([
-          { project_id: 1, project_code: "FLOAT001" },
-          { project_id: 2, project_code: "FLOAT002" },
-          { project_id: 3, project_code: "FLOAT003" }
-        ]);
+      if (url.includes("/projects?")) {
+        const page = new URL(url).searchParams.get("page");
+        return ok(
+          page === "1"
+            ? [{ project_id: 1, project_code: "FLOAT001" }]
+            : [{ project_id: 2, project_code: "FLOAT002" }],
+          { "x-pagination-page-count": "2" }
+        );
+      }
+
+      if (url.includes("/tasks?")) {
+        return ok([{ task_id: 83, project_id: 1, people_id: 501, hours: 8 }]);
+      }
+
+      if (url.includes("/people?")) {
+        return ok([{ people_id: 501, name: "Yunni Float Person" }]);
       }
 
       return ok({ sheets: [{ properties: { title: "Sheet1" } }] });
@@ -207,8 +217,11 @@ describe("Phase 10 live source snapshot builder", () => {
       fee_sheet: 12,
       pipeline: 4,
       production_revenue: 4,
-      float: 3
+      float: 5
     });
+    expect(snapshot.sources.find((sourceRow) => sourceRow.source === "float")?.sourceVersion).toBe(
+      "GET /v3/projects + /v3/tasks + /v3/people"
+    );
     expect(snapshot.sources.find((sourceRow) => sourceRow.source === "fee_sheet")?.sourceVersion).toBe(
       "ranges:'LDN'!A:I,'UCX'!A:I,'USA'!A:I"
     );
@@ -216,7 +229,11 @@ describe("Phase 10 live source snapshot builder", () => {
       expect.stringContaining("'LDN'!A:I"),
       expect.stringContaining("'UCX'!A:I"),
       expect.stringContaining("'USA'!A:I"),
-      expect.stringContaining("'PRODUCTION ONLY'!A:U")
+      expect.stringContaining("'PRODUCTION ONLY'!A:U"),
+      expect.stringContaining("/projects?per-page=200&page=1"),
+      expect.stringContaining("/projects?per-page=200&page=2"),
+      expect.stringContaining("/tasks?per-page=200&page=1&start_date=2026-01-01&end_date=2027-12-31"),
+      expect.stringContaining("/people?per-page=200&page=1")
     ]));
     expect(decodedCalls.some((url) => url.includes("A1:I1000"))).toBe(false);
     expect(decodedCalls.some((url) => url.includes("A1:U1000"))).toBe(false);
@@ -520,10 +537,15 @@ function source(name: string, rows: number) {
   };
 }
 
-function ok(payload: unknown) {
+function ok(payload: unknown, headerValues: Record<string, string> = {}) {
   return {
     ok: true,
     status: 200,
+    headers: {
+      get(key: string) {
+        return headerValues[key] ?? null;
+      }
+    },
     async json() {
       return payload;
     }

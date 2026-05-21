@@ -4,6 +4,7 @@ const GOOGLE_SHEETS_SCOPE = "https://www.googleapis.com/auth/spreadsheets.readon
 const GOOGLE_TOKEN_URL = "https://oauth2.googleapis.com/token";
 const GOOGLE_SHEETS_URL = "https://sheets.googleapis.com/v4/spreadsheets";
 const FLOAT_API_URL = "https://api.float.com/v3";
+const FLOAT_PER_PAGE = 200;
 
 const REQUIRED_SOURCES = ["fee_sheet", "pipeline", "production_revenue", "float"];
 
@@ -235,6 +236,18 @@ function valuesToSnapshotRows({ source, spreadsheetId, range, values, maxRows })
 
 async function readFloatSource({ env, fetchImpl, now, maxRows, floatScenarioCodes = [], floatProjectIds = [] }) {
   const apiKey = requiredEnv(env, "FLOAT_API_KEY");
+
+  if (maxRows === "all") {
+    return readFullFloatSource({
+      env,
+      fetchImpl,
+      now,
+      apiKey,
+      floatScenarioCodes,
+      floatProjectIds
+    });
+  }
+
   const projects = await fetchJson(fetchImpl, `${FLOAT_API_URL}/projects`, {
     headers: {
       Authorization: `Bearer ${apiKey}`,
@@ -282,6 +295,49 @@ async function readFloatSource({ env, fetchImpl, now, maxRows, floatScenarioCode
   };
 }
 
+async function readFullFloatSource({ env, fetchImpl, now, apiKey, floatScenarioCodes, floatProjectIds }) {
+  const taskWindow = resolveFloatTaskWindow(env, now);
+  const [projectRecords, taskRecords, peopleRecords] = await Promise.all([
+    fetchFloatCollection({ fetchImpl, apiKey, endpoint: "/projects", collectionName: "projects" }),
+    fetchFloatCollection({
+      fetchImpl,
+      apiKey,
+      endpoint: "/tasks",
+      collectionName: "tasks",
+      params: {
+        start_date: taskWindow.startDate,
+        end_date: taskWindow.endDate
+      }
+    }),
+    fetchFloatCollection({ fetchImpl, apiKey, endpoint: "/people", collectionName: "people" })
+  ]);
+  const targetManifest = await resolveFloatTargets({
+    projectRecords,
+    floatScenarioCodes,
+    floatProjectIds,
+    fetchImpl,
+    apiKey
+  });
+  const rows = [
+    ...floatRowsFor("project", "projects", projectRecords, "all"),
+    ...floatRowsFor("task", "tasks", taskRecords, "all"),
+    ...floatRowsFor("person", "people", peopleRecords, "all"),
+    floatTargetManifestRow(targetManifest)
+  ];
+
+  if (rows.length === 1) {
+    throw new Error("Float source snapshot produced no project, task, or people rows.");
+  }
+
+  return {
+    source: "float",
+    mode: "read_only_live",
+    sourceLabel: "Float API full evidence",
+    sourceVersion: "GET /v3/projects + /v3/tasks + /v3/people",
+    rows
+  };
+}
+
 async function readTargetedFloatRows({ fetchImpl, apiKey, projectIds, taskWindow, maxRows }) {
   const headers = {
     Authorization: `Bearer ${apiKey}`,
@@ -307,6 +363,35 @@ async function readTargetedFloatRows({ fetchImpl, apiKey, projectIds, taskWindow
         .filter((row) => targetedPersonIds.has(String(row.identity.sourceObjectId)));
 
   return [...dedupeRows(taskRows), ...dedupeRows(peopleRows)];
+}
+
+async function fetchFloatCollection({ fetchImpl, apiKey, endpoint, collectionName, params = {} }) {
+  const headers = {
+    Authorization: `Bearer ${apiKey}`,
+    "Content-Type": "application/json"
+  };
+  const rows = [];
+  let page = 1;
+  let totalPages = 1;
+
+  do {
+    const searchParams = new URLSearchParams({
+      "per-page": String(FLOAT_PER_PAGE),
+      page: String(page),
+      ...params
+    });
+    const response = await fetchImpl(`${FLOAT_API_URL}${endpoint}?${searchParams.toString()}`, { headers });
+
+    if (!response.ok) {
+      throw new Error(`Read-only fetch failed with ${response.status} for ${safeUrl(`${FLOAT_API_URL}${endpoint}`)}.`);
+    }
+
+    totalPages = parsePositiveInt(response.headers?.get?.("x-pagination-page-count")) ?? 1;
+    rows.push(...asArray(await response.json(), collectionName));
+    page += 1;
+  } while (page <= totalPages);
+
+  return rows;
 }
 
 function floatRowsFor(objectType, collectionName, values, maxRows) {
@@ -592,6 +677,12 @@ function sourceObjectIdFor(objectType, record, index) {
   const sourceObjectId = candidates.find((value) => value !== undefined && value !== null && String(value).trim() !== "");
 
   return String(sourceObjectId ?? `float-${objectType}-${index + 1}`);
+}
+
+function parsePositiveInt(value) {
+  if (typeof value !== "string") return undefined;
+  const parsed = Number.parseInt(value, 10);
+  return Number.isInteger(parsed) && parsed > 0 ? parsed : undefined;
 }
 
 function collectPersonIds(rows) {
