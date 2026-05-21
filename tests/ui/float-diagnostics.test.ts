@@ -15,6 +15,11 @@ describe("P6-D Float diagnostics", () => {
     const html = renderToStaticMarkup(React.createElement(FloatDiagnostics, { contract }));
 
     expect(html).toContain("Float Diagnostics");
+    expect(html).toContain("Raw");
+    expect(html).toContain("Cache");
+    expect(html).toContain("Visible");
+    expect(html).toContain("present");
+    expect(html).toContain("missing");
     expect(html).toContain("UCS04787");
     expect(html).toContain("11413929");
     expect(html).toContain("PCS00250_RAW_CACHE_UNRESOLVED");
@@ -30,5 +35,19 @@ describe("P6-D Float diagnostics", () => {
     expect(html).toContain("Pasted sample");
     expect(html).toContain("Ambiguous match");
     expect(html).toContain("Dashboard-only rows missing from pasted export");
+  });
+
+  test("shows focused Float ID state on the Float detail route", () => {
+    const contract = getFixtureDashboardContract({
+      office: "LDN",
+      from: "2026-01-01",
+      to: "2026-03-31",
+      floatProjectId: "11413929"
+    });
+    const html = renderToStaticMarkup(React.createElement(FloatDiagnostics, { contract }));
+
+    expect(html).toContain("Focused Float ID: 11413929");
+    expect(html).toContain("UCS04787");
+    expect(html).toContain("11413929");
   });
 });

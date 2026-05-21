@@ -14,7 +14,10 @@ export function FloatDiagnostics({ contract }: { contract: DashboardDisplayContr
       "div",
       { className: "table-title" },
       React.createElement("h2", null, "Float Diagnostics"),
-      React.createElement("span", { className: "status-pill" }, `${checks.length} checks`)
+      React.createElement("span", { className: "status-pill" }, `${checks.length} checks`),
+      contract.scope.floatProjectId === undefined
+        ? null
+        : React.createElement("span", { className: "status-pill" }, `Focused Float ID: ${contract.scope.floatProjectId}`)
     ),
     React.createElement(
       "table",
@@ -28,6 +31,9 @@ export function FloatDiagnostics({ contract }: { contract: DashboardDisplayContr
           React.createElement("th", null, "Project"),
           React.createElement("th", null, "Float ID"),
           React.createElement("th", null, "Row type"),
+          React.createElement("th", null, "Raw"),
+          React.createElement("th", null, "Cache"),
+          React.createElement("th", null, "Visible"),
           React.createElement("th", null, "State"),
           React.createElement("th", null, "Trace")
         )
@@ -91,6 +97,9 @@ function floatRow(row: DashboardProjectRow, contract: DashboardDisplayContract) 
     ),
     React.createElement("td", null, floatProjectId),
     React.createElement("td", null, React.createElement("span", { className: "row-type-badge" }, row.rowType)),
+    React.createElement("td", null, layerState(row, "float_raw")),
+    React.createElement("td", null, layerState(row, "float_cache")),
+    React.createElement("td", null, layerState(row, "float_visible")),
     React.createElement("td", null, state),
     React.createElement(
       "td",
@@ -99,6 +108,16 @@ function floatRow(row: DashboardProjectRow, contract: DashboardDisplayContract) 
       " ",
       row.sourceTrace.map((ref) => ref.rawRowId ?? ref.sourceObjectId ?? ref.sourceLayer).join(" ")
     )
+  );
+}
+
+function layerState(row: DashboardProjectRow, sourceLayer: "float_raw" | "float_cache" | "float_visible") {
+  const present = row.sourceTrace.some((ref) => ref.sourceLayer === sourceLayer);
+
+  return React.createElement(
+    "span",
+    { className: present ? "status-badge ok" : "status-badge warn" },
+    present ? "present" : "missing"
   );
 }
 
