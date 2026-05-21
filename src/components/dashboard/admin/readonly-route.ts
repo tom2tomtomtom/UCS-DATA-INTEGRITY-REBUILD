@@ -3,6 +3,8 @@ import React from "react";
 export type ReadOnlyRouteEvidenceItem = {
   readonly label: string;
   readonly detail: string;
+  readonly href?: string;
+  readonly meta?: readonly string[];
 };
 
 export function ReadOnlyRouteSurface({
@@ -27,7 +29,11 @@ export function ReadOnlyRouteSurface({
           "li",
           { key: item.label },
           React.createElement("strong", null, item.label),
-          React.createElement("span", null, item.detail)
+          item.meta === undefined || item.meta.length === 0
+            ? null
+            : React.createElement("small", null, item.meta.join(" / ")),
+          React.createElement("span", null, item.detail),
+          item.href === undefined ? null : React.createElement("a", { href: item.href }, "Open evidence")
         )
       )
     )
