@@ -3,7 +3,10 @@ import React from "react";
 import type { DashboardDisplayContract, DashboardProjectRow, DashboardTotals } from "../../../lib";
 import { scopedHref } from "../../../lib";
 import { formatProjectMetric, projectRowTraceabilityLabel } from "../../../lib/display/project-metric-format";
+import type { ProjectsViewState } from "../../../lib/ui/projects-view-state";
+import type { UiSearchParams } from "../../../lib/ui/scope-params";
 import { buildCsvDataUriFromContract } from "../export/csv-export";
+import { ProjectsBreakdownControls, ProjectsControls } from "./projects-controls";
 
 const tableMetrics = [
   ["Sold", "soldFee"],
@@ -13,7 +16,15 @@ const tableMetrics = [
   ["Production rev", "productionRevenue"]
 ] as const satisfies readonly (readonly [string, keyof DashboardTotals])[];
 
-export function ProjectsTable({ contract }: { contract: DashboardDisplayContract }) {
+export function ProjectsTable({
+  contract,
+  params = {},
+  viewState = { presentationView: "list", breakdownView: "department" }
+}: {
+  readonly contract: DashboardDisplayContract;
+  readonly params?: UiSearchParams;
+  readonly viewState?: ProjectsViewState;
+}) {
   return React.createElement(
     "section",
     { className: "projects-surface" },
@@ -31,6 +42,7 @@ export function ProjectsTable({ contract }: { contract: DashboardDisplayContract
         "Download CSV"
       )
     ),
+    React.createElement(ProjectsControls, { params, viewState }),
     React.createElement(
       "div",
       { className: "active-filter-row", "aria-label": "Active filters" },
@@ -42,30 +54,45 @@ export function ProjectsTable({ contract }: { contract: DashboardDisplayContract
       optionalScopeChip("Client", contract.scope.client),
       optionalScopeChip("Search", contract.scope.search)
     ),
+    viewState.presentationView === "calendar"
+      ? calendarEmptyState(params, viewState)
+      : projectsListTable(contract)
+  );
+}
+
+function projectsListTable(contract: DashboardDisplayContract) {
+  return React.createElement(
+    "table",
+    { className: "projects-table" },
     React.createElement(
-      "table",
-      { className: "projects-table" },
+      "thead",
+      null,
       React.createElement(
-        "thead",
+        "tr",
         null,
-        React.createElement(
-          "tr",
-          null,
-          React.createElement("th", null, "Job Number"),
-          React.createElement("th", null, "Client"),
-          React.createElement("th", null, "Project"),
-          React.createElement("th", null, "Row Type"),
-          ...tableMetrics.map(([label]) => React.createElement("th", { key: label }, label)),
-          React.createElement("th", null, "Confidence")
-        )
-      ),
-      React.createElement(
-        "tbody",
-        null,
-        contract.visibleRows.map((row) => projectRow(row)),
-        footerRow(contract)
+        React.createElement("th", null, "Job Number"),
+        React.createElement("th", null, "Client"),
+        React.createElement("th", null, "Project"),
+        React.createElement("th", null, "Row Type"),
+        ...tableMetrics.map(([label]) => React.createElement("th", { key: label }, label)),
+        React.createElement("th", null, "Confidence")
       )
+    ),
+    React.createElement(
+      "tbody",
+      null,
+      contract.visibleRows.map((row) => projectRow(row)),
+      footerRow(contract)
     )
+  );
+}
+
+function calendarEmptyState(params: UiSearchParams, viewState: ProjectsViewState) {
+  return React.createElement(
+    "div",
+    { className: "projects-calendar-empty" },
+    React.createElement("p", null, "No calendar data for this period."),
+    React.createElement(ProjectsBreakdownControls, { params, viewState })
   );
 }
 
