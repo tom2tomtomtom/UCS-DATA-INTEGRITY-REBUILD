@@ -375,17 +375,26 @@ async function fetchSheetRowsWithCellMetadata({
     fields
   });
   const url = `${GOOGLE_SHEETS_URL}/${encodeURIComponent(spreadsheetId)}?${searchParams.toString()}`;
-  const payload = await fetchJson(fetchImpl, url, {
-    headers: {
-      Authorization: `Bearer ${googleAccessToken}`
-    }
-  });
+  const [payload, renderedValues] = await Promise.all([
+    fetchJson(fetchImpl, url, {
+      headers: {
+        Authorization: `Bearer ${googleAccessToken}`
+      }
+    }),
+    fetchSheetValues({
+      fetchImpl,
+      googleAccessToken,
+      spreadsheetId,
+      range
+    })
+  ]);
 
   return gridDataToSnapshotRows({
     source,
     spreadsheetId,
     range,
     payload,
+    renderedValues,
     maxRows
   });
 }
@@ -418,7 +427,7 @@ function valuesToSnapshotRows({ source, spreadsheetId, range, values, maxRows })
   });
 }
 
-function gridDataToSnapshotRows({ source, spreadsheetId, range, payload, maxRows }) {
+function gridDataToSnapshotRows({ source, spreadsheetId, range, payload, renderedValues = [], maxRows }) {
   const tab = sourceTabFromRange(range);
   const sheets = Array.isArray(payload?.sheets) ? payload.sheets : [];
   const sheet = sheets.find((candidate) => candidate?.properties?.title === tab) ?? sheets[0];
@@ -433,18 +442,25 @@ function gridDataToSnapshotRows({ source, spreadsheetId, range, payload, maxRows
       if (maxRows !== "all" && rows.length >= maxRows) return rows;
 
       const values = Array.isArray(rowData[index]?.values) ? rowData[index].values : [];
-      const cells = trimTrailingEmptyCells(values.map(cellDisplayValue));
+      const sourceRowNumber = startRow + index + 1;
+      const renderedRow = Array.isArray(renderedValues[sourceRowNumber - 1]) ? renderedValues[sourceRowNumber - 1] : [];
+      const cells = trimTrailingEmptyCells(
+        renderedRow.length > 0
+          ? renderedRow.map((cell) => String(cell ?? ""))
+          : values.map(cellDisplayValue)
+      );
+      const cellData = extractCellData(values, cells);
 
       if (cells.every((cell) => String(cell ?? "").trim() === "")) {
         continue;
       }
 
-      const sourceRowNumber = startRow + index + 1;
       const cellLinks = extractCellLinks(values, cells);
       const raw = {
         source,
         rowNumber: sourceRowNumber,
         cells,
+        ...(cellData.length > 0 ? { cellData } : {}),
         ...(cellLinks.length > 0 ? { cellLinks } : {})
       };
 
@@ -509,6 +525,32 @@ function extractCellLinks(values, cells) {
   }
 
   return links;
+}
+
+function extractCellData(values, cells) {
+  const cellData = [];
+
+  for (let index = 0; index < values.length; index += 1) {
+    const cell = asRecord(values[index]);
+    const formattedValue = typeof cell.formattedValue === "string" ? cell.formattedValue : undefined;
+    const effectiveValue = scalarCellValue(cell.effectiveValue);
+    const userEnteredValue = scalarCellValue(cell.userEnteredValue);
+
+    if (formattedValue === undefined && effectiveValue === undefined && userEnteredValue === undefined) {
+      continue;
+    }
+
+    cellData.push({
+      columnIndex: index + 1,
+      columnLetter: columnLetter(index + 1),
+      displayValue: cells[index] ?? cellDisplayValue(cell),
+      ...(formattedValue !== undefined ? { formattedValue } : {}),
+      ...(effectiveValue !== undefined ? { effectiveValue } : {}),
+      ...(userEnteredValue !== undefined ? { userEnteredValue } : {})
+    });
+  }
+
+  return cellData;
 }
 
 function linkForCell(cell) {

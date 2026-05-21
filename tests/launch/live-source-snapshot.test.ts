@@ -213,6 +213,7 @@ describe("Phase 10 live source snapshot builder", () => {
                         },
                         {
                           formattedValue: "Formula Link",
+                          effectiveValue: { numberValue: 1234 },
                           userEnteredValue: {
                             formulaValue: "=HYPERLINK(\"https://docs.google.com/spreadsheets/d/formula-linked-id/edit\",\"Formula Link\")"
                           }
@@ -242,6 +243,24 @@ describe("Phase 10 live source snapshot builder", () => {
                 }
               ]
             }
+          ]
+        });
+      }
+
+      if (decodedUrl.includes("fee_tracker_sheet") && decodedUrl.includes("/values/")) {
+        return ok({
+          values: [
+            ["Created", "Client", "Job Number", "Job Name", "Fee Sheet Link"],
+            [
+              "09-06-2025",
+              "British Airways",
+              "UCS04787",
+              "BA Retainer",
+              "UCS04787 Fee Sheet",
+              "Formula Link",
+              "Rich Link",
+              "Format Link"
+            ]
           ]
         });
       }
@@ -309,7 +328,16 @@ describe("Phase 10 live source snapshot builder", () => {
           uri: "https://docs.google.com/spreadsheets/d/format-linked-id/edit",
           linkSource: "user_entered_format"
         }
-      ]
+      ],
+      cellData: expect.arrayContaining([
+        expect.objectContaining({
+          columnIndex: 6,
+          columnLetter: "F",
+          formattedValue: "Formula Link",
+          effectiveValue: 1234,
+          userEnteredValue: "=HYPERLINK(\"https://docs.google.com/spreadsheets/d/formula-linked-id/edit\",\"Formula Link\")"
+        })
+      ])
     });
   });
 
@@ -358,6 +386,15 @@ describe("Phase 10 live source snapshot builder", () => {
         });
       }
 
+      if (decodedUrl.includes("fee_tracker_sheet") && decodedUrl.includes("/values/")) {
+        return ok({
+          values: [
+            ["Created", "Client", "Job Number", "Job Name", "Fee Sheet Link"],
+            ["09-06-2025", "British Airways", "UCS04787", "BA Retainer", "UCS04787 Fee Sheet"]
+          ]
+        });
+      }
+
       if (decodedUrl.includes("linked-fee-sheet-id") && decodedUrl.includes("fields=sheets.properties")) {
         return ok({
           sheets: [
@@ -395,6 +432,18 @@ describe("Phase 10 live source snapshot builder", () => {
               ]
             }
           ]
+        });
+      }
+
+      if (decodedUrl.includes("linked-fee-sheet-id") && decodedUrl.includes("/values/")) {
+        const title = decodedUrl.includes("CLIENT%20SUMMARY") || decodedUrl.includes("CLIENT SUMMARY")
+          ? "CLIENT SUMMARY"
+          : decodedUrl.includes("V1")
+            ? "V1"
+            : "FIRST TAB";
+
+        return ok({
+          values: [[title, "UCS04787", title === "FIRST TAB" ? "Float ID 10480262" : "100"]]
         });
       }
 

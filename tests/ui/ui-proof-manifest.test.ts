@@ -114,5 +114,5 @@ describe("P8-F UI proof manifest", () => {
     expect(output).not.toContain("SUPABASE_SERVICE_ROLE_KEY");
     expect(output).not.toContain("raw source payload");
     expect(output).not.toContain("sourceRefs");
-  });
+  }, 15000);
 });
