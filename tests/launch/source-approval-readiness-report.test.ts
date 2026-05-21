@@ -2,6 +2,7 @@ import { execFileSync } from "node:child_process";
 import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
+import { pathToFileURL } from "node:url";
 
 import { describe, expect, test } from "vitest";
 
@@ -46,7 +47,7 @@ describe("Phase 10 source approval readiness report", { timeout: 15000 }, () => 
     expect(output).not.toContain("google_json_secret");
   });
 
-  test("passes when all source streams, snapshots, UI spec, and stakeholder approval are ready", () => {
+  test("blocks approval when source streams and snapshots are ready but named scenarios still warn", () => {
     const output = runReport({
       SOURCE_APPROVAL_ENV_TEXT: fullEnv,
       SOURCE_SNAPSHOT_FILE: writeSnapshotFile(fourStreamSnapshotWithLiveFloatManifest()),
@@ -55,7 +56,14 @@ describe("Phase 10 source approval readiness report", { timeout: 15000 }, () => 
     });
     const report = JSON.parse(output);
 
-    expect(report.status).toBe("pass");
+    expect(report.status).toBe("fail");
+    expect(report.blockers).toEqual(
+      expect.arrayContaining([expect.objectContaining({ code: "NAMED_SCENARIOS_NOT_READY" })])
+    );
+    expect(report.summary).toMatchObject({
+      sourceSnapshotStatus: "ready",
+      namedScenarioStatus: "warn"
+    });
     expect(report.sources).toEqual(
       expect.arrayContaining([
         expect.objectContaining({ name: "sold", status: "pass" }),
@@ -118,7 +126,10 @@ describe("Phase 10 source approval readiness report", { timeout: 15000 }, () => 
     });
     const report = JSON.parse(output);
 
-    expect(report.status).toBe("pass");
+    expect(report.status).toBe("fail");
+    expect(report.blockers).toEqual(
+      expect.arrayContaining([expect.objectContaining({ code: "NAMED_SCENARIOS_NOT_READY" })])
+    );
     expect(report.sources).toEqual(
       expect.arrayContaining([
         expect.objectContaining({ name: "pipeline", status: "pass" }),
@@ -137,11 +148,38 @@ describe("Phase 10 source approval readiness report", { timeout: 15000 }, () => 
     });
     const report = JSON.parse(output);
 
-    expect(report.status).toBe("pass");
+    expect(report.status).toBe("fail");
     expect(report.checks).toEqual(
-      expect.arrayContaining([expect.objectContaining({ code: "SOURCE_SNAPSHOTS_READY", status: "pass" })])
+      expect.arrayContaining([
+        expect.objectContaining({ code: "SOURCE_SNAPSHOTS_READY", status: "pass" }),
+        expect.objectContaining({ code: "NAMED_SCENARIOS_NOT_READY", status: "fail" })
+      ])
     );
     expect(report.summary.sourceSnapshotStatus).toBe("ready");
+    expect(report.summary.namedScenarioStatus).toBe("warn");
+  });
+
+  test("pure report passes only when the named scenario gate is also pass", async () => {
+    const { buildSourceApprovalReadinessReport } = await import(
+      pathToFileURL(`${process.cwd()}/scripts/lib/source-approval-readiness-report.mjs`).href
+    );
+
+    const report = buildSourceApprovalReadinessReport({
+      envText: fullEnv,
+      expected: {
+        rebuildSupabaseRef: "nxrzhwqsswhjgeouxsyr"
+      },
+      uiSpecStatus: "ready",
+      sourceSnapshotStatus: "ready",
+      namedScenarioStatus: "pass",
+      stakeholderApprovalStatus: "approved",
+      productionCutoverStatus: "not_cut_over"
+    });
+
+    expect(report.status).toBe("pass");
+    expect(report.checks).toEqual(
+      expect.arrayContaining([expect.objectContaining({ code: "NAMED_SCENARIOS_READY", status: "pass" })])
+    );
   });
 
   test("does not mark four-stream snapshots ready without live Float target manifest evidence", () => {

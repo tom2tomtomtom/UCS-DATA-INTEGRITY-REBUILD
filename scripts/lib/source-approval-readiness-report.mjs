@@ -3,6 +3,8 @@ export function buildSourceApprovalReadinessReport({
   expected,
   uiSpecStatus = "pending",
   sourceSnapshotStatus = "missing",
+  namedScenarioStatus = "not_checked",
+  namedScenarioWarnings = [],
   stakeholderApprovalStatus = "not_approved",
   productionCutoverStatus = "not_cut_over"
 }) {
@@ -65,6 +67,8 @@ export function buildSourceApprovalReadinessReport({
     failMessage: "Source snapshots are not ready. Do not ask stakeholders to approve source accuracy yet."
   }));
 
+  checks.push(namedScenarioCheck(namedScenarioStatus, namedScenarioWarnings));
+
   checks.push(
     uiSpecStatus === "ready"
       ? pass("UI_PARITY_SPEC_READY", "Legacy UI UX spec has been ingested for parity checks.")
@@ -102,6 +106,8 @@ export function buildSourceApprovalReadinessReport({
       sourceStreamsBlocked: sourceStreams.filter((stream) => stream.check.status === "fail").map((stream) => stream.name),
       uiSpecStatus,
       sourceSnapshotStatus,
+      namedScenarioStatus,
+      namedScenarioWarnings,
       stakeholderApprovalStatus,
       productionCutoverStatus
     }
@@ -157,6 +163,25 @@ function statusCheck({ code, value, passValue, failMessage }) {
   return value === passValue
     ? pass(code, `${code} is ${passValue}.`)
     : fail(`${code}_BLOCKED`, failMessage);
+}
+
+function namedScenarioCheck(status, warnings) {
+  if (status === "pass") {
+    return pass("NAMED_SCENARIOS_READY", "Named Sian/Yunni/Jade scenarios are pass.");
+  }
+
+  if (status === "warn") {
+    const warningList = Array.isArray(warnings) && warnings.length > 0 ? warnings.join(", ") : "unknown warnings";
+    return fail(
+      "NAMED_SCENARIOS_NOT_READY",
+      `Named Sian/Yunni/Jade scenario warnings remain: ${warningList}. Do not ask stakeholders to approve source accuracy yet.`
+    );
+  }
+
+  return warn(
+    "NAMED_SCENARIOS_NOT_CHECKED",
+    "Named Sian/Yunni/Jade scenarios have not been checked against the current source snapshot."
+  );
 }
 
 function hasValue(env, key) {

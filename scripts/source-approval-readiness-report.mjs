@@ -4,9 +4,17 @@ import fs from "node:fs";
 
 import { buildSourceApprovalReadinessReport } from "./lib/source-approval-readiness-report.mjs";
 import { buildSourceSnapshotImportPlan } from "./lib/source-import-report.mjs";
-import { buildFloatTargetManifestEvidenceFromSnapshot } from "./lib/named-scenario-report.mjs";
+import {
+  buildFloatLayerEvidenceFromSnapshot,
+  buildFloatTargetManifestEvidenceFromSnapshot,
+  buildNamedScenarioReport,
+  buildScenarioSourceEvidenceFromSnapshot
+} from "./lib/named-scenario-report.mjs";
 
 const envText = readEnvText();
+const sourceSnapshot = readSourceSnapshot();
+const sourceSnapshotStatus = resolveSourceSnapshotStatus(sourceSnapshot);
+const namedScenarioReadiness = resolveNamedScenarioReadiness(sourceSnapshot, sourceSnapshotStatus);
 
 const report = buildSourceApprovalReadinessReport({
   envText,
@@ -14,7 +22,9 @@ const report = buildSourceApprovalReadinessReport({
     rebuildSupabaseRef: "nxrzhwqsswhjgeouxsyr"
   },
   uiSpecStatus: process.env.UI_PARITY_SPEC_STATUS ?? "pending",
-  sourceSnapshotStatus: resolveSourceSnapshotStatus(),
+  sourceSnapshotStatus,
+  namedScenarioStatus: namedScenarioReadiness.status,
+  namedScenarioWarnings: namedScenarioReadiness.warnings,
   stakeholderApprovalStatus: process.env.STAKEHOLDER_APPROVAL_STATUS ?? "not_approved",
   productionCutoverStatus: process.env.PRODUCTION_CUTOVER_STATUS ?? "not_cut_over"
 });
@@ -54,23 +64,70 @@ function readEnvText() {
   return keys.map((key) => `${key}=${process.env[key] ?? ""}`).join("\n");
 }
 
-function resolveSourceSnapshotStatus() {
-  if (process.env.SOURCE_SNAPSHOT_FILE !== undefined && process.env.SOURCE_SNAPSHOT_FILE.trim() !== "") {
-    try {
-      const snapshot = JSON.parse(fs.readFileSync(process.env.SOURCE_SNAPSHOT_FILE, "utf8"));
-      const plan = buildSourceSnapshotImportPlan(snapshot);
-      const requiredSources = ["fee_sheet", "pipeline", "production_revenue", "float"];
-      const hasAllStreams = requiredSources.every((source) => (plan.report.bySource[source]?.rawRows ?? 0) > 0);
-      const hasOnlyLiveSourceEvidence = plan.report.status === "pass" && plan.report.cacheEvidenceRows === 0;
-      const hasLiveFloatTargetManifest = buildFloatTargetManifestEvidenceFromSnapshot(snapshot) !== undefined;
+function readSourceSnapshot() {
+  if (process.env.SOURCE_SNAPSHOT_FILE === undefined || process.env.SOURCE_SNAPSHOT_FILE.trim() === "") {
+    return undefined;
+  }
 
-      return hasAllStreams && hasOnlyLiveSourceEvidence && hasLiveFloatTargetManifest ? "ready" : "missing";
-    } catch {
-      return "missing";
-    }
+  try {
+    return JSON.parse(fs.readFileSync(process.env.SOURCE_SNAPSHOT_FILE, "utf8"));
+  } catch {
+    return undefined;
+  }
+}
+
+function resolveSourceSnapshotStatus(snapshot) {
+  if (snapshot !== undefined) {
+    return sourceSnapshotIsReady(snapshot) ? "ready" : "missing";
   }
 
   return process.env.SOURCE_SNAPSHOT_STATUS === undefined || process.env.SOURCE_SNAPSHOT_STATUS === "ready"
     ? "missing"
     : process.env.SOURCE_SNAPSHOT_STATUS;
+}
+
+function sourceSnapshotIsReady(snapshot) {
+  try {
+    const plan = buildSourceSnapshotImportPlan(snapshot);
+    const requiredSources = ["fee_sheet", "pipeline", "production_revenue", "float"];
+    const hasAllStreams = requiredSources.every((source) => (plan.report.bySource[source]?.rawRows ?? 0) > 0);
+    const hasOnlyLiveSourceEvidence = plan.report.status === "pass" && plan.report.cacheEvidenceRows === 0;
+    const hasLiveFloatTargetManifest = buildFloatTargetManifestEvidenceFromSnapshot(snapshot) !== undefined;
+
+    return hasAllStreams && hasOnlyLiveSourceEvidence && hasLiveFloatTargetManifest;
+  } catch {
+    return false;
+  }
+}
+
+function resolveNamedScenarioReadiness(snapshot, sourceSnapshotStatus) {
+  if (snapshot === undefined || sourceSnapshotStatus !== "ready") {
+    return { status: "not_checked", warnings: [] };
+  }
+
+  try {
+    const plan = buildSourceSnapshotImportPlan(snapshot);
+    const floatTargetManifest = buildFloatTargetManifestEvidenceFromSnapshot(snapshot);
+    if (floatTargetManifest === undefined) {
+      return { status: "not_checked", warnings: [] };
+    }
+
+    const sourceEvidence = {
+      status: "ready",
+      snapshotId: plan.report.snapshotId,
+      sourcesChecked: ["fee_sheet", "pipeline", "production_revenue", "float"],
+      rawRows: plan.report.rawRows,
+      floatTargetManifest,
+      floatLayerEvidence: buildFloatLayerEvidenceFromSnapshot(snapshot, floatTargetManifest),
+      scenarioSourceEvidence: buildScenarioSourceEvidenceFromSnapshot(snapshot)
+    };
+    const report = buildNamedScenarioReport({ sourceEvidence });
+
+    return {
+      status: report.status,
+      warnings: report.scenarios.filter((scenario) => scenario.status === "warn").map((scenario) => scenario.id)
+    };
+  } catch {
+    return { status: "not_checked", warnings: [] };
+  }
 }
