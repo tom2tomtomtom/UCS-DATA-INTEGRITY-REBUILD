@@ -2,6 +2,7 @@ import React from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, test } from "vitest";
 
+import ChatDemoPage from "../../app/dashboard/chat-demo/page";
 import { ChatShell } from "../../src/components/dashboard/chat/chat-shell";
 
 describe("P6-F chat shell", () => {
@@ -76,5 +77,32 @@ describe("P6-F chat shell", () => {
     expect(idleHtml).toContain("Idle");
     expect(idleHtml).toContain("Ask a scoped question");
     expect(idleHtml).not.toContain("Evidence ready");
+  });
+
+  test("chat demo runs a scoped evidence investigation when a question is submitted", async () => {
+    const html = renderToStaticMarkup(
+      await ChatDemoPage({
+        searchParams: Promise.resolve({
+          office: "LDN",
+          from: "2026-01-01",
+          to: "2026-03-31",
+          department: "Design",
+          question: "what errors can you see"
+        })
+      })
+    );
+
+    expect(html).toContain("Dashboard Chat");
+    expect(html).toContain("Evidence ready");
+    expect(html).toContain("Question:");
+    expect(html).toContain("what errors can you see");
+    expect(html).toContain("Playbook: dashboard_scan");
+    expect(html).toContain("Sources checked");
+    expect(html).toContain("float_visible");
+    expect(html).toContain("UCS04787 raw/cache reconciliation");
+    expect(html).toContain("Unresolved checks");
+    expect(html).toContain("TOOL_NOT_FIXTURE_BACKED");
+    expect(html).toContain("Needs Codex");
+    expect(html).not.toContain("source fixed");
   });
 });

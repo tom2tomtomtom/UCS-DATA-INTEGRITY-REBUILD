@@ -6,20 +6,24 @@ import { ChatEvidenceTrace } from "./chat-evidence-trace";
 export type ChatShellState = "closed" | "idle" | "working" | "evidence" | "error";
 
 export type ChatShellEvidence = {
-  sourcesChecked: string[];
+  sourcesChecked: readonly string[];
   confidence: "high" | "medium" | "low";
-  warnings: string[];
-  unresolved?: string[];
+  warnings: readonly string[];
+  unresolved?: readonly string[];
 };
 
 export function ChatShell({
   scope,
   state,
+  question,
+  answer,
   evidence,
   needsCodexReasons
 }: {
   scope: DashboardScope;
   state: ChatShellState;
+  question?: string;
+  answer?: string;
   evidence?: ChatShellEvidence;
   needsCodexReasons: string[];
 }) {
@@ -28,8 +32,9 @@ export function ChatShell({
     { className: "chat-shell", "aria-label": "Dashboard Chat" },
     React.createElement("div", { className: "table-title" }, React.createElement("h2", null, "Dashboard Chat"), React.createElement("span", { className: "status-pill" }, labelForState(state))),
     React.createElement("p", { className: "detail-scope" }, scopeLine(scope)),
-    chatForm(scope),
+    chatForm(scope, question),
     quickQuestions(scope),
+    transcriptSection(question, answer),
     evidenceSection(evidence),
     React.createElement(
       "section",
@@ -44,12 +49,13 @@ export function ChatShell({
   );
 }
 
-function chatForm(scope: DashboardScope) {
+function chatForm(scope: DashboardScope, question: string | undefined) {
   return React.createElement(
     "form",
     { action: "/dashboard/chat-demo", className: "chat-form", method: "get" },
     React.createElement("textarea", {
       "aria-label": "Ask the dashboard chat",
+      defaultValue: question ?? "",
       name: "question",
       placeholder: "Ask a scoped evidence question...",
       rows: 4
@@ -60,6 +66,19 @@ function chatForm(scope: DashboardScope) {
     React.createElement("input", { name: "state", type: "hidden", value: "working" }),
     ...optionalScopeInputs(scope),
     React.createElement("button", { type: "submit" }, "Ask read-only chat")
+  );
+}
+
+function transcriptSection(question: string | undefined, answer: string | undefined) {
+  if ((question === undefined || question.trim() === "") && (answer === undefined || answer.trim() === "")) {
+    return null;
+  }
+
+  return React.createElement(
+    "section",
+    { className: "chat-transcript", "aria-label": "Chat answer" },
+    question === undefined || question.trim() === "" ? null : React.createElement("p", null, React.createElement("strong", null, "Question: "), question),
+    answer === undefined || answer.trim() === "" ? null : React.createElement("pre", null, answer)
   );
 }
 
