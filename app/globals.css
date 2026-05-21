@@ -1098,6 +1098,28 @@ select {
   font-size: 16px;
 }
 
+.quality-tabs {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.quality-tabs a {
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  padding: 7px 10px;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.quality-tabs a.active {
+  border-color: var(--ink);
+  background: var(--ink);
+  color: white;
+}
+
 .quality-status-grid {
   display: grid;
   gap: 10px;

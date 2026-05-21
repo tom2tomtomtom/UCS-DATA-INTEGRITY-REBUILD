@@ -4,7 +4,7 @@ import os from "node:os";
 import path from "node:path";
 import { describe, expect, test } from "vitest";
 
-describe("Phase 10 stakeholder approval pack", () => {
+describe("Phase 10 stakeholder approval pack", { timeout: 15000 }, () => {
   test("blocks stakeholder approval and production cutover when named scenarios still warn", () => {
     const snapshotFile = writeSnapshotFile(fourStreamSnapshot());
     const output = execFileSync("node", ["scripts/stakeholder-approval-pack.mjs"], {

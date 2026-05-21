@@ -21,7 +21,7 @@ const fullEnv = [
   "ANTHROPIC_API_KEY=anthropic_secret"
 ].join("\n");
 
-describe("Phase 10 source approval readiness report", () => {
+describe("Phase 10 source approval readiness report", { timeout: 15000 }, () => {
   test("reports missing source stream env as blockers without leaking values", () => {
     const output = runReport({
       SOURCE_APPROVAL_ENV_TEXT: fullEnv

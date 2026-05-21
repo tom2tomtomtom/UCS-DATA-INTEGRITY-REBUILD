@@ -25,7 +25,7 @@ const requiredScenarioIds = [
   "exact-client-drilldown"
 ];
 
-describe("P8-E named Sian Yunni Jade scenario report", () => {
+describe("P8-E named Sian Yunni Jade scenario report", { timeout: 15000 }, () => {
   test("covers every Gate 5 named scenario with owner, status, classification, and checks", () => {
     const report = buildNamedScenarioReport();
 

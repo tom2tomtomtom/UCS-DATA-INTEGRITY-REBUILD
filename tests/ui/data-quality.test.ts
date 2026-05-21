@@ -12,6 +12,10 @@ describe("P6-E Data Quality", () => {
     const html = renderToStaticMarkup(React.createElement(DataQualityDashboard, { contract }));
 
     expect(html).toContain("Data Quality");
+    expect(html).toContain("All issues");
+    expect(html).toContain("Named checks");
+    expect(html).toContain("Float");
+    expect(html).toContain("Affected rows");
     expect(html).toContain("FAIL");
     expect(html).toContain("WARN");
     expect(html).toContain("UNRESOLVED");
@@ -28,6 +32,11 @@ describe("P6-E Data Quality", () => {
     expect(html).toContain("Display");
     expect(html).toContain("CSV");
     expect(html).toContain("Chat");
+    expect(html).toContain("Float issues");
+    expect(html).toContain("Affected dashboard rows");
+    expect(html).toContain("FLOAT_ONLY: UCS05186");
+    expect(html).toContain("href=\"/dashboard/projects/UCS05186?office=LDN&amp;from=2026-01-01&amp;to=2026-03-31&amp;jobNumber=UCS05186\"");
+    expect(html).toContain("Use Codex for repo changes");
   });
 
   test("surfaces USA warnings from the named scenario report when source rows are missing", () => {
