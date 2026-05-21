@@ -10,10 +10,12 @@ export type ReadOnlyRouteEvidenceItem = {
 export function ReadOnlyRouteSurface({
   title,
   status,
+  controls,
   evidenceItems
 }: {
   readonly title: string;
   readonly status: string;
+  readonly controls?: React.ReactNode;
   readonly evidenceItems: readonly ReadOnlyRouteEvidenceItem[];
 }) {
   return React.createElement(
@@ -21,6 +23,7 @@ export function ReadOnlyRouteSurface({
     { className: "quality-surface" },
     React.createElement("h2", null, title),
     React.createElement("p", { className: "detail-scope" }, status),
+    controls,
     React.createElement(
       "ul",
       { className: "evidence-list" },

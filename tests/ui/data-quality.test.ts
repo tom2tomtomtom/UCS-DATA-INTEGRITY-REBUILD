@@ -50,6 +50,7 @@ describe("P6-E Data Quality", () => {
     expect(html).toContain("Sian:");
     expect(html).toContain("Jade:");
     expect(html).toContain("PRODUCTION_REVENUE_ONLY: UCS09999");
+    expect(html).toContain("PIPELINE_ONLY: Pipeline source row fixture-pipeline-tbc");
     expect(html).toContain("Archived source rows");
     expect(html).toContain("Use Codex for repo changes");
   });

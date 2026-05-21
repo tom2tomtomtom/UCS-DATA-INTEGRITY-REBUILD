@@ -362,7 +362,7 @@ function affectedRowCard(row: DashboardProjectRow) {
     React.createElement(
       "strong",
       null,
-      `${row.rowType.toUpperCase()}: ${row.jobNumber ?? "No job number"}`
+      `${row.rowType.toUpperCase()}: ${rowIdentityLabel(row)}`
     ),
     React.createElement(
       "span",
@@ -371,6 +371,16 @@ function affectedRowCard(row: DashboardProjectRow) {
     ),
     React.createElement("a", { href }, "Open row")
   );
+}
+
+function rowIdentityLabel(row: DashboardProjectRow): string {
+  if (row.jobNumber !== undefined && row.jobNumber.trim() !== "") return row.jobNumber;
+  if (row.rowType === "pipeline_only") {
+    const rawRowId = row.sourceTrace.find((ref) => ref.source === "pipeline")?.rawRowId;
+    return rawRowId === undefined ? "Pipeline source row" : `Pipeline source row ${rawRowId}`;
+  }
+
+  return "No job number";
 }
 
 function formatMoney(value: number): string {

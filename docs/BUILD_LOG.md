@@ -2729,6 +2729,35 @@ Boundary kept:
 - no source snapshot committed to git,
 - no stakeholder approval language.
 
+### Checkpoint: Float And Warning Review Controls
+
+Phase: 9.5
+
+Tickets: `#83`, `#85`, `#88`
+
+Status: implemented, local verification passed
+
+What changed:
+
+- Float Diagnostics now has a scoped search form for job, client, project, and Float ID,
+- Float search preserves the active display scope and remains read-only,
+- Sync Warnings now has status/source/owner review filters,
+- TBC pipeline-only rows now show their source row identity in Projects and Data Quality instead of only saying `No job number`.
+
+Verification:
+
+- `npm test -- tests/ui/secondary-routes.test.ts tests/ui/float-diagnostics.test.ts tests/ui/projects-page.test.ts tests/ui/data-quality.test.ts` passed,
+- `npm run verify:phase9` passed with 79 test files, 330 tests, typecheck, Next build, Phase 8 verifier, and Phase 9 verifier.
+
+Boundary kept:
+
+- no production cutover,
+- no source-system mutation,
+- no scheduled sync,
+- no Supabase migration,
+- no source snapshot committed to git,
+- no stakeholder approval language.
+
 ### Checkpoint: Project Detail Uses Display-Layer View Model And Named Scenario TODOs Are Tests
 
 Phase: 9.5 and 10

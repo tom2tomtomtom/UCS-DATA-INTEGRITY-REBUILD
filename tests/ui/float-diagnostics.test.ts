@@ -31,11 +31,29 @@ describe("P6-D Float diagnostics", () => {
     expect(html).toContain("Detail trace");
     expect(html).toContain("/dashboard/projects/UCS04787?office=LDN&amp;from=2026-01-01&amp;to=2026-03-31&amp;jobNumber=UCS04787#float-trace");
     expect(html).toContain("Float Export Compare");
+    expect(html).toContain("Search Float rows");
+    expect(html).toContain("placeholder=\"Job, client, project, or Float ID\"");
     expect(html).toContain("No pasted export yet");
     expect(html).toContain("Compare export");
     expect(html).toContain("Fixed-width Hours");
     expect(html).toContain("Ambiguous match");
     expect(html).toContain("Dashboard-only rows missing from pasted export");
+  });
+
+  test("filters Float diagnostics rows by the active search scope", () => {
+    const contract = getFixtureDashboardContract({
+      office: "LDN",
+      from: "2026-01-01",
+      to: "2026-03-31",
+      search: "Boldbean"
+    });
+    const html = renderToStaticMarkup(React.createElement(FloatDiagnostics, { contract }));
+
+    expect(html).toContain("value=\"Boldbean\"");
+    expect(html).toContain("UCS05186");
+    expect(html).toContain("Boldbean Brand Platform");
+    expect(html).not.toContain("British Airways");
+    expect(html).not.toContain("PCS00250 New Biz");
   });
 
   test("shows focused Float ID state on the Float detail route", () => {

@@ -34,6 +34,7 @@ describe("P6-C Projects table", () => {
     expect(html).toContain("British Airways");
     expect(html).toContain("UCS04787");
     expect(html).toContain("pipeline_only");
+    expect(html).toContain("Pipeline source row fixture-pipeline-tbc");
     expect(html).toContain("production_revenue_only");
     expect(html).toContain("float_only");
     expect(html).toContain("Archived Production Revenue");

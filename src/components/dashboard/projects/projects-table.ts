@@ -137,7 +137,7 @@ function projectRow(row: DashboardProjectRow) {
     React.createElement(
       "td",
       null,
-      React.createElement("a", { href: primaryHref }, row.jobNumber ?? "No job number"),
+      React.createElement("a", { href: primaryHref }, rowIdentityLabel(row)),
       React.createElement("br"),
       React.createElement("span", { className: "row-type-badge" }, row.rowType)
     ),
@@ -168,6 +168,16 @@ function projectRow(row: DashboardProjectRow) {
 function projectDetailHref(row: DashboardProjectRow): string | undefined {
   if (row.jobNumber === undefined) return undefined;
   return scopedHref(`/dashboard/projects/${row.jobNumber}`, row.scope, { jobNumber: row.jobNumber });
+}
+
+function rowIdentityLabel(row: DashboardProjectRow): string {
+  if (row.jobNumber !== undefined && row.jobNumber.trim() !== "") return row.jobNumber;
+  if (row.rowType === "pipeline_only") {
+    const rawRowId = row.sourceTrace.find((ref) => ref.source === "pipeline")?.rawRowId;
+    return rawRowId === undefined ? "Pipeline source row" : `Pipeline source row ${rawRowId}`;
+  }
+
+  return "No job number";
 }
 
 function projectFloatHref(row: DashboardProjectRow): string | undefined {

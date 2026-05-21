@@ -16,7 +16,10 @@ export function FloatDiagnostics({
   contract: DashboardDisplayContract;
   pastedFloatExport?: string | undefined;
 }) {
-  const floatRows = contract.visibleRows.filter((row) => row.sourceFloatProjectId !== undefined || row.canonicalFloatProjectId !== undefined);
+  const floatRows = filterFloatRows(
+    contract.visibleRows.filter((row) => row.sourceFloatProjectId !== undefined || row.canonicalFloatProjectId !== undefined),
+    contract.scope.search
+  );
   const checks = contract.reconciliation.filter((check) => check.code.includes("FLOAT") || check.code.includes("PCS00250") || check.code.includes("BT_RAW_CACHE"));
 
   return React.createElement(
@@ -31,6 +34,7 @@ export function FloatDiagnostics({
         ? null
         : React.createElement("span", { className: "status-pill" }, `Focused Float ID: ${contract.scope.floatProjectId}`)
     ),
+    floatSearchForm(contract),
     React.createElement(
       "table",
       { className: "projects-table" },
@@ -60,6 +64,40 @@ export function FloatDiagnostics({
       { className: "detail-scope" },
       "Duplicate/manual and inactive/archive candidates are shown when the display contract carries them. Export compare reads pasted text only and does not write data."
     )
+  );
+}
+
+function floatSearchForm(contract: DashboardDisplayContract) {
+  return React.createElement(
+    "form",
+    { action: "/dashboard/float", className: "filter-menu", method: "get", role: "search" },
+    ...scopeHiddenInputs(contract, { omitSearch: true }),
+    React.createElement("label", { htmlFor: "float-search" }, "Search Float rows"),
+    React.createElement("input", {
+      defaultValue: contract.scope.search ?? "",
+      id: "float-search",
+      name: "search",
+      placeholder: "Job, client, project, or Float ID"
+    }),
+    React.createElement("button", { type: "submit" }, "Search")
+  );
+}
+
+function filterFloatRows(rows: readonly DashboardProjectRow[], search: string | undefined): DashboardProjectRow[] {
+  const needle = search?.trim().toLowerCase();
+  if (needle === undefined || needle === "") return [...rows];
+
+  return rows.filter((row) =>
+    [
+      row.jobNumber,
+      row.canonicalClient,
+      row.sourceClient,
+      row.canonicalProjectName,
+      row.sourceProjectName,
+      row.canonicalFloatProjectId,
+      row.sourceFloatProjectId,
+      row.id
+    ].some((value) => value?.toLowerCase().includes(needle))
   );
 }
 
@@ -215,7 +253,7 @@ function dashboardMatchLabel(row: FloatExportComparisonRow): string {
   return row.dashboard.jobNumber ?? row.dashboard.floatProjectId ?? row.dashboard.projectName;
 }
 
-function scopeHiddenInputs(contract: DashboardDisplayContract) {
+function scopeHiddenInputs(contract: DashboardDisplayContract, options: { readonly omitSearch?: boolean } = {}) {
   const scope = contract.scope;
   const values = {
     office: scope.office,
@@ -225,7 +263,7 @@ function scopeHiddenInputs(contract: DashboardDisplayContract) {
     department: scope.department,
     role: scope.role,
     client: scope.client,
-    search: scope.search,
+    search: options.omitSearch === true ? undefined : scope.search,
     jobNumber: scope.jobNumber,
     floatProjectId: scope.floatProjectId
   };
