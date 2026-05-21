@@ -13,6 +13,7 @@ import type {
 } from "../../../lib";
 import { scopedHref } from "../../../lib";
 import { formatProjectMetric } from "../../../lib/display/project-metric-format";
+import { TimeFilterControls } from "../time-filter-controls";
 
 const detailMetrics = [
   ["Sold (fee sheet)", "soldFee"],
@@ -51,6 +52,7 @@ export function ProjectDetail({
       React.createElement("div", null, React.createElement("h2", null, `${row.canonicalClient ?? row.sourceClient ?? "Unknown"} / ${jobNumber}`), scopeLine(contract)),
       React.createElement("a", { href: scopedHref("/dashboard/projects", contract.scope, { jobNumber }) }, "Back to Projects")
     ),
+    React.createElement(TimeFilterControls, { basePath: `/dashboard/projects/${jobNumber}`, scope: contract.scope }),
     matchingRows.length > 1 ? duplicateRowsPanel(matchingRows) : null,
     React.createElement(
       "div",

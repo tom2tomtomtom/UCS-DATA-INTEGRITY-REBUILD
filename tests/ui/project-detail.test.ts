@@ -46,6 +46,9 @@ describe("P6-D project detail", () => {
     expect(html).toContain("fixture-float-visible-ucs04787");
     expect(html).toContain("Back to Projects");
     expect(html).toContain("href=\"/dashboard/projects?office=LDN&amp;from=2026-01-01&amp;to=2026-03-31&amp;department=Design&amp;jobNumber=UCS04787\"");
+    expect(html).toContain("Quick");
+    expect(html).toContain("Full year");
+    expect(html).toContain("href=\"/dashboard/projects/UCS04787?office=LDN&amp;from=2026-04-01&amp;to=2026-06-30&amp;department=Design&amp;jobNumber=UCS04787\">Q2");
   });
 
   test("does not collapse duplicate visible rows that share one job number", () => {
