@@ -5,6 +5,7 @@ import path from "node:path";
 import { describe, expect, test } from "vitest";
 
 import {
+  buildFloatLayerEvidenceFromSnapshot,
   buildFloatTargetManifestEvidenceFromSnapshot,
   buildNamedScenarioReport
 } from "../../src/lib/scenarios/named-scenario-report";
@@ -203,7 +204,8 @@ describe("P8-E named Sian Yunni Jade scenario report", () => {
         snapshotId: "named-scenario-test-snapshot",
         sourcesChecked: ["fee_sheet", "pipeline", "production_revenue", "float"],
         rawRows: 8,
-        floatTargetManifest: floatTargetManifest!
+        floatTargetManifest: floatTargetManifest!,
+        floatLayerEvidence: []
       }
     });
 
@@ -223,6 +225,71 @@ describe("P8-E named Sian Yunni Jade scenario report", () => {
     });
     expect(report.scenarios.find((scenario) => scenario.id === "ucs04787")?.status).toBe("warn");
     expect(report.scenarios.find((scenario) => scenario.id === "bt-raw-without-cache")?.status).toBe("warn");
+    expect(report.approvalReady).toBe(false);
+  });
+
+  test("derives Float warning layer status from live source evidence when task and display evidence exists", () => {
+    const snapshot = floatLayerEvidenceSnapshot();
+    const floatTargetManifest = buildFloatTargetManifestEvidenceFromSnapshot(snapshot);
+    expect(floatTargetManifest).toBeDefined();
+    const floatLayerEvidence = buildFloatLayerEvidenceFromSnapshot(snapshot, floatTargetManifest!);
+
+    const report = buildNamedScenarioReport({
+      sourceEvidence: {
+        status: "ready",
+        snapshotId: "named-scenario-layer-evidence-snapshot",
+        sourcesChecked: ["fee_sheet", "pipeline", "production_revenue", "float"],
+        rawRows: 10,
+        floatTargetManifest: floatTargetManifest!,
+        floatLayerEvidence
+      }
+    });
+
+    expect(floatLayerEvidence.find((item) => item.scenarioCode === "UCS04787")).toMatchObject({
+      raw: "represented",
+      cache: "missing",
+      visible: "represented",
+      displayContract: "represented",
+      derivedLayers: ["raw", "cache", "visible", "display_contract"]
+    });
+    expect(floatLayerEvidence.find((item) => item.scenarioCode === "PCS00250")).toMatchObject({
+      raw: "missing",
+      derivedLayers: ["raw"]
+    });
+    expect(warningEvidence(report, "ucs04787")).toMatchObject({
+      evidenceStatus: "source_snapshot_ready",
+      sourceLayersChecked: [
+        "fee_sheet",
+        "pipeline",
+        "production_revenue",
+        "float",
+        "live_float_manifest",
+        "float_raw",
+        "float_cache",
+        "float_visible",
+        "display_contract"
+      ],
+      rawCacheVisibleStatus: {
+        raw: "represented",
+        cache: "missing",
+        visible: "represented"
+      },
+      rawCacheVisibleStatusBasis: "derived_source_snapshot",
+      derivedLayers: ["raw", "cache", "visible", "display_contract"],
+      fixtureLayers: [],
+      displayContractRowStatus: "represented"
+    });
+    expect(warningEvidence(report, "pcs00250")).toMatchObject({
+      rawCacheVisibleStatus: {
+        raw: "missing",
+        cache: "represented",
+        visible: "missing"
+      },
+      rawCacheVisibleStatusBasis: "mixed_source_snapshot_and_fixture",
+      derivedLayers: ["raw"],
+      fixtureLayers: ["cache", "visible"]
+    });
+    expect(report.status).toBe("warn");
     expect(report.approvalReady).toBe(false);
   });
 
@@ -352,6 +419,29 @@ function liveSnapshotWithoutResolvedScenarios() {
   };
 }
 
+function floatLayerEvidenceSnapshot() {
+  return {
+    ...fourStreamSnapshot(),
+    sources: fourStreamSnapshot().sources.map((source) =>
+      source.source === "float"
+        ? {
+            ...source,
+            rows: [
+              ...source.rows,
+              floatTaskRow("UCS04787", "10979146", "task-04787-1"),
+              floatTaskRow("UCS05186", "11413292", "task-05186-1"),
+              floatLayerEvidenceRow("UCS04787", "10979146", {
+                cache: "missing",
+                visible: "represented",
+                displayContract: "represented"
+              })
+            ]
+          }
+        : source
+    )
+  };
+}
+
 function floatProjectRow(scenarioCode: string, floatProjectId: string) {
   return {
     identity: {
@@ -363,6 +453,45 @@ function floatProjectRow(scenarioCode: string, floatProjectId: string) {
       project_id: Number(floatProjectId),
       project_code: scenarioCode,
       name: `${scenarioCode} Float project`
+    }
+  };
+}
+
+function floatTaskRow(scenarioCode: string, floatProjectId: string, taskId: string) {
+  return {
+    identity: {
+      stableSourceRowKey: `float:tasks:${taskId}`,
+      sourceObjectId: taskId
+    },
+    raw: {
+      objectType: "task",
+      task_id: taskId,
+      project_id: Number(floatProjectId),
+      project_code: scenarioCode,
+      hours: 8
+    }
+  };
+}
+
+function floatLayerEvidenceRow(
+  scenarioCode: string,
+  floatProjectId: string,
+  layers: {
+    readonly cache: "represented" | "missing";
+    readonly visible: "represented" | "missing";
+    readonly displayContract: "represented" | "missing";
+  }
+) {
+  return {
+    identity: {
+      stableSourceRowKey: `float:layer-evidence:${scenarioCode}`,
+      sourceObjectId: `layer-evidence:${scenarioCode}`
+    },
+    raw: {
+      objectType: "float_layer_evidence",
+      scenarioCode,
+      floatProjectId,
+      ...layers
     }
   };
 }

@@ -3,7 +3,11 @@
 import fs from "node:fs";
 
 import { buildSourceSnapshotImportPlan } from "./lib/source-import-report.mjs";
-import { buildFloatTargetManifestEvidenceFromSnapshot, buildNamedScenarioReport } from "./lib/named-scenario-report.mjs";
+import {
+  buildFloatLayerEvidenceFromSnapshot,
+  buildFloatTargetManifestEvidenceFromSnapshot,
+  buildNamedScenarioReport
+} from "./lib/named-scenario-report.mjs";
 
 process.stdout.write(`${JSON.stringify(buildNamedScenarioReport({ sourceEvidence: readSourceEvidence() }), null, 2)}\n`);
 
@@ -28,7 +32,8 @@ function readSourceEvidence() {
       snapshotId: plan.report.snapshotId,
       sourcesChecked,
       rawRows: plan.report.rawRows,
-      floatTargetManifest
+      floatTargetManifest,
+      floatLayerEvidence: buildFloatLayerEvidenceFromSnapshot(snapshot, floatTargetManifest)
     };
   } catch {
     return undefined;

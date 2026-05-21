@@ -145,6 +145,51 @@ export function buildFloatTargetManifestEvidenceFromSnapshot(snapshot) {
   };
 }
 
+export function buildFloatLayerEvidenceFromSnapshot(snapshot, floatTargetManifest) {
+  const floatSource = findLiveFloatSource(snapshot);
+  if (floatSource === undefined) return [];
+
+  const rows = arrayRecords(floatSource.rows);
+  const hasTaskCoverage = rows.some(isFloatTaskRow);
+
+  return floatTargetManifest.requestedScenarioCodes.map((scenarioCode) => {
+    const resolution = floatTargetManifest.resolvedScenarios.find((item) =>
+      sameScenarioCode(item.scenarioCode, scenarioCode)
+    );
+    const explicitLayerEvidence = explicitFloatLayerEvidence(rows, scenarioCode, resolution?.floatProjectId);
+    const sourceRowKeys = [];
+    const derivedLayers = [];
+    let raw = "not_applicable";
+
+    if (resolution !== undefined && hasTaskCoverage) {
+      const taskRows = rows.filter((row) => isFloatTaskForProject(row, resolution.floatProjectId));
+      raw = taskRows.length > 0 ? "represented" : "missing";
+      derivedLayers.push("raw");
+      for (const taskRow of taskRows) {
+        const sourceRowKey = stableSourceRowKeyFor(taskRow);
+        if (sourceRowKey !== undefined) addUnique(sourceRowKeys, sourceRowKey);
+      }
+    }
+
+    const cache = explicitLayerEvidence.cache;
+    const visible = explicitLayerEvidence.visible;
+    const displayContract = explicitLayerEvidence.displayContract;
+    sourceRowKeys.push(...explicitLayerEvidence.sourceRowKeys.filter((key) => !sourceRowKeys.includes(key)));
+    derivedLayers.push(...explicitLayerEvidence.derivedLayers.filter((layer) => !derivedLayers.includes(layer)));
+
+    return {
+      scenarioCode,
+      ...(resolution === undefined ? {} : { floatProjectId: resolution.floatProjectId }),
+      raw,
+      cache,
+      visible,
+      displayContract,
+      derivedLayers,
+      sourceRowKeys
+    };
+  });
+}
+
 function missingSourceEvidence() {
   return {
     status: "missing",
@@ -207,22 +252,56 @@ function check(code, status, evidence) {
 
 function warningEvidence(sourceEvidence, scenarioCode, input) {
   const isSourceSnapshotReady = sourceEvidence.status === "ready";
+  const layerEvidence = floatLayerEvidenceFor(sourceEvidence, scenarioCode);
+  const raw = layerEvidence?.derivedLayers.includes("raw") === true ? layerEvidence.raw : input.raw;
+  const cache = layerEvidence?.derivedLayers.includes("cache") === true ? layerEvidence.cache : input.cache;
+  const visible = layerEvidence?.derivedLayers.includes("visible") === true ? layerEvidence.visible : input.visible;
+  const derivedLayers = layerEvidence?.derivedLayers ?? [];
+  const fixtureLayers = ["raw", "cache", "visible"].filter((layer) => !derivedLayers.includes(layer));
 
   return {
     evidenceStatus: isSourceSnapshotReady ? "source_snapshot_ready" : "source_snapshot_missing",
-    sourceLayersChecked: isSourceSnapshotReady
-      ? [...sourceEvidence.sourcesChecked, "live_float_manifest"]
-      : [],
+    sourceLayersChecked: sourceLayersCheckedFor(sourceEvidence, derivedLayers),
     knownFloatIdsFromLiveManifest: liveManifestFloatIds(sourceEvidence, scenarioCode),
     rawCacheVisibleStatus: {
-      raw: input.raw,
-      cache: input.cache,
-      visible: input.visible
+      raw,
+      cache,
+      visible
     },
-    rawCacheVisibleStatusBasis: "named_scenario_fixture",
+    rawCacheVisibleStatusBasis: rawCacheVisibleStatusBasis(derivedLayers),
+    derivedLayers,
+    fixtureLayers,
+    displayContractRowStatus:
+      layerEvidence?.derivedLayers.includes("display_contract") === true
+        ? layerEvidence.displayContract
+        : "not_applicable",
     classification: input.classification,
     nextHumanAction: input.nextHumanAction
   };
+}
+
+function sourceLayersCheckedFor(sourceEvidence, derivedLayers) {
+  if (sourceEvidence.status !== "ready") return [];
+
+  const layers = [...sourceEvidence.sourcesChecked, "live_float_manifest"];
+  if (derivedLayers.includes("raw")) layers.push("float_raw");
+  if (derivedLayers.includes("cache")) layers.push("float_cache");
+  if (derivedLayers.includes("visible")) layers.push("float_visible");
+  if (derivedLayers.includes("display_contract")) layers.push("display_contract");
+  return layers;
+}
+
+function rawCacheVisibleStatusBasis(derivedLayers) {
+  const derivedSourceLayers = derivedLayers.filter((layer) => layer !== "display_contract");
+  if (derivedSourceLayers.length === 0) return "named_scenario_fixture";
+  if (derivedSourceLayers.length === 3) return "derived_source_snapshot";
+  return "mixed_source_snapshot_and_fixture";
+}
+
+function floatLayerEvidenceFor(sourceEvidence, scenarioCode) {
+  if (sourceEvidence.status !== "ready") return undefined;
+
+  return sourceEvidence.floatLayerEvidence?.find((item) => sameScenarioCode(item.scenarioCode, scenarioCode));
 }
 
 function liveManifestFloatIds(sourceEvidence, scenarioCode) {
@@ -231,6 +310,77 @@ function liveManifestFloatIds(sourceEvidence, scenarioCode) {
   return sourceEvidence.floatTargetManifest.resolvedScenarios
     .filter((resolution) => sameScenarioCode(resolution.scenarioCode, scenarioCode))
     .map((resolution) => resolution.floatProjectId);
+}
+
+function explicitFloatLayerEvidence(rows, scenarioCode, floatProjectId) {
+  const derivedLayers = [];
+  const sourceRowKeys = [];
+  let cache = "not_applicable";
+  let visible = "not_applicable";
+  let displayContract = "not_applicable";
+
+  for (const row of rows) {
+    const raw = asRecord(row.raw);
+    if (raw === undefined || stringValue(raw.objectType) !== "float_layer_evidence") continue;
+
+    const rowScenarioCode = stringValue(raw.scenarioCode);
+    const rowFloatProjectId = stringValue(raw.floatProjectId);
+    const matchesScenario = rowScenarioCode !== undefined && sameScenarioCode(rowScenarioCode, scenarioCode);
+    const matchesFloatProject = floatProjectId !== undefined && rowFloatProjectId === floatProjectId;
+    if (!matchesScenario && !matchesFloatProject) continue;
+
+    const sourceRowKey = stableSourceRowKeyFor(row);
+    if (sourceRowKey !== undefined) addUnique(sourceRowKeys, sourceRowKey);
+
+    const cachePresence = layerPresence(raw.cache);
+    if (cachePresence !== undefined) {
+      cache = cachePresence;
+      addUnique(derivedLayers, "cache");
+    }
+    const visiblePresence = layerPresence(raw.visible);
+    if (visiblePresence !== undefined) {
+      visible = visiblePresence;
+      addUnique(derivedLayers, "visible");
+    }
+    const displayContractPresence = layerPresence(raw.displayContract ?? raw.display_contract);
+    if (displayContractPresence !== undefined) {
+      displayContract = displayContractPresence;
+      addUnique(derivedLayers, "display_contract");
+    }
+  }
+
+  return {
+    cache,
+    visible,
+    displayContract,
+    derivedLayers,
+    sourceRowKeys
+  };
+}
+
+function isFloatTaskForProject(row, floatProjectId) {
+  if (!isFloatTaskRow(row)) return false;
+  const raw = asRecord(row.raw);
+  return stringValue(raw.project_id ?? raw.projectId) === floatProjectId;
+}
+
+function isFloatTaskRow(row) {
+  const raw = asRecord(row.raw);
+  return raw !== undefined && stringValue(raw.objectType) === "task";
+}
+
+function stableSourceRowKeyFor(row) {
+  const identity = asRecord(row.identity);
+  return stringValue(identity?.stableSourceRowKey);
+}
+
+function layerPresence(value) {
+  if (value === "represented" || value === "missing" || value === "not_applicable") {
+    return value;
+  }
+  if (value === true) return "represented";
+  if (value === false) return "missing";
+  return undefined;
 }
 
 function statusFromChecks(checks) {

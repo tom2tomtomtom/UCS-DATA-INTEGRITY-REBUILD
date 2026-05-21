@@ -141,6 +141,70 @@ export function buildSourceSnapshotImportPlan(snapshot) {
   };
 }
 
+export function buildSourceSnapshotLifecyclePlan({ previous, current, deletionEvidence = [] }) {
+  const previousPlan = buildSourceSnapshotImportPlan(previous);
+  const currentPlan = buildSourceSnapshotImportPlan(current);
+  const currentSources = new Set((current.sources ?? []).map((source) => source.source));
+  const currentRowsByIdentity = new Map(
+    currentPlan.rawRows.map((row) => [identityKey(row.source, row.identity), row])
+  );
+  const lifecycleRows = [];
+
+  for (const currentRawRow of currentPlan.rawRows) {
+    lifecycleRows.push({
+      source: currentRawRow.source,
+      identity: currentRawRow.identity,
+      lifecycleState: "current",
+      previousSnapshotId: previous.snapshotId,
+      currentSnapshotId: current.snapshotId,
+      currentSupported: true,
+      currentRawRow
+    });
+  }
+
+  for (const historicalRawRow of previousPlan.rawRows) {
+    if (!currentSources.has(historicalRawRow.source)) continue;
+    if (currentRowsByIdentity.has(identityKey(historicalRawRow.source, historicalRawRow.identity))) {
+      continue;
+    }
+
+    const matchingDeletionEvidence = deletionEvidence.find((evidence) =>
+      evidenceMatchesIdentity(evidence, historicalRawRow)
+    );
+    lifecycleRows.push({
+      source: historicalRawRow.source,
+      identity: historicalRawRow.identity,
+      lifecycleState:
+        matchingDeletionEvidence === undefined
+          ? "not_seen_in_latest_batch"
+          : "deleted_by_source_evidence",
+      previousSnapshotId: previous.snapshotId,
+      currentSnapshotId: current.snapshotId,
+      currentSupported: false,
+      historicalRawRow,
+      ...(matchingDeletionEvidence === undefined ? {} : { deletionEvidence: matchingDeletionEvidence })
+    });
+  }
+
+  const unresolvedDisappearedRows = lifecycleRows.filter(
+    (row) => row.lifecycleState === "not_seen_in_latest_batch"
+  );
+  const deletedRows = lifecycleRows.filter(
+    (row) => row.lifecycleState === "deleted_by_source_evidence"
+  );
+
+  return {
+    previousSnapshotId: previous.snapshotId,
+    currentSnapshotId: current.snapshotId,
+    currentRows: currentPlan.rawRows,
+    historicalRows: previousPlan.rawRows,
+    lifecycleRows,
+    unresolvedDisappearedRows,
+    deletedRows,
+    currentCountBySource: countRowsBySource(currentPlan.rawRows)
+  };
+}
+
 function reportForSource(reports, source) {
   if (reports[source] !== undefined) return reports[source];
 
@@ -247,6 +311,32 @@ function deterministicUuid(seed) {
     `${((parseInt(hash.slice(16, 18), 16) & 0x3f) | 0x80).toString(16).padStart(2, "0")}${hash.slice(18, 20)}`,
     hash.slice(20, 32)
   ].join("-");
+}
+
+function identityKey(source, identity) {
+  return `${source}:${identity.stableSourceRowKey}`;
+}
+
+function evidenceMatchesIdentity(evidence, row) {
+  return (
+    evidence.source === row.source &&
+    evidence.identity?.stableSourceRowKey === row.identity.stableSourceRowKey &&
+    matchesOptional(evidence.identity?.sourceDocumentId, row.identity.sourceDocumentId) &&
+    matchesOptional(evidence.identity?.sourceTab, row.identity.sourceTab) &&
+    matchesOptional(evidence.identity?.sourceRowNumber, row.identity.sourceRowNumber) &&
+    matchesOptional(evidence.identity?.sourceObjectId, row.identity.sourceObjectId)
+  );
+}
+
+function matchesOptional(expected, actual) {
+  return expected === undefined || expected === actual;
+}
+
+function countRowsBySource(rows) {
+  return rows.reduce((counts, row) => {
+    counts[row.source] = (counts[row.source] ?? 0) + 1;
+    return counts;
+  }, {});
 }
 
 function stableStringify(value) {

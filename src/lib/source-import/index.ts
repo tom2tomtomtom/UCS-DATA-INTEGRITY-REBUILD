@@ -2,6 +2,10 @@ export {
   buildSourceSnapshotImportPlan
 } from "./snapshot-import";
 
+export {
+  buildSourceSnapshotLifecyclePlan
+} from "./snapshot-lifecycle";
+
 export type {
   SourceSnapshotImportInput,
   SourceSnapshotImportPlan,
@@ -10,3 +14,10 @@ export type {
   SourceSnapshotRow,
   SourceSnapshotSource
 } from "./snapshot-import";
+
+export type {
+  SourceSnapshotDeletionEvidence,
+  SourceSnapshotLifecyclePlan,
+  SourceSnapshotLifecycleRow,
+  SourceSnapshotLifecycleState
+} from "./snapshot-lifecycle";

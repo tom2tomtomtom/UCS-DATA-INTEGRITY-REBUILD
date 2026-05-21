@@ -2,13 +2,18 @@
 
 import fs from "node:fs";
 
-import { buildFloatTargetManifestEvidenceFromSnapshot, buildNamedScenarioReport } from "./lib/named-scenario-report.mjs";
-import { buildSourceSnapshotImportPlan } from "./lib/source-import-report.mjs";
+import {
+  buildFloatLayerEvidenceFromSnapshot,
+  buildFloatTargetManifestEvidenceFromSnapshot,
+  buildNamedScenarioReport
+} from "./lib/named-scenario-report.mjs";
+import { buildSourceSnapshotImportPlan, buildSourceSnapshotLifecyclePlan } from "./lib/source-import-report.mjs";
 
-const sourceEvidence = readSourceEvidence();
+const { sourceEvidence, lifecycleEvidence } = readSourceEvidence();
 const scenarioReport = buildNamedScenarioReport({ sourceEvidence });
 const blockers = buildBlockers({
   scenarioReport,
+  lifecycleEvidence,
   stakeholderApprovalStatus: process.env.STAKEHOLDER_APPROVAL_STATUS ?? "not_approved",
   productionCutoverStatus: process.env.PRODUCTION_CUTOVER_STATUS ?? "not_cut_over"
 });
@@ -33,6 +38,7 @@ const pack = {
   blockers,
   warnings: warningScenarioIds,
   warningEvidence,
+  lifecycleEvidence,
   sourceEvidence: scenarioReport.sourceEvidence,
   namedScenarioStatus: scenarioReport.status,
   namedScenarioSummary: scenarioReport.summary,
@@ -43,7 +49,7 @@ const pack = {
 
 process.stdout.write(`${JSON.stringify(pack, null, 2)}\n`);
 
-function buildBlockers({ scenarioReport, stakeholderApprovalStatus, productionCutoverStatus }) {
+function buildBlockers({ scenarioReport, lifecycleEvidence, stakeholderApprovalStatus, productionCutoverStatus }) {
   const blockers = [];
 
   if (scenarioReport.sourceEvidence.status !== "ready") {
@@ -52,6 +58,10 @@ function buildBlockers({ scenarioReport, stakeholderApprovalStatus, productionCu
 
   if (scenarioReport.status !== "pass") {
     blockers.push("named_scenarios_not_fully_passed");
+  }
+
+  if ((lifecycleEvidence?.unresolvedDisappearedRows ?? 0) > 0) {
+    blockers.push("source_lifecycle_unresolved");
   }
 
   if (stakeholderApprovalStatus !== "approved") {
@@ -67,7 +77,7 @@ function buildBlockers({ scenarioReport, stakeholderApprovalStatus, productionCu
 
 function readSourceEvidence() {
   if (process.env.SOURCE_SNAPSHOT_FILE === undefined || process.env.SOURCE_SNAPSHOT_FILE.trim() === "") {
-    return undefined;
+    return {};
   }
 
   try {
@@ -78,17 +88,61 @@ function readSourceEvidence() {
     const floatTargetManifest = buildFloatTargetManifestEvidenceFromSnapshot(snapshot);
 
     if (!hasAllSources || plan.report.cacheEvidenceRows > 0 || plan.report.status !== "pass" || floatTargetManifest === undefined) {
-      return undefined;
+      return {};
     }
 
+    const lifecycleEvidence = readLifecycleEvidence(snapshot);
+
     return {
-      status: "ready",
-      snapshotId: plan.report.snapshotId,
-      sourcesChecked,
-      rawRows: plan.report.rawRows,
-      floatTargetManifest
+      sourceEvidence: {
+        status: "ready",
+        snapshotId: plan.report.snapshotId,
+        sourcesChecked,
+        rawRows: plan.report.rawRows,
+        floatTargetManifest,
+        floatLayerEvidence: buildFloatLayerEvidenceFromSnapshot(snapshot, floatTargetManifest)
+      },
+      lifecycleEvidence
     };
   } catch {
+    return {};
+  }
+}
+
+function readLifecycleEvidence(currentSnapshot) {
+  if (process.env.SOURCE_PREVIOUS_SNAPSHOT_FILE === undefined || process.env.SOURCE_PREVIOUS_SNAPSHOT_FILE.trim() === "") {
     return undefined;
   }
+
+  const previousSnapshot = JSON.parse(fs.readFileSync(process.env.SOURCE_PREVIOUS_SNAPSHOT_FILE, "utf8"));
+  const lifecycle = buildSourceSnapshotLifecyclePlan({
+    previous: previousSnapshot,
+    current: currentSnapshot,
+    deletionEvidence: readDeletionEvidence()
+  });
+
+  return {
+    previousSnapshotId: lifecycle.previousSnapshotId,
+    currentSnapshotId: lifecycle.currentSnapshotId,
+    currentRows: lifecycle.currentRows.length,
+    historicalRows: lifecycle.historicalRows.length,
+    unresolvedDisappearedRows: lifecycle.unresolvedDisappearedRows.length,
+    deletedRows: lifecycle.deletedRows.length,
+    currentCountBySource: lifecycle.currentCountBySource,
+    unresolvedEvidence: lifecycle.unresolvedDisappearedRows.map((row) => ({
+      source: row.source,
+      lifecycleState: row.lifecycleState,
+      stableSourceRowKey: row.identity.stableSourceRowKey,
+      sourceObjectId: row.identity.sourceObjectId
+    }))
+  };
+}
+
+function readDeletionEvidence() {
+  if (process.env.SOURCE_DELETION_EVIDENCE_FILE === undefined || process.env.SOURCE_DELETION_EVIDENCE_FILE.trim() === "") {
+    return [];
+  }
+
+  const parsed = JSON.parse(fs.readFileSync(process.env.SOURCE_DELETION_EVIDENCE_FILE, "utf8"));
+  return Array.isArray(parsed) ? parsed : [];
 }
