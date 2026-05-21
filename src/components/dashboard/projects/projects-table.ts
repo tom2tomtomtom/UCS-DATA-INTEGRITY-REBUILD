@@ -255,10 +255,10 @@ function compareProjectRows(left: DashboardProjectRow, right: DashboardProjectRo
     );
   }
   if (sortKey === "office") return compareStrings(left.scope.office, right.scope.office);
-  if (sortKey === "soldFee") return metricNumber(left.totals.soldFee) - metricNumber(right.totals.soldFee);
-  if (sortKey === "pipelineFee") return metricNumber(left.totals.pipelineFee) - metricNumber(right.totals.pipelineFee);
-  if (sortKey === "soldHours") return metricNumber(left.totals.soldHours) - metricNumber(right.totals.soldHours);
-  if (sortKey === "allocated") return metricNumber(left.totals.floatHours) - metricNumber(right.totals.floatHours);
+  if (sortKey === "soldFee") return compareMetrics(left.totals.soldFee, right.totals.soldFee);
+  if (sortKey === "pipelineFee") return compareMetrics(left.totals.pipelineFee, right.totals.pipelineFee);
+  if (sortKey === "soldHours") return compareMetrics(left.totals.soldHours, right.totals.soldHours);
+  if (sortKey === "allocated") return compareMetrics(left.totals.floatHours, right.totals.floatHours);
   if (sortKey === "unallocated") return compareStrings(unallocatedLabel(left), unallocatedLabel(right));
   if (sortKey === "floatValue") return compareStrings(floatValueLabel(left), floatValueLabel(right));
   if (sortKey === "variance") return varianceHoursNumber(left) - varianceHoursNumber(right);
@@ -267,7 +267,20 @@ function compareProjectRows(left: DashboardProjectRow, right: DashboardProjectRo
 }
 
 function varianceHoursNumber(row: DashboardProjectRow): number {
-  return metricNumber(row.totals.soldHours) - metricNumber(row.totals.floatHours);
+  const soldHours = metricNumber(row.totals.soldHours);
+  const allocatedHours = metricNumber(row.totals.floatHours);
+
+  return soldHours === undefined || allocatedHours === undefined ? Number.NEGATIVE_INFINITY : soldHours - allocatedHours;
+}
+
+function compareMetrics(left: MetricValue, right: MetricValue): number {
+  const leftNumber = metricNumber(left);
+  const rightNumber = metricNumber(right);
+
+  if (leftNumber === undefined && rightNumber === undefined) return 0;
+  if (leftNumber === undefined) return Number.NEGATIVE_INFINITY;
+  if (rightNumber === undefined) return Number.POSITIVE_INFINITY;
+  return leftNumber - rightNumber;
 }
 
 function compareStrings(left: string | undefined, right: string | undefined): number {
@@ -327,7 +340,9 @@ function displayOffice(scope: DashboardScope): string {
 }
 
 function unallocatedLabel(row: DashboardProjectRow): string {
-  if (metricNumber(row.totals.floatHours) === 0) {
+  const floatHours = metricNumber(row.totals.floatHours);
+
+  if (floatHours === undefined || floatHours === 0) {
     return formatProjectMetric(row.totals.floatHours, row, "floatHours");
   }
 
@@ -339,7 +354,7 @@ function floatValueLabel(row: DashboardProjectRow): string {
   const soldFee = metricNumber(row.totals.soldFee);
   const allocatedHours = metricNumber(row.totals.floatHours);
 
-  if (soldHours <= 0 || allocatedHours <= 0) {
+  if (soldHours === undefined || soldFee === undefined || allocatedHours === undefined || soldHours <= 0 || allocatedHours <= 0) {
     return "Unsupported";
   }
 
@@ -350,13 +365,18 @@ function varianceHoursLabel(row: DashboardProjectRow): string {
   const soldHours = metricNumber(row.totals.soldHours);
   const allocatedHours = metricNumber(row.totals.floatHours);
 
+  if (soldHours === undefined || allocatedHours === undefined) return "Unsupported";
   if (soldHours === 0 && allocatedHours === 0 && row.rowType !== "matched") return "Source-only";
   if (soldHours === 0 && allocatedHours === 0) return "No source row";
   return `${formatNumber(soldHours - allocatedHours)}h`;
 }
 
 function varianceHoursFooterLabel(contract: DashboardDisplayContract): string {
-  return `${formatNumber(metricNumber(contract.footerTotals.soldHours) - metricNumber(contract.footerTotals.floatHours))}h`;
+  const soldHours = metricNumber(contract.footerTotals.soldHours);
+  const allocatedHours = metricNumber(contract.footerTotals.floatHours);
+
+  if (soldHours === undefined || allocatedHours === undefined) return "Unsupported";
+  return `${formatNumber(soldHours - allocatedHours)}h`;
 }
 
 function lastSyncLabel(row: DashboardProjectRow): string {
@@ -364,10 +384,10 @@ function lastSyncLabel(row: DashboardProjectRow): string {
   return "Display contract";
 }
 
-function metricNumber(value: MetricValue): number {
+function metricNumber(value: MetricValue): number | undefined {
   if (value.kind === "money") return value.value.amountGbp;
   if (value.kind === "hours" || value.kind === "count") return value.value;
-  return 0;
+  return undefined;
 }
 
 function formatFooterMetric(value: MetricValue): string {

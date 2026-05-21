@@ -254,8 +254,13 @@ function confidenceCard(contract: DashboardDisplayContract) {
 }
 
 function dataCoverageCard(contract: DashboardDisplayContract) {
-  const soldRows = contract.visibleRows.filter((row) => metricNumber(row.totals.soldFee) > 0);
-  const matchedRows = soldRows.filter((row) => metricNumber(row.totals.floatHours) > 0);
+  const soldRows = contract.visibleRows.filter((row) => {
+    const soldFee = metricNumber(row.totals.soldFee) ?? 0;
+    const soldHours = metricNumber(row.totals.soldHours) ?? 0;
+
+    return soldFee > 0 || soldHours > 0;
+  });
+  const matchedRows = soldRows.filter((row) => (metricNumber(row.totals.floatHours) ?? 0) > 0);
   const percentage = soldRows.length === 0 ? 0 : Math.round((matchedRows.length / soldRows.length) * 100);
 
   return React.createElement(
@@ -302,7 +307,7 @@ function departmentHoursChart(contract: DashboardDisplayContract) {
   const rows = contract.rollups.byDepartment;
   const maxHours = Math.max(
     1,
-    ...rows.flatMap((row) => [metricNumber(row.totals.soldHours), metricNumber(row.totals.floatHours)])
+    ...rows.flatMap((row) => [metricNumber(row.totals.soldHours) ?? 0, metricNumber(row.totals.floatHours) ?? 0])
   );
 
   return React.createElement(
@@ -322,6 +327,8 @@ function departmentHoursChart(contract: DashboardDisplayContract) {
 function chartRow(row: RollupRow, maxHours: number) {
   const soldHours = metricNumber(row.totals.soldHours);
   const floatHours = metricNumber(row.totals.floatHours);
+  const allocatedWidth = floatHours === undefined ? 0 : Math.max(4, (floatHours / maxHours) * 100);
+  const soldWidth = soldHours === undefined ? 0 : Math.max(4, (soldHours / maxHours) * 100);
 
   return React.createElement(
     "div",
@@ -333,12 +340,12 @@ function chartRow(row: RollupRow, maxHours: number) {
       React.createElement("i", {
         className: "allocated-bar",
         title: `Allocated ${formatHoursValue(floatHours)}`,
-        style: { width: `${Math.max(4, (floatHours / maxHours) * 100)}%` }
+        style: { width: `${allocatedWidth}%` }
       }),
       React.createElement("i", {
         className: "sold-bar",
         title: `Sold ${formatHoursValue(soldHours)}`,
-        style: { width: `${Math.max(4, (soldHours / maxHours) * 100)}%` }
+        style: { width: `${soldWidth}%` }
       })
     ),
     React.createElement("span", null, `${formatHoursValue(floatHours)} / ${formatHoursValue(soldHours)}`)
@@ -496,12 +503,12 @@ function compareRollupRows(left: RollupRow, right: RollupRow, sortKey: RollupSor
 }
 
 function rollupSortNumber(row: RollupRow, sortKey: RollupSortKey): number {
-  if (sortKey === "pipelineFee") return metricNumber(row.totals.pipelineFee);
-  if (sortKey === "soldFee") return metricNumber(row.totals.soldFee);
-  if (sortKey === "soldHours") return metricNumber(row.totals.soldHours);
-  if (sortKey === "allocatedHours") return metricNumber(allocatedHoursMetric(row));
-  if (sortKey === "unallocatedHours") return metricNumber(unallocatedHoursMetric(row));
-  if (sortKey === "totalHours") return metricNumber(row.totals.floatHours);
+  if (sortKey === "pipelineFee") return metricSortNumber(row.totals.pipelineFee);
+  if (sortKey === "soldFee") return metricSortNumber(row.totals.soldFee);
+  if (sortKey === "soldHours") return metricSortNumber(row.totals.soldHours);
+  if (sortKey === "allocatedHours") return metricSortNumber(allocatedHoursMetric(row));
+  if (sortKey === "unallocatedHours") return metricSortNumber(unallocatedHoursMetric(row));
+  if (sortKey === "totalHours") return metricSortNumber(row.totals.floatHours);
   if (sortKey === "allocatedValue") return allocatedValueNumber(row);
   return variancePercentNumber(row);
 }
@@ -511,6 +518,7 @@ function allocatedValueNumber(row: RollupRow): number {
   const soldFee = metricNumber(row.totals.soldFee);
   const allocatedHours = metricNumber(allocatedHoursMetric(row));
 
+  if (soldHours === undefined || soldFee === undefined || allocatedHours === undefined) return Number.NEGATIVE_INFINITY;
   return soldHours <= 0 || allocatedHours <= 0 ? 0 : (soldFee / soldHours) * allocatedHours;
 }
 
@@ -518,18 +526,17 @@ function variancePercentNumber(row: RollupRow): number {
   const soldHours = metricNumber(row.totals.soldHours);
   const allocatedHours = metricNumber(row.totals.floatHours);
 
+  if (soldHours === undefined || allocatedHours === undefined) return Number.NEGATIVE_INFINITY;
   if (soldHours === 0) return allocatedHours > 0 ? Number.POSITIVE_INFINITY : 0;
   return (allocatedHours - soldHours) / soldHours;
 }
 
 function statusSortValue(row: RollupRow): string {
-  return statusFor(metricNumber(row.totals.soldHours), metricNumber(row.totals.floatHours), row.unsupported.length);
+  return statusFor(row.totals.soldHours, row.totals.floatHours, row.unsupported.length);
 }
 
 function rollupRow(row: RollupRow) {
-  const soldHours = metricNumber(row.totals.soldHours);
-  const totalHours = metricNumber(row.totals.floatHours);
-  const allocatedHours = metricNumber(allocatedHoursMetric(row));
+  const allocatedHours = allocatedHoursMetric(row);
 
   return React.createElement(
     "tr",
@@ -546,8 +553,8 @@ function rollupRow(row: RollupRow) {
     React.createElement("td", null, formatUnallocatedHours(row)),
     React.createElement("td", null, formatMetric(row.totals.floatHours)),
     React.createElement("td", null, allocatedValueLabel(row, allocatedHours)),
-    React.createElement("td", null, variancePercent(soldHours, totalHours)),
-    React.createElement("td", null, statusBadge(soldHours, totalHours, row.unsupported.length))
+    React.createElement("td", null, variancePercent(row.totals.soldHours, row.totals.floatHours)),
+    React.createElement("td", null, statusBadge(row.totals.soldHours, row.totals.floatHours, row.unsupported.length))
   );
 }
 
@@ -596,11 +603,12 @@ function formatUnallocatedHours(row: RollupRow): string {
   return `${label} + unclassified`;
 }
 
-function allocatedValueLabel(row: RollupRow, allocatedHours: number): string {
+function allocatedValueLabel(row: RollupRow, allocatedHours: MetricValue): string {
   const soldHours = metricNumber(row.totals.soldHours);
   const soldFee = metricNumber(row.totals.soldFee);
+  const allocatedHourCount = metricNumber(allocatedHours);
 
-  if (soldHours <= 0 || allocatedHours <= 0) {
+  if (soldHours === undefined || soldFee === undefined || allocatedHourCount === undefined || soldHours <= 0 || allocatedHourCount <= 0) {
     return "Unsupported";
   }
 
@@ -608,7 +616,7 @@ function allocatedValueLabel(row: RollupRow, allocatedHours: number): string {
     style: "currency",
     currency: "GBP",
     maximumFractionDigits: 0
-  }).format((soldFee / soldHours) * allocatedHours);
+  }).format((soldFee / soldHours) * allocatedHourCount);
 }
 
 function unsupportedMetric(metric: string, row: RollupRow): MetricValue {
@@ -687,13 +695,17 @@ function viewToggle(
   );
 }
 
-function statusBadge(soldHours: number, allocatedHours: number, unsupportedCount: number) {
+function statusBadge(soldHours: MetricValue, allocatedHours: MetricValue, unsupportedCount: number) {
   const label = statusFor(soldHours, allocatedHours, unsupportedCount);
 
   return React.createElement("span", { className: `status-badge ${label.toLowerCase()}` }, label);
 }
 
-function statusFor(soldHours: number, allocatedHours: number, unsupportedCount: number): string {
+function statusFor(soldHoursMetric: MetricValue, allocatedHoursMetric: MetricValue, unsupportedCount: number): string {
+  const soldHours = metricNumber(soldHoursMetric);
+  const allocatedHours = metricNumber(allocatedHoursMetric);
+
+  if (soldHours === undefined || allocatedHours === undefined) return "Warn";
   if (unsupportedCount > 0 && allocatedHours === 0) return "Warn";
   if (soldHours === 0 && allocatedHours > 0) return "Uncosted";
   if (allocatedHours > soldHours * 1.15) return "Over";
@@ -701,7 +713,11 @@ function statusFor(soldHours: number, allocatedHours: number, unsupportedCount: 
   return "OK";
 }
 
-function variancePercent(soldHours: number, allocatedHours: number): string {
+function variancePercent(soldHoursMetric: MetricValue, allocatedHoursMetric: MetricValue): string {
+  const soldHours = metricNumber(soldHoursMetric);
+  const allocatedHours = metricNumber(allocatedHoursMetric);
+
+  if (soldHours === undefined || allocatedHours === undefined) return "Unsupported";
   if (soldHours === 0) return allocatedHours > 0 ? "Uncosted" : "0.0%";
 
   return `${(((allocatedHours - soldHours) / soldHours) * 100).toFixed(1)}%`;
@@ -727,10 +743,14 @@ function formatMetric(value: MetricValue): string {
   return formatNumber(value.value);
 }
 
-function metricNumber(value: MetricValue): number {
+function metricNumber(value: MetricValue): number | undefined {
   if (value.kind === "money") return value.value.amountGbp;
   if (value.kind === "hours" || value.kind === "count") return value.value;
-  return 0;
+  return undefined;
+}
+
+function metricSortNumber(value: MetricValue): number {
+  return metricNumber(value) ?? Number.NEGATIVE_INFINITY;
 }
 
 function confidenceCounts(contract: DashboardDisplayContract) {
@@ -751,8 +771,8 @@ function confidenceCounts(contract: DashboardDisplayContract) {
   return { high, medium, low };
 }
 
-function formatHoursValue(value: number): string {
-  return `${formatNumber(value)}h`;
+function formatHoursValue(value: number | undefined): string {
+  return value === undefined ? "Unsupported" : `${formatNumber(value)}h`;
 }
 
 function formatNumber(value: number): string {

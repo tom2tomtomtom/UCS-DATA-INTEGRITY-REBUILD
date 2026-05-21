@@ -134,6 +134,30 @@ describe("Phase 9.5 dashboard chrome parity", () => {
     expect(html).toContain("visible source gap");
   });
 
+  test("shows an explicit banner when rendering fixture mode", () => {
+    const contract = getFixtureDashboardContract({
+      office: "LDN",
+      from: "2026-01-01",
+      to: "2026-03-31"
+    });
+    const html = renderChrome(contract, {}, "fixture");
+
+    expect(html).toContain("aria-label=\"Fixture dashboard mode warning\"");
+    expect(html).toContain("Fixture mode");
+    expect(html).toContain("local/test fixture data only");
+  });
+
+  test("does not show the fixture banner in source archive mode", () => {
+    const contract = getFixtureDashboardContract({
+      office: "LDN",
+      from: "2026-01-01",
+      to: "2026-03-31"
+    });
+    const html = renderChrome(contract, {}, "source_archive");
+
+    expect(html).not.toContain("aria-label=\"Fixture dashboard mode warning\"");
+  });
+
   test("preserves the full approved legacy nav route set", () => {
     const contract = getFixtureDashboardContract({
       office: "LDN",
@@ -179,7 +203,8 @@ describe("Phase 9.5 dashboard chrome parity", () => {
 
 function renderChrome(
   contract: ReturnType<typeof getFixtureDashboardContract>,
-  extraScopeParams: Record<string, string | undefined> = {}
+  extraScopeParams: Record<string, string | undefined> = {},
+  dataMode: "fixture" | "source_archive" = "fixture"
 ): string {
   return renderToStaticMarkup(
     React.createElement(
@@ -187,7 +212,8 @@ function renderChrome(
       {
         contract,
         activePath: "/dashboard/projects",
-        extraScopeParams
+        extraScopeParams,
+        dataMode
       },
       React.createElement("section", null, "Contract-backed page")
     )

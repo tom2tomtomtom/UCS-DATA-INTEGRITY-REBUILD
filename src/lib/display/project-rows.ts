@@ -17,11 +17,14 @@ import type {
   SourceFactSet,
   SourceLayer,
   SourceName,
+  SourceCapabilitiesForSource,
+  SourceCapability,
   SourceTraceRef,
   SourceWarning,
   UnsupportedMetric
 } from "../canon/types";
-import { filterFactsByScope } from "../canon-queries/scope";
+import { buildSourceCapabilityIndex, capabilitiesForSource } from "../canon-queries/capabilities";
+import { filterFactsByScope, sourceSupportsScopedField } from "../canon-queries/scope";
 
 export type ProjectRowSourceLabel = {
   source: SourceName;
@@ -38,6 +41,7 @@ export type BuildProjectRowsInput = Pick<
   "soldFacts" | "pipelineFacts" | "productionRevenueFacts" | "floatFacts" | "sourceIssues"
 > & {
   scope: DashboardScope;
+  capabilities?: readonly SourceCapabilitiesForSource[];
   unsupportedMetrics?: readonly UnsupportedMetric[];
 };
 
@@ -53,10 +57,20 @@ type MutableProjectRow = ProjectDisplayRow & {
 
 export function buildProjectRows(input: BuildProjectRowsInput): ProjectDisplayRow[] {
   const rows = new Map<string, MutableProjectRow>();
-  const soldFacts = filterFactsByScope(input.soldFacts, input.scope);
-  const pipelineFacts = filterFactsByScope(input.pipelineFacts, input.scope);
-  const productionRevenueFacts = filterFactsByScope(input.productionRevenueFacts, input.scope);
-  const floatFacts = filterFactsByScope(input.floatFacts, input.scope);
+  const capabilityIndex = buildSourceCapabilityIndex(input.capabilities ?? []);
+  const soldCapabilities = capabilitiesForSource(capabilityIndex, "fee_sheet");
+  const pipelineCapabilities = capabilitiesForSource(capabilityIndex, "pipeline");
+  const productionRevenueCapabilities = capabilitiesForSource(capabilityIndex, "production_revenue");
+  const floatCapabilities = capabilitiesForSource(capabilityIndex, "float");
+  const soldFacts = filterFactsByScope(input.soldFacts, input.scope, soldCapabilities);
+  const pipelineFacts = filterFactsByScope(input.pipelineFacts, input.scope, pipelineCapabilities);
+  const productionRevenueFacts = filterFactsByScope(input.productionRevenueFacts, input.scope, productionRevenueCapabilities);
+  const floatFacts = filterFactsByScope(input.floatFacts, input.scope, floatCapabilities);
+  const unsupportedMetrics = [
+    ...(input.unsupportedMetrics ?? []),
+    ...unsupportedProjectMetricsForScopedSource(input.scope, "pipeline", pipelineCapabilities, ["pipelineFee"]),
+    ...unsupportedProjectMetricsForScopedSource(input.scope, "production_revenue", productionRevenueCapabilities, ["productionRevenue"])
+  ];
 
   for (const fact of soldFacts) {
     addFactToRow(rows, rowKeyForSold(fact), input.scope, fact, "soldFee", "soldHours");
@@ -95,7 +109,39 @@ export function buildProjectRows(input: BuildProjectRowsInput): ProjectDisplayRo
     addSourceIssueToMatchingRows(rows, warning);
   }
 
-  return Array.from(rows.values()).map((row) => finalizeRow(row, input.unsupportedMetrics ?? []));
+  return Array.from(rows.values()).map((row) => finalizeRow(row, unsupportedMetrics));
+}
+
+function unsupportedProjectMetricsForScopedSource(
+  scope: DashboardScope,
+  source: SourceName,
+  capabilities: readonly SourceCapability[],
+  metrics: readonly (keyof DashboardTotals)[]
+): UnsupportedMetric[] {
+  const reason = unsupportedScopeReason(scope, capabilities);
+  if (reason === undefined) return [];
+
+  return metrics.map((metric) => ({
+    kind: "unsupported",
+    metric,
+    scope: { ...scope },
+    source,
+    reason,
+    displayLabel: "Unsupported",
+    severity: "warn"
+  }));
+}
+
+function unsupportedScopeReason(scope: DashboardScope, capabilities: readonly SourceCapability[]): string | undefined {
+  if (scope.department !== undefined && !sourceSupportsScopedField(capabilities, "department")) {
+    return capabilities.find((capability) => capability.key === "department")?.reason ?? "Source does not support department attribution.";
+  }
+
+  if (scope.role !== undefined && !sourceSupportsScopedField(capabilities, "role")) {
+    return capabilities.find((capability) => capability.key === "role")?.reason ?? "Source does not support role attribution.";
+  }
+
+  return undefined;
 }
 
 function rowKeyForSold(fact: SoldFact): string {

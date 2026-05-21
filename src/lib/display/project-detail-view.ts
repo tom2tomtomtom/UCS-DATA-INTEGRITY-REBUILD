@@ -229,6 +229,9 @@ function emptyDetail(): ProjectDetailEvidence {
 }
 
 function sumDetailHours(values: readonly MetricValue[]): MetricValue {
+  const unsupported = values.find((value) => value.kind === "unsupported");
+  if (unsupported !== undefined) return cloneMetric(unsupported);
+
   return {
     kind: "hours",
     value: values.reduce((total, value) => total + (value.kind === "hours" ? value.value : 0), 0),

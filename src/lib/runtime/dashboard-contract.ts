@@ -76,5 +76,24 @@ export function getDashboardFactSetSync(options: DashboardContractProviderOption
 }
 
 export function dashboardDataMode(env: DashboardRuntimeEnv = process.env): DashboardDataMode {
-  return env.DASHBOARD_DATA_MODE === "source_archive" ? "source_archive" : "fixture";
+  const mode = env.DASHBOARD_DATA_MODE;
+
+  if (mode === "source_archive") return "source_archive";
+  if (mode === "fixture" && fixtureDashboardModeAllowed(env)) return "fixture";
+  if (mode === undefined && fixtureDashboardModeAllowed(env)) return "fixture";
+
+  throw new Error(
+    mode === undefined
+      ? "DASHBOARD_DATA_MODE must be set to source_archive outside local/test dashboard runs."
+      : `Unsupported DASHBOARD_DATA_MODE "${mode}". Use source_archive outside local/test dashboard runs.`
+  );
+}
+
+export function fixtureDashboardModeAllowed(env: DashboardRuntimeEnv = process.env): boolean {
+  if (env.ALLOW_FIXTURE_DASHBOARD === "1") return true;
+  if (env.NODE_ENV === "test") return true;
+  if (env.APP_ENV === "test" || env.APP_ENV === "local" || env.APP_ENV === "development") return true;
+  if (env.NODE_ENV === "development" && env.APP_ENV === undefined) return true;
+
+  return false;
 }

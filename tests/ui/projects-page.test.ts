@@ -3,6 +3,7 @@ import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, test } from "vitest";
 
 import { ProjectsTable } from "../../src/components/dashboard/projects/projects-table";
+import type { DashboardDisplayContract, MetricValue } from "../../src/lib";
 import { getFixtureDashboardContract } from "../../src/lib/ui/fixture-contract";
 
 describe("P6-C Projects table", () => {
@@ -82,4 +83,62 @@ describe("P6-C Projects table", () => {
     expect(html).toContain("Total");
     expect(html).toContain("£275,947");
   });
+
+  test("renders unsupported project metrics as Unsupported instead of arithmetic zeroes", () => {
+    const contract = withUnsupportedProjectMetrics(getFixtureDashboardContract({
+      office: "LDN",
+      from: "2026-01-01",
+      to: "2026-03-31"
+    }));
+    const html = renderToStaticMarkup(React.createElement(ProjectsTable, { contract }));
+
+    expect(html).toContain("Unsupported");
+    expect(html).not.toContain("-0h");
+    expect(html).not.toContain("<td>0</td>");
+    expect(html).not.toContain("<td>0h</td>");
+  });
 });
+
+function withUnsupportedProjectMetrics(contract: DashboardDisplayContract): DashboardDisplayContract {
+  const unsupportedSoldHours = unsupportedMetric("soldHours");
+  const unsupportedFloatHours = unsupportedMetric("floatHours");
+  const firstRow = contract.visibleRows[0];
+
+  if (firstRow === undefined) return contract;
+
+  return {
+    ...contract,
+    visibleRows: [
+      {
+        ...firstRow,
+        totals: {
+          ...firstRow.totals,
+          soldHours: unsupportedSoldHours,
+          floatHours: unsupportedFloatHours
+        }
+      },
+      ...contract.visibleRows.slice(1)
+    ],
+    footerTotals: {
+      ...contract.footerTotals,
+      soldHours: unsupportedSoldHours,
+      floatHours: unsupportedFloatHours
+    }
+  };
+}
+
+function unsupportedMetric(metric: string): MetricValue {
+  return {
+    kind: "unsupported",
+    metric,
+    scope: {
+      office: "LDN",
+      from: "2026-01-01",
+      to: "2026-03-31"
+    },
+    source: "fee_sheet",
+    reason: "UI regression fixture.",
+    displayLabel: "Unsupported",
+    severity: "info"
+  };
+}

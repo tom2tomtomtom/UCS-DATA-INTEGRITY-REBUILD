@@ -8,12 +8,14 @@ import type {
   SoldFact,
   SourceFactSet,
   SourceName,
+  SourceCapability,
   SourceTraceRef,
   SourceTraceSummary,
   SourceWarning,
   UnsupportedMetric
 } from "../canon/types";
-import { filterFactsByScope } from "../canon-queries/scope";
+import { buildSourceCapabilityIndex, capabilitiesForSource } from "../canon-queries/capabilities";
+import { filterFactsByScope, sourceSupportsScopedField } from "../canon-queries/scope";
 import type { ApprovalContractOutput } from "./approval-output";
 import { buildCsvRowsFromDisplayContract } from "./csv";
 import { createFloatReconciliationChecks } from "./float-reconciliation";
@@ -185,23 +187,34 @@ const zeroHours = (): MetricValue => ({
 export function buildDashboardDisplayContract(
   input: BuildDashboardDisplayContractInput
 ): DashboardDisplayContract {
+  const capabilityIndex = buildSourceCapabilityIndex(input.capabilities);
+  const soldCapabilities = capabilitiesForSource(capabilityIndex, "fee_sheet");
+  const pipelineCapabilities = capabilitiesForSource(capabilityIndex, "pipeline");
+  const productionRevenueCapabilities = capabilitiesForSource(capabilityIndex, "production_revenue");
+  const floatCapabilities = capabilitiesForSource(capabilityIndex, "float");
   const unsupportedByMetric = new Map(
     (input.unsupportedMetrics ?? []).map((metric) => [metric.metric, metric])
   );
-  const soldFacts = filterFactsByScope(input.soldFacts, input.scope);
-  const pipelineFacts = filterFactsByScope(input.pipelineFacts, input.scope);
-  const productionRevenueFacts = filterFactsByScope(input.productionRevenueFacts, input.scope);
-  const floatFacts = filterFactsByScope(input.floatFacts, input.scope);
-  const soldTotals = additiveSoldTotals(soldFacts);
+  const soldFacts = filterFactsByScope(input.soldFacts, input.scope, soldCapabilities);
+  const pipelineFacts = filterFactsByScope(input.pipelineFacts, input.scope, pipelineCapabilities);
+  const productionRevenueFacts = filterFactsByScope(input.productionRevenueFacts, input.scope, productionRevenueCapabilities);
+  const floatFacts = filterFactsByScope(input.floatFacts, input.scope, floatCapabilities);
   const emptyReason = "No supported facts for this metric in the current display contract scope.";
+  const pipelineScopeUnsupported = sourceScopeUnsupported(input.scope, pipelineCapabilities);
+  const productionRevenueScopeUnsupported = sourceScopeUnsupported(input.scope, productionRevenueCapabilities);
+  const soldTotals = additiveSoldTotals(soldFacts, input.scope, emptyReason);
   const totals: DashboardTotals = {
     soldFee: soldTotals.soldFee,
     soldHours: soldTotals.soldHours,
     pipelineFee:
       unsupportedByMetric.get("pipelineFee") ??
+      (pipelineScopeUnsupported === undefined ? undefined : unsupportedTotal("pipelineFee", input.scope, "pipeline", pipelineScopeUnsupported)) ??
       additivePipelineTotal(pipelineFacts, input.scope, emptyReason),
     productionRevenue:
       unsupportedByMetric.get("productionRevenue") ??
+      (productionRevenueScopeUnsupported === undefined
+        ? undefined
+        : unsupportedTotal("productionRevenue", input.scope, "production_revenue", productionRevenueScopeUnsupported)) ??
       additiveProductionRevenueTotal(productionRevenueFacts, input.scope, emptyReason),
     floatHours:
       unsupportedByMetric.get("floatHours") ??
@@ -244,7 +257,23 @@ export function buildDashboardDisplayContract(
   };
 }
 
-function additiveSoldTotals(soldFacts: readonly SoldFact[]): {
+function sourceScopeUnsupported(scope: DashboardScope, capabilities: readonly SourceCapability[]): string | undefined {
+  if (scope.department !== undefined && !sourceSupportsScopedField(capabilities, "department")) {
+    return capabilities.find((capability) => capability.key === "department")?.reason ?? "Source does not support department attribution.";
+  }
+
+  if (scope.role !== undefined && !sourceSupportsScopedField(capabilities, "role")) {
+    return capabilities.find((capability) => capability.key === "role")?.reason ?? "Source does not support role attribution.";
+  }
+
+  return undefined;
+}
+
+function additiveSoldTotals(
+  soldFacts: readonly SoldFact[],
+  scope: DashboardScope,
+  emptyReason: string
+): {
   readonly soldFee: MetricValue;
   readonly soldHours: MetricValue;
   readonly soldFeeRefs: SourceTraceRef[];
@@ -272,7 +301,7 @@ function additiveSoldTotals(soldFacts: readonly SoldFact[]): {
     }
   }
 
-  const soldFee = additiveFacts.length === 0 ? zeroMoney() : {
+  const soldFee = additiveFacts.length === 0 ? unsupportedTotal("soldFee", scope, "fee_sheet", emptyReason) : {
     kind: "money" as const,
     value: {
       amountOriginal,
@@ -284,7 +313,7 @@ function additiveSoldTotals(soldFacts: readonly SoldFact[]): {
     }
   };
 
-  const soldHours = additiveFacts.length === 0 ? zeroHours() : {
+  const soldHours = additiveFacts.length === 0 ? unsupportedTotal("soldHours", scope, "fee_sheet", emptyReason) : {
     kind: "hours" as const,
     value: hours,
     unit: "decimal_hours" as const

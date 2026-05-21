@@ -2,10 +2,14 @@ import { describe, expect, test } from "vitest";
 
 import type {
   DashboardScope,
+  FloatFact,
+  MetricValue,
   PipelineFact,
   ProductionRevenueFact,
+  SourceName,
   SoldFact
 } from "../../src/lib/canon/types";
+import { buildDashboardDisplayContract } from "../../src/lib/display/contract";
 import { buildDepartmentRollups, buildRoleRollups } from "../../src/lib/display/rollups";
 
 const scope: DashboardScope = {
@@ -75,6 +79,7 @@ function pipelineFact(): PipelineFact {
     rawRowIds: ["pipeline-row-1"],
     batchId: "batch",
     stablePipelineIdentity: "pipeline:row-1",
+    jobNumber: "UCS04787",
     client: "Acme Studios",
     office: "LDN",
     month: "2026-02",
@@ -101,6 +106,7 @@ function productionRevenueFact(): ProductionRevenueFact {
     rawRowIds: ["production-row-1"],
     batchId: "batch",
     productionStatus: "CONFIRMED",
+    jobNumber: "UCS04787",
     client: "Acme Studios",
     office: "LDN",
     month: "2026-02",
@@ -120,6 +126,32 @@ function productionRevenueFact(): ProductionRevenueFact {
 }
 
 describe("Law 5: unsupported is not zero", () => {
+  test("marks empty sold display scopes as unsupported rather than £0 and 0h", () => {
+    const contract = buildDashboardDisplayContract({
+      scope,
+      generatedAt: "2026-05-21T00:00:00.000Z",
+      soldFacts: [],
+      pipelineFacts: [],
+      productionRevenueFacts: [],
+      floatFacts: [],
+      readOnlySqlFacts: [],
+      syncLogFacts: [],
+      sourceIssues: [],
+      capabilities: []
+    });
+
+    expect(contract.heroTotals.soldFee).toMatchObject(unsupportedMetric("soldFee", "fee_sheet"));
+    expect(contract.heroTotals.soldHours).toMatchObject(unsupportedMetric("soldHours", "fee_sheet"));
+    expect(contract.heroTotals.soldFee).not.toMatchObject({
+      kind: "money",
+      value: { amountGbp: 0 }
+    });
+    expect(contract.heroTotals.soldHours).not.toMatchObject({
+      kind: "hours",
+      value: 0
+    });
+  });
+
   test("marks unsupported department and role slices as unsupported rather than zero", () => {
     const departmentRollup = buildDepartmentRollups({
       scope,
@@ -155,6 +187,155 @@ describe("Law 5: unsupported is not zero", () => {
       value: { amountGbp: 0 }
     });
   });
-  test.todo("marks absent role allocation as unsupported instead of zero");
-  test.todo("labels Float-only rows with no fee-sheet role data as unsupported");
+
+  test("keeps unsupported scoped source rows visible without attributing their money to the slice", () => {
+    const contract = buildDashboardDisplayContract({
+      scope: {
+        ...scope,
+        department: "Design"
+      },
+      generatedAt: "2026-05-21T00:00:00.000Z",
+      soldFacts: [soldFact()],
+      pipelineFacts: [pipelineFact()],
+      productionRevenueFacts: [productionRevenueFact()],
+      floatFacts: [],
+      readOnlySqlFacts: [],
+      syncLogFacts: [],
+      sourceIssues: [],
+      capabilities: [
+        {
+          source: "pipeline",
+          capabilities: [
+            { key: "department", status: "unsupported", reason: "Pipeline source rows do not carry department attribution." },
+            { key: "role", status: "unsupported", reason: "Pipeline source rows do not carry role attribution." }
+          ]
+        },
+        {
+          source: "production_revenue",
+          capabilities: [
+            { key: "department", status: "unsupported", reason: "Production revenue source rows do not support department attribution." },
+            { key: "role", status: "unsupported", reason: "Production revenue source rows do not support role attribution." }
+          ]
+        },
+        {
+          source: "fee_sheet",
+          capabilities: [
+            { key: "department", status: "supported" },
+            { key: "role", status: "partial" }
+          ]
+        }
+      ]
+    });
+    const row = contract.visibleRows.find((candidate) => candidate.jobNumber === "UCS04787");
+
+    expect(contract.heroTotals.pipelineFee).toMatchObject(unsupportedMetric("pipelineFee", "pipeline"));
+    expect(contract.heroTotals.productionRevenue).toMatchObject(unsupportedMetric("productionRevenue", "production_revenue"));
+    expect(row?.totals.pipelineFee).toMatchObject(unsupportedMetric("pipelineFee", "pipeline"));
+    expect(row?.totals.productionRevenue).toMatchObject(unsupportedMetric("productionRevenue", "production_revenue"));
+    expect(row?.sourceTrace.map((ref) => ref.source)).toEqual(expect.arrayContaining(["fee_sheet", "pipeline", "production_revenue"]));
+    expect(row?.totals.pipelineFee).not.toMatchObject({
+      kind: "money",
+      value: { amountGbp: 0 }
+    });
+  });
+  test("marks absent role allocation as unsupported instead of zero", () => {
+    const contract = buildDashboardDisplayContract({
+      scope: {
+        ...scope,
+        role: "Senior Designer"
+      },
+      generatedAt: "2026-05-21T00:00:00.000Z",
+      soldFacts: [soldFactWithoutRole()],
+      pipelineFacts: [],
+      productionRevenueFacts: [],
+      floatFacts: [],
+      readOnlySqlFacts: [],
+      syncLogFacts: [],
+      sourceIssues: [],
+      capabilities: []
+    });
+
+    expect(contract.heroTotals.soldHours).toMatchObject(unsupportedMetric("soldHours", "fee_sheet"));
+    expect(contract.heroTotals.soldHours).not.toMatchObject({
+      kind: "hours",
+      value: 0
+    });
+  });
+
+  test("labels Float-only rows with no fee-sheet role data as unsupported", () => {
+    const contract = buildDashboardDisplayContract({
+      scope: {
+        ...scope,
+        role: "Senior Designer"
+      },
+      generatedAt: "2026-05-21T00:00:00.000Z",
+      soldFacts: [],
+      pipelineFacts: [],
+      productionRevenueFacts: [],
+      floatFacts: [floatFactWithoutRole()],
+      readOnlySqlFacts: [],
+      syncLogFacts: [],
+      sourceIssues: [],
+      capabilities: [
+        {
+          source: "float",
+          capabilities: [
+            { key: "role", status: "unsupported", reason: "Float source row has no role attribution." }
+          ]
+        }
+      ]
+    });
+    const row = contract.visibleRows[0];
+
+    expect(row?.rowType).toBe("float_only");
+    expect(row?.totals.soldHours).toMatchObject(unsupportedMetric("soldHours", "fee_sheet"));
+    expect(row?.totals.soldHours).not.toMatchObject({
+      kind: "hours",
+      value: 0
+    });
+  });
 });
+
+function unsupportedMetric(metric: string, source: SourceName): Partial<MetricValue> {
+  return {
+    kind: "unsupported",
+    source,
+    metric,
+    displayLabel: "Unsupported"
+  };
+}
+
+function soldFactWithoutRole(): SoldFact {
+  const { role: _role, ...fact } = soldFact();
+
+  return fact;
+}
+
+function floatFactWithoutRole(): FloatFact {
+  return {
+    id: "float:without-role",
+    source: "float",
+    sourceLayer: "float_visible",
+    rawRowIds: ["float-without-role-row"],
+    batchId: "batch",
+    jobNumber: "UCS99999",
+    floatProjectId: "99999",
+    client: "Acme Studios",
+    canonicalClient: "Acme Studios",
+    projectName: "Float Without Role",
+    office: "LDN",
+    month: "2026-02",
+    hours: hours(5),
+    isAdditive: true,
+    confidence: "medium",
+    warnings: [],
+    trace: [
+      {
+        source: "float",
+        sourceLayer: "float_visible",
+        batchId: "batch",
+        rawRowId: "float-without-role-row"
+      }
+    ]
+  };
+}

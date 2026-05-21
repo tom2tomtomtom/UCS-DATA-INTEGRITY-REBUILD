@@ -18,13 +18,19 @@ const baseScope = {
 } as const;
 
 describe("runtime dashboard contract provider", () => {
-  test("defaults to fixture mode until live source archive parsing is implemented", () => {
-    expect(dashboardDataMode({})).toBe("fixture");
+  test("allows fixture mode only for local and test runs", () => {
+    expect(dashboardDataMode({ NODE_ENV: "test" })).toBe("fixture");
 
-    const contract = getDashboardContractSync(baseScope, { env: {} });
+    const contract = getDashboardContractSync(baseScope, { env: { NODE_ENV: "test" } });
 
     expect(contract.scope).toEqual(baseScope);
     expect(contract.visibleRows.length).toBeGreaterThan(0);
+  });
+
+  test("fails closed when staging or production has no source archive mode", () => {
+    expect(() => dashboardDataMode({ APP_ENV: "staging" })).toThrow(/DASHBOARD_DATA_MODE must be set/);
+    expect(() => dashboardDataMode({ APP_ENV: "production", DASHBOARD_DATA_MODE: "fixtuer" })).toThrow(/Unsupported DASHBOARD_DATA_MODE/);
+    expect(() => getDashboardContractSync(baseScope, { env: { APP_ENV: "staging" } })).toThrow(/DASHBOARD_DATA_MODE/);
   });
 
   test("blocks sync source archive mode without explicit archive rows", () => {

@@ -2,6 +2,7 @@ import React from "react";
 
 import type { DashboardConcreteOffice, DashboardDisplayContract, DashboardOffice, DashboardScope } from "../../../lib";
 import { scopedHref } from "../../../lib";
+import { dashboardDataMode, type DashboardDataMode, type DashboardRuntimeEnv } from "../../../lib/runtime/dashboard-contract";
 
 const navItems = [
   { label: "Department Rollup", href: "/dashboard" },
@@ -31,11 +32,13 @@ export function DashboardChrome({
   contract,
   activePath,
   extraScopeParams = {},
+  dataMode = dashboardDataMode(process.env as DashboardRuntimeEnv),
   children
 }: {
   contract: DashboardDisplayContract;
   activePath: string;
   extraScopeParams?: Readonly<Record<string, string | undefined>>;
+  dataMode?: DashboardDataMode;
   children?: React.ReactNode;
 }) {
   const scope = contract.scope;
@@ -142,6 +145,7 @@ export function DashboardChrome({
         )
       )
     ),
+    dataMode === "fixture" ? fixtureModeBanner(scope) : null,
     React.createElement(
       "section",
       { className: warningCount > 0 ? "sync-alert-banner" : "sync-alert-banner clean", "aria-live": "polite" },
@@ -179,6 +183,16 @@ export function DashboardChrome({
       React.createElement("span", null, "Every visible number below comes from the display contract.")
     ),
     React.createElement("main", { className: "dashboard-main" }, children)
+  );
+}
+
+function fixtureModeBanner(scope: DashboardScope) {
+  return React.createElement(
+    "section",
+    { className: "fixture-mode-banner", "aria-label": "Fixture dashboard mode warning" },
+    React.createElement("strong", null, "Fixture mode"),
+    React.createElement("span", null, "This dashboard is rendering local/test fixture data only. Staging and production must use source_archive."),
+    React.createElement("a", { href: scopedHref("/dashboard/audit", scope) }, "Review source mode")
   );
 }
 

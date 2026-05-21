@@ -4,7 +4,7 @@ import { describe, expect, test } from "vitest";
 
 import { DashboardHome } from "../../src/components/dashboard/rollups/dashboard-home";
 import { buildRollupCsvText, buildRollupFooter } from "../../src/lib/display/rollup-export";
-import type { MetricValue } from "../../src/lib";
+import type { DashboardDisplayContract, MetricValue, RollupRow, UnsupportedMetric } from "../../src/lib";
 import { getFixtureDashboardContract } from "../../src/lib/ui/fixture-contract";
 
 describe("P6-B dashboard home rollups", () => {
@@ -145,10 +145,68 @@ describe("P6-B dashboard home rollups", () => {
     expect(html).toContain("href=\"/dashboard?office=LDN&amp;from=2026-01-01&amp;to=2026-03-31&amp;view=department&amp;sort=label&amp;dir=desc\"");
     expect(html.indexOf("Design")).toBeLessThan(html.indexOf("Strategy"));
   });
+
+  test("renders unsupported rollup metrics and CSV cells as Unsupported rather than zero", () => {
+    const contract = withUnsupportedRollupMetrics(getFixtureDashboardContract({
+      office: "LDN",
+      from: "2026-01-01",
+      to: "2026-03-31"
+    }));
+    const html = renderToStaticMarkup(React.createElement(DashboardHome, { contract }));
+    const csv = buildRollupCsvText(contract.rollups.byDepartment);
+
+    expect(html).toContain("Unsupported");
+    expect(html).toContain("<strong>_unmapped</strong>");
+    expect(html).toContain("Unsupported / Unsupported");
+    expect(html).toContain("<td>Unsupported</td><td>0h</td><td>1,051.4h + unclassified</td><td>Unsupported</td><td>Unsupported</td><td>Unsupported</td>");
+    expect(csv).toContain("Unsupported");
+    expect(csv).toContain("_unmapped,Unsupported,0,Unsupported,0,1051.4,Unsupported,Unsupported,Unsupported,Warn");
+  });
 });
 
 function metricNumber(value: MetricValue): number {
   if (value.kind === "money") return value.value.amountGbp;
   if (value.kind === "hours" || value.kind === "count") return value.value;
   return 0;
+}
+
+function withUnsupportedRollupMetrics(contract: DashboardDisplayContract): DashboardDisplayContract {
+  const firstRow = contract.rollups.byDepartment[0];
+  if (firstRow === undefined) return contract;
+
+  const unsupportedSoldHours = unsupportedMetric("soldHours");
+  const unsupportedFloatHours = unsupportedMetric("floatHours");
+  const patchedRow: RollupRow = {
+    ...firstRow,
+    totals: {
+      ...firstRow.totals,
+      soldHours: unsupportedSoldHours,
+      floatHours: unsupportedFloatHours
+    },
+    unsupported: [...firstRow.unsupported, unsupportedSoldHours, unsupportedFloatHours]
+  };
+
+  return {
+    ...contract,
+    rollups: {
+      ...contract.rollups,
+      byDepartment: [patchedRow, ...contract.rollups.byDepartment.slice(1)]
+    }
+  };
+}
+
+function unsupportedMetric(metric: string): UnsupportedMetric {
+  return {
+    kind: "unsupported",
+    metric,
+    scope: {
+      office: "LDN",
+      from: "2026-01-01",
+      to: "2026-03-31"
+    },
+    source: "fee_sheet",
+    reason: "UI regression fixture.",
+    displayLabel: "Unsupported",
+    severity: "info"
+  };
 }

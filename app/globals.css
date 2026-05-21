@@ -41,6 +41,7 @@ select {
 .dashboard-topbar,
 .dashboard-tabs,
 .sync-alert-banner,
+.fixture-mode-banner,
 .exchange-warning-banner,
 .scope-strip,
 .warning-banner,
@@ -280,6 +281,7 @@ select {
 }
 
 .sync-alert-banner,
+.fixture-mode-banner,
 .exchange-warning-banner {
   display: flex;
   align-items: center;
@@ -302,6 +304,17 @@ select {
 
 .sync-alert-banner a {
   color: var(--accent);
+  font-weight: 900;
+  text-decoration: underline;
+}
+
+.fixture-mode-banner {
+  background: #3a1515;
+  color: #fff7ed;
+}
+
+.fixture-mode-banner a {
+  color: #fff7ed;
   font-weight: 900;
   text-decoration: underline;
 }

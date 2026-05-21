@@ -29,7 +29,7 @@ export function buildRollupFooter(rows: readonly RollupRow[]): RollupFooter {
     pipelineFee,
     soldFee,
     soldHours,
-    status: statusFor(metricNumber(soldHours), metricNumber(totalHours), unsupportedCount([allocatedHours, unallocatedHours])),
+    status: statusFor(soldHours, totalHours, unsupportedCount([allocatedHours, unallocatedHours])),
     totalHours,
     unallocatedHours,
     variancePercent
@@ -71,29 +71,29 @@ function rollupCsvCells(row: RollupRow): Record<string, string | number> {
 
   return {
     label: row.label,
-    pipelineGbp: metricNumber(row.totals.pipelineFee),
-    soldGbp: metricNumber(row.totals.soldFee),
-    soldHours: metricNumber(row.totals.soldHours),
-    allocatedHours: metricNumber(allocatedHours),
-    unallocatedHours: metricNumber(unallocatedHours),
-    totalHours: metricNumber(row.totals.floatHours),
-    allocatedValueGbp: metricNumber(allocatedValue),
-    variancePercent: metricNumber(variancePercent),
-    status: statusFor(metricNumber(row.totals.soldHours), metricNumber(row.totals.floatHours), row.unsupported.length)
+    pipelineGbp: metricCsvValue(row.totals.pipelineFee),
+    soldGbp: metricCsvValue(row.totals.soldFee),
+    soldHours: metricCsvValue(row.totals.soldHours),
+    allocatedHours: metricCsvValue(allocatedHours),
+    unallocatedHours: metricCsvValue(unallocatedHours),
+    totalHours: metricCsvValue(row.totals.floatHours),
+    allocatedValueGbp: metricCsvValue(allocatedValue),
+    variancePercent: metricCsvValue(variancePercent),
+    status: statusFor(row.totals.soldHours, row.totals.floatHours, row.unsupported.length)
   };
 }
 
 function footerCsvCells(footer: RollupFooter): Record<string, string | number> {
   return {
     label: "Total",
-    pipelineGbp: metricNumber(footer.pipelineFee),
-    soldGbp: metricNumber(footer.soldFee),
-    soldHours: metricNumber(footer.soldHours),
-    allocatedHours: metricNumber(footer.allocatedHours),
-    unallocatedHours: metricNumber(footer.unallocatedHours),
-    totalHours: metricNumber(footer.totalHours),
-    allocatedValueGbp: metricNumber(footer.allocatedValue),
-    variancePercent: metricNumber(footer.variancePercent),
+    pipelineGbp: metricCsvValue(footer.pipelineFee),
+    soldGbp: metricCsvValue(footer.soldFee),
+    soldHours: metricCsvValue(footer.soldHours),
+    allocatedHours: metricCsvValue(footer.allocatedHours),
+    unallocatedHours: metricCsvValue(footer.unallocatedHours),
+    totalHours: metricCsvValue(footer.totalHours),
+    allocatedValueGbp: metricCsvValue(footer.allocatedValue),
+    variancePercent: metricCsvValue(footer.variancePercent),
     status: footer.status
   };
 }
@@ -104,10 +104,10 @@ function sumMetric(values: readonly (MetricValue | undefined)[], kind: "hours" |
   }
 
   if (kind === "money") {
-    return moneyMetric(values.reduce((total, value) => total + metricNumber(value), 0));
+    return moneyMetric(values.reduce((total, value) => total + (metricNumber(value) ?? 0), 0));
   }
 
-  return hoursMetric(values.reduce((total, value) => total + metricNumber(value), 0));
+  return hoursMetric(values.reduce((total, value) => total + (metricNumber(value) ?? 0), 0));
 }
 
 function allocatedValueMetric(soldFee: MetricValue, soldHours: MetricValue, allocatedHours: MetricValue): MetricValue {
@@ -117,9 +117,10 @@ function allocatedValueMetric(soldFee: MetricValue, soldHours: MetricValue, allo
 
   const soldHourCount = metricNumber(soldHours);
   const allocatedHourCount = metricNumber(allocatedHours);
+  if (soldHourCount === undefined || allocatedHourCount === undefined) return unsupportedMetric("allocatedValue");
   if (soldHourCount <= 0 || allocatedHourCount <= 0) return moneyMetric(0);
 
-  return moneyMetric((metricNumber(soldFee) / soldHourCount) * allocatedHourCount);
+  return moneyMetric(((metricNumber(soldFee) ?? 0) / soldHourCount) * allocatedHourCount);
 }
 
 function variancePercentMetric(soldHours: MetricValue, totalHours: MetricValue): MetricValue {
@@ -127,6 +128,7 @@ function variancePercentMetric(soldHours: MetricValue, totalHours: MetricValue):
 
   const soldHourCount = metricNumber(soldHours);
   const totalHourCount = metricNumber(totalHours);
+  if (soldHourCount === undefined || totalHourCount === undefined) return unsupportedMetric("variancePercent");
 
   return {
     kind: "count",
@@ -134,7 +136,11 @@ function variancePercentMetric(soldHours: MetricValue, totalHours: MetricValue):
   };
 }
 
-function statusFor(soldHours: number, allocatedHours: number, unsupportedMetrics: number): string {
+function statusFor(soldHoursMetric: MetricValue, allocatedHoursMetric: MetricValue, unsupportedMetrics: number): string {
+  const soldHours = metricNumber(soldHoursMetric);
+  const allocatedHours = metricNumber(allocatedHoursMetric);
+
+  if (soldHours === undefined || allocatedHours === undefined) return "Warn";
   if (unsupportedMetrics > 0 && allocatedHours === 0) return "Warn";
   if (soldHours === 0 && allocatedHours > 0) return "Uncosted";
   if (allocatedHours > soldHours * 1.15) return "Over";
@@ -146,10 +152,14 @@ function unsupportedCount(values: readonly MetricValue[]): number {
   return values.filter((value) => value.kind === "unsupported").length;
 }
 
-function metricNumber(value: MetricValue | undefined): number {
+function metricNumber(value: MetricValue | undefined): number | undefined {
   if (value?.kind === "money") return value.value.amountGbp;
   if (value?.kind === "hours" || value?.kind === "count") return value.value;
-  return 0;
+  return undefined;
+}
+
+function metricCsvValue(value: MetricValue): string | number {
+  return metricNumber(value) ?? "Unsupported";
 }
 
 function moneyMetric(amountGbp: number): MetricValue {
