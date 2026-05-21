@@ -25,7 +25,7 @@ Status: done for current stage. Keep updating when Phase 9.5 and Phase 10 eviden
 - Manifest records route, scope, state, old app commit, auth mode, data mode, and blockers.
 - Remaining required route captures are either complete or explicitly deferred.
 
-Status: waiting for Tom's full old-site UI UX design spec. This blocks UI parity approval, not source approval setup.
+Status: old-site UI UX spec received and encoded into Phase 9.5 parity docs. Combined office semantics are implemented and smoke-tested on staging. UI parity approval is still not complete because the checklist has not been fully executed across every surface and stakeholder workflow.
 
 ### Environment
 
@@ -74,11 +74,11 @@ Do not start production cutover or stakeholder approval language if:
 
 ## First Build Task Once Ready
 
-The next coding task should continue Phase 10 source approval:
+The next coding task should continue Phase 10 source approval and Phase 9.5 parity proof:
 
 1. classify the remaining warning scenarios from the source snapshot,
-2. tie warning scenarios to display-contract rows where currently `not_checked`,
-3. convert the old-site UI UX spec into executable parity tests,
+2. reduce or explicitly preserve the remaining named scenario warnings with source/display evidence,
+3. continue converting the old-site UI UX spec into executable parity tests,
 4. prepare the stakeholder review pack without approval language,
 5. keep production cutover blocked.
 

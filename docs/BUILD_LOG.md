@@ -2692,3 +2692,39 @@ Boundary kept:
 - no Supabase migration,
 - no source snapshot committed to git,
 - no stakeholder accuracy language.
+
+### Checkpoint: Combined Office Scope Law Implemented
+
+Phase: 9.5
+
+Tickets: `#83`, `#84`
+
+Status: implemented, pushed, CI and staging green
+
+What changed:
+
+- added first-class combined office scope to the dashboard contract with `offices=LDN,UCX`,
+- made `offices` win over a single `office` query value when both are present,
+- preserved combined office state through Dashboard chrome, nav links, Projects controls, Projects table, date filters, CSV, chat demo, and project/Float drilldowns,
+- kept single-office collapse lawful when a combined scope is reduced back to one office,
+- added tests for scope parsing, selector filtering, scoped hrefs, dashboard chrome, app shell, and combined office fixture behaviour.
+
+Verification:
+
+- `npm test -- tests/ui/scope-params.test.ts tests/display/scope-preservation.test.ts tests/canon-queries/sold-facts.test.ts tests/ui/dashboard-chrome.test.ts tests/ui/projects-controls-parity.test.ts tests/ui/chat-shell.test.ts` passed,
+- `npm run typecheck -- --pretty false` passed,
+- `npm run verify:phase9` passed with 78 test files, 310 tests, typecheck, Next build, Phase 8 verifier, and Phase 9 verifier,
+- GitHub CI passed for commit `87e5f31`,
+- Railway staging deployment `bfd49d08-9442-4de1-adc9-b44dbfc5fca9` succeeded,
+- staging Playwright smoke on `https://ucs-data-integrity-rebuild-staging.up.railway.app/dashboard?office=USA&offices=LDN,UCX&from=2026-01-01&to=2026-03-31&view=department` showed `Office: LDN + UCX`,
+- staging Projects smoke preserved `offices=LDN%2CUCX` through nav, time filters, Ask AI, CSV, project detail links, and Float trace links,
+- screenshot artifact captured as `ucs-rebuild-combined-office-staging.png`.
+
+Boundary kept:
+
+- no production cutover,
+- no source-system mutation,
+- no scheduled sync,
+- no Supabase migration,
+- no source snapshot committed to git,
+- no stakeholder approval language.
