@@ -9,7 +9,11 @@ const navItems = [
   { label: "Float", href: "/dashboard/float" },
   { label: "Approval Audit", href: "/dashboard/approval" },
   { label: "Data Quality", href: "/dashboard/data-quality" },
-  { label: "Glossary", href: "/dashboard/glossary" }
+  { label: "Glossary", href: "/dashboard/glossary" },
+  { label: "Sync Audit", href: "/dashboard/audit" },
+  { label: "Sync Warnings", href: "/dashboard/admin/sync-warnings" },
+  { label: "Capacity Reduced", href: "/dashboard/admin/timeoffs" },
+  { label: "Users", href: "/dashboard/users" }
 ] as const;
 
 const officeOptions = [

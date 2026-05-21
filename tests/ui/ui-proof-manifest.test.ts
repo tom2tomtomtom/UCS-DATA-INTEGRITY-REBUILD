@@ -10,7 +10,11 @@ const requiredSurfaceIds = [
   "float-diagnostics",
   "data-quality",
   "approval-audit",
-  "chat-evidence"
+  "chat-evidence",
+  "sync-audit",
+  "sync-warnings",
+  "capacity-reduced",
+  "users"
 ];
 
 describe("P8-F UI proof manifest", () => {
@@ -70,6 +74,27 @@ describe("P8-F UI proof manifest", () => {
     expect(detail?.expectedText).toEqual(expect.arrayContaining(["FLOAT_VISIBLE_CACHE_MISSING_CACHE", "fixture-float-visible-ucs04787", "Back to Projects"]));
     expect(float?.expectedText).toEqual(expect.arrayContaining(["PCS00250_RAW_CACHE_UNRESOLVED", "BT_RAW_CACHE_UNRESOLVED", "UCS05186", "archived/manual/source-only candidate"]));
     expect(chat?.expectedText).toEqual(expect.arrayContaining(["Dashboard Chat", "Working", "Needs Codex", "browser testing"]));
+  });
+
+  test("locks secondary legacy routes as read-only parity surfaces", () => {
+    const manifest = buildUiProofManifest({
+      baseUrl: "http://localhost:3030",
+      capturedAt: "2026-05-20T18:20:00.000Z"
+    });
+    const syncAudit = manifest.surfaces.find((surface) => surface.id === "sync-audit");
+    const syncWarnings = manifest.surfaces.find((surface) => surface.id === "sync-warnings");
+    const capacityReduced = manifest.surfaces.find((surface) => surface.id === "capacity-reduced");
+    const users = manifest.surfaces.find((surface) => surface.id === "users");
+
+    expect(syncAudit?.url).toContain("/dashboard/audit?office=LDN");
+    expect(syncAudit?.expectedText).toEqual(expect.arrayContaining(["Sync Audit", "Read-only sync evidence"]));
+    expect(syncWarnings?.url).toContain("/dashboard/admin/sync-warnings?office=LDN");
+    expect(syncWarnings?.expectedText).toEqual(expect.arrayContaining(["Sync Warnings", "MUTATION_GUARD is read_only"]));
+    expect(syncWarnings?.mustNotContain).toEqual(expect.arrayContaining(["Archive selected", "Dismiss selected"]));
+    expect(capacityReduced?.url).toContain("/dashboard/admin/timeoffs?office=LDN");
+    expect(capacityReduced?.expectedText).toEqual(expect.arrayContaining(["Capacity Reduced", "Latest batch awareness"]));
+    expect(users?.url).toContain("/dashboard/users?office=LDN");
+    expect(users?.mustNotContain).toEqual(expect.arrayContaining(["Send invite"]));
   });
 
   test("script emits a safe screenshot manifest without raw source payloads or secrets", () => {

@@ -71,6 +71,36 @@ export function buildUiProofManifest({
         url: `${cleanBaseUrl}/dashboard/chat-demo?${designScope}`,
         screenshotFile: "p8f-chat-evidence.png",
         expectedText: ["Dashboard Chat", "Working", "display contract", "Needs Codex", "browser testing"]
+      }),
+      surface({
+        id: "sync-audit",
+        label: "Sync Audit read-only evidence",
+        url: `${cleanBaseUrl}/dashboard/audit?${scope}`,
+        screenshotFile: "p8f-sync-audit.png",
+        expectedText: ["Sync Audit", "Read-only sync evidence", "Issue details"]
+      }),
+      surface({
+        id: "sync-warnings",
+        label: "Sync Warnings read-only review",
+        url: `${cleanBaseUrl}/dashboard/admin/sync-warnings?${scope}`,
+        screenshotFile: "p8f-sync-warnings.png",
+        expectedText: ["Sync Warnings", "Read-only warning review", "MUTATION_GUARD is read_only"],
+        mustNotContain: ["Archive selected", "Dismiss selected"]
+      }),
+      surface({
+        id: "capacity-reduced",
+        label: "Capacity Reduced read-only evidence",
+        url: `${cleanBaseUrl}/dashboard/admin/timeoffs?${scope}`,
+        screenshotFile: "p8f-capacity-reduced.png",
+        expectedText: ["Capacity Reduced", "Time-off rows stay separate from booked project hours", "Latest batch awareness"]
+      }),
+      surface({
+        id: "users",
+        label: "Users read-only access surface",
+        url: `${cleanBaseUrl}/dashboard/users?${scope}`,
+        screenshotFile: "p8f-users.png",
+        expectedText: ["Users", "Read-only access surface", "Role management"],
+        mustNotContain: ["Send invite"]
       })
     ]
   };

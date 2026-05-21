@@ -81,6 +81,39 @@ describe("Phase 9.5 dashboard chrome parity", () => {
     );
   });
 
+  test("preserves the full approved legacy nav route set", () => {
+    const contract = getFixtureDashboardContract({
+      office: "LDN",
+      from: "2026-01-01",
+      to: "2026-03-31"
+    });
+    const html = renderChrome(contract);
+
+    for (const marker of [
+      "Department Rollup",
+      "Projects",
+      "Float",
+      "Approval Audit",
+      "Data Quality",
+      "Glossary",
+      "Sync Audit",
+      "Sync Warnings",
+      "Capacity Reduced",
+      "Users"
+    ]) {
+      expect(html).toContain(marker);
+    }
+
+    for (const href of [
+      "/dashboard/audit?office=LDN&amp;from=2026-01-01&amp;to=2026-03-31",
+      "/dashboard/admin/sync-warnings?office=LDN&amp;from=2026-01-01&amp;to=2026-03-31",
+      "/dashboard/admin/timeoffs?office=LDN&amp;from=2026-01-01&amp;to=2026-03-31",
+      "/dashboard/users?office=LDN&amp;from=2026-01-01&amp;to=2026-03-31"
+    ]) {
+      expect(html).toContain(`href="${href}"`);
+    }
+  });
+
   test("keeps the global dashboard header persistent while scrolling", () => {
     const css = readFileSync("app/globals.css", "utf8");
     const topbarRule = css.match(/\.dashboard-topbar\s*\{[^}]+\}/)?.[0] ?? "";
