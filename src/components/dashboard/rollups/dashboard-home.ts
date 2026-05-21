@@ -37,12 +37,28 @@ const activeRollupConfig = {
   { key: keyof DashboardDisplayContract["rollups"]; label: string; title: string }
 >;
 
+export type RollupSortKey =
+  | "label"
+  | "pipelineFee"
+  | "soldFee"
+  | "soldHours"
+  | "allocatedHours"
+  | "unallocatedHours"
+  | "totalHours"
+  | "allocatedValue"
+  | "variancePercent"
+  | "status";
+
 export function DashboardHome({
   contract,
-  view = "department"
+  view = "department",
+  sortKey = "soldFee",
+  sortDir = "desc"
 }: {
   contract: DashboardDisplayContract;
   view?: RollupDimension;
+  sortKey?: RollupSortKey;
+  sortDir?: "asc" | "desc";
 }) {
   const activeRollup = activeRollupConfig[view];
 
@@ -63,7 +79,7 @@ export function DashboardHome({
     floatWarningsCard(contract),
     lowerThanFloatDisclosure(contract),
     departmentHoursChart(contract),
-    primaryRollupTable(contract, activeRollup.title, activeRollup.label, contract.rollups[activeRollup.key]),
+    primaryRollupTable(contract, activeRollup.title, activeRollup.label, contract.rollups[activeRollup.key], view, sortKey, sortDir),
     React.createElement(
       "section",
       { className: "metric-grid", "aria-label": "Source stream metrics" },
@@ -332,13 +348,16 @@ function primaryRollupTable(
   contract: DashboardDisplayContract,
   title: string,
   firstColumnLabel: string,
-  rows: readonly RollupRow[]
+  rows: readonly RollupRow[],
+  view: RollupDimension,
+  sortKey: RollupSortKey,
+  sortDir: "asc" | "desc"
 ) {
   return React.createElement(
     "section",
     { className: "rollup-table primary-rollup-table", "aria-label": `${title} table` },
     React.createElement("div", { className: "table-title" }, React.createElement("h2", null, title)),
-    rollupTableElement(rows, firstColumnLabel)
+    rollupTableElement(sortRollupRows(rows, sortKey, sortDir), firstColumnLabel, { contract, view, sortKey, sortDir })
   );
 }
 
@@ -364,7 +383,16 @@ function rollupTable(title: string, rows: readonly RollupRow[]) {
   );
 }
 
-function rollupTableElement(rows: readonly RollupRow[], firstColumnLabel: string) {
+function rollupTableElement(
+  rows: readonly RollupRow[],
+  firstColumnLabel: string,
+  sortState?: {
+    readonly contract: DashboardDisplayContract;
+    readonly view: RollupDimension;
+    readonly sortKey: RollupSortKey;
+    readonly sortDir: "asc" | "desc";
+  }
+) {
   return React.createElement(
     "table",
     null,
@@ -374,16 +402,16 @@ function rollupTableElement(rows: readonly RollupRow[], firstColumnLabel: string
       React.createElement(
         "tr",
         null,
-        React.createElement("th", null, firstColumnLabel),
-        React.createElement("th", null, "Pipeline (£)"),
-        React.createElement("th", null, "Sold (£)"),
-        React.createElement("th", null, "Sold (hrs)"),
-        React.createElement("th", null, "Allocated (hrs)"),
-        React.createElement("th", null, "Unallocated (hrs)"),
-        React.createElement("th", null, "Total (hrs)"),
-        React.createElement("th", null, "Allocated (£)"),
-        React.createElement("th", null, "Variance %"),
-        React.createElement("th", null, "Status")
+        rollupHeader(firstColumnLabel, "label", sortState),
+        rollupHeader("Pipeline (£)", "pipelineFee", sortState),
+        rollupHeader("Sold (£)", "soldFee", sortState),
+        rollupHeader("Sold (hrs)", "soldHours", sortState),
+        rollupHeader("Allocated (hrs)", "allocatedHours", sortState),
+        rollupHeader("Unallocated (hrs)", "unallocatedHours", sortState),
+        rollupHeader("Total (hrs)", "totalHours", sortState),
+        rollupHeader("Allocated (£)", "allocatedValue", sortState),
+        rollupHeader("Variance %", "variancePercent", sortState),
+        rollupHeader("Status", "status", sortState)
       )
     ),
     React.createElement(
@@ -394,6 +422,90 @@ function rollupTableElement(rows: readonly RollupRow[], firstColumnLabel: string
         : rows.map((row) => rollupRow(row))
     )
   );
+}
+
+function rollupHeader(
+  label: string,
+  key: RollupSortKey,
+  sortState:
+    | {
+        readonly contract: DashboardDisplayContract;
+        readonly view: RollupDimension;
+        readonly sortKey: RollupSortKey;
+        readonly sortDir: "asc" | "desc";
+      }
+    | undefined
+) {
+  if (sortState === undefined) {
+    return React.createElement("th", null, label);
+  }
+
+  const active = sortState.sortKey === key;
+  const nextDir = active && sortState.sortDir === "asc" ? "desc" : "asc";
+  const marker = active ? (sortState.sortDir === "asc" ? " ▲" : " ▼") : "";
+
+  return React.createElement(
+    "th",
+    null,
+    React.createElement("a", { href: rollupSortHref(sortState.contract, sortState.view, key, nextDir) }, `${label}${marker}`)
+  );
+}
+
+function rollupSortHref(
+  contract: DashboardDisplayContract,
+  view: RollupDimension,
+  sortKey: RollupSortKey,
+  sortDir: "asc" | "desc"
+): string {
+  const baseHref = scopedHref("/dashboard", contract.scope);
+  const separator = baseHref.includes("?") ? "&" : "?";
+
+  return `${baseHref}${separator}view=${view}&sort=${sortKey}&dir=${sortDir}`;
+}
+
+function sortRollupRows(rows: readonly RollupRow[], sortKey: RollupSortKey, sortDir: "asc" | "desc"): RollupRow[] {
+  return [...rows].sort((left, right) => {
+    const result = compareRollupRows(left, right, sortKey);
+    return sortDir === "asc" ? result : -result;
+  });
+}
+
+function compareRollupRows(left: RollupRow, right: RollupRow, sortKey: RollupSortKey): number {
+  if (sortKey === "label") return left.label.localeCompare(right.label);
+  if (sortKey === "status") return statusSortValue(left).localeCompare(statusSortValue(right));
+
+  return rollupSortNumber(left, sortKey) - rollupSortNumber(right, sortKey);
+}
+
+function rollupSortNumber(row: RollupRow, sortKey: RollupSortKey): number {
+  if (sortKey === "pipelineFee") return metricNumber(row.totals.pipelineFee);
+  if (sortKey === "soldFee") return metricNumber(row.totals.soldFee);
+  if (sortKey === "soldHours") return metricNumber(row.totals.soldHours);
+  if (sortKey === "allocatedHours") return metricNumber(allocatedHoursMetric(row));
+  if (sortKey === "unallocatedHours") return metricNumber(unallocatedHoursMetric(row));
+  if (sortKey === "totalHours") return metricNumber(row.totals.floatHours);
+  if (sortKey === "allocatedValue") return allocatedValueNumber(row);
+  return variancePercentNumber(row);
+}
+
+function allocatedValueNumber(row: RollupRow): number {
+  const soldHours = metricNumber(row.totals.soldHours);
+  const soldFee = metricNumber(row.totals.soldFee);
+  const allocatedHours = metricNumber(allocatedHoursMetric(row));
+
+  return soldHours <= 0 || allocatedHours <= 0 ? 0 : (soldFee / soldHours) * allocatedHours;
+}
+
+function variancePercentNumber(row: RollupRow): number {
+  const soldHours = metricNumber(row.totals.soldHours);
+  const allocatedHours = metricNumber(row.totals.floatHours);
+
+  if (soldHours === 0) return allocatedHours > 0 ? Number.POSITIVE_INFINITY : 0;
+  return (allocatedHours - soldHours) / soldHours;
+}
+
+function statusSortValue(row: RollupRow): string {
+  return statusFor(metricNumber(row.totals.soldHours), metricNumber(row.totals.floatHours), row.unsupported.length);
 }
 
 function rollupRow(row: RollupRow) {

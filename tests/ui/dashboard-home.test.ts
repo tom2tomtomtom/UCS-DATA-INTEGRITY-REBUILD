@@ -24,6 +24,8 @@ describe("P6-B dashboard home rollups", () => {
     expect(html).toContain("Client Rollup");
     expect(html).toContain("href=\"/dashboard/projects?office=LDN&amp;from=2026-01-01&amp;to=2026-03-31&amp;department=Design\"");
     expect(html).toContain("Allocated (hrs)");
+    expect(html).toContain("Sold (£) ▼");
+    expect(html).toContain("href=\"/dashboard?office=LDN&amp;from=2026-01-01&amp;to=2026-03-31&amp;view=department&amp;sort=soldFee&amp;dir=asc\"");
     expect(html).toContain("Confidence");
   });
 
@@ -99,10 +101,23 @@ describe("P6-B dashboard home rollups", () => {
     const html = renderToStaticMarkup(React.createElement(DashboardHome, { contract, view: "client" }));
 
     expect(html).toContain("aria-label=\"Client Rollup table\"");
-    expect(html).toContain("<th>Client</th>");
+    expect(html).toContain(">Client<");
     expect(html).toContain("aria-current=\"page\">By Client");
     expect(html).toContain("href=\"/dashboard/projects?office=LDN&amp;from=2026-01-01&amp;to=2026-03-31&amp;client=British+Airways\"");
     expect(html).toContain("href=\"/dashboard?office=LDN&amp;from=2026-01-01&amp;to=2026-03-31&amp;view=department\"");
     expect(html).toContain("href=\"/dashboard?office=LDN&amp;from=2026-04-01&amp;to=2026-06-30&amp;view=client\">Q2");
+  });
+
+  test("sorts the primary rollup table through URL state without changing secondary tables", () => {
+    const contract = getFixtureDashboardContract({
+      office: "LDN",
+      from: "2026-01-01",
+      to: "2026-03-31"
+    });
+    const html = renderToStaticMarkup(React.createElement(DashboardHome, { contract, sortKey: "label", sortDir: "asc" }));
+
+    expect(html).toContain("Department ▲");
+    expect(html).toContain("href=\"/dashboard?office=LDN&amp;from=2026-01-01&amp;to=2026-03-31&amp;view=department&amp;sort=label&amp;dir=desc\"");
+    expect(html.indexOf("Design")).toBeLessThan(html.indexOf("Strategy"));
   });
 });
