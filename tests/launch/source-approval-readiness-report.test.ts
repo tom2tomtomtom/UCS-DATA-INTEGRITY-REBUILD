@@ -162,6 +162,47 @@ describe("Phase 10 source approval readiness report", () => {
       expect.arrayContaining([expect.objectContaining({ code: "SOURCE_SNAPSHOTS_READY_BLOCKED" })])
     );
   });
+
+  test("does not let legacy cache evidence count as source snapshot readiness", () => {
+    const snapshotFile = writeSnapshotFile({
+      ...fourStreamSnapshot(),
+      sources: fourStreamSnapshot().sources.map((source) =>
+        source.source === "float"
+          ? {
+              ...source,
+              mode: "legacy_import",
+              rows: [
+                {
+                  identity: {
+                    stableSourceRowKey: "float_allocations:10480262",
+                    sourceObjectId: "10480262"
+                  },
+                  raw: {
+                    table: "float_allocations",
+                    projectId: 10480262,
+                    jobNumber: "UCS04154",
+                    hours: 1
+                  }
+                }
+              ]
+            }
+          : source
+      )
+    });
+    const output = runReport({
+      SOURCE_APPROVAL_ENV_TEXT: fullEnv,
+      SOURCE_SNAPSHOT_FILE: snapshotFile,
+      UI_PARITY_SPEC_STATUS: "ready",
+      STAKEHOLDER_APPROVAL_STATUS: "approved"
+    });
+    const report = JSON.parse(output);
+
+    expect(report.status).toBe("fail");
+    expect(report.blockers).toEqual(
+      expect.arrayContaining([expect.objectContaining({ code: "SOURCE_SNAPSHOTS_READY_BLOCKED" })])
+    );
+    expect(report.summary.sourceSnapshotStatus).toBe("missing");
+  });
 });
 
 function runReport(env: Record<string, string>): string {

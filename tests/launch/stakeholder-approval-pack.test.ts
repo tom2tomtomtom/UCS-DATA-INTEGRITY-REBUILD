@@ -37,6 +37,48 @@ describe("Phase 10 stakeholder approval pack", () => {
     expect(pack.status).toBe("blocked");
     expect(pack.blockers).toEqual(expect.arrayContaining(["source_snapshot_missing"]));
   });
+
+  test("does not let legacy cache evidence count as source snapshot approval evidence", () => {
+    const snapshotFile = writeSnapshotFile({
+      ...fourStreamSnapshot(),
+      sources: fourStreamSnapshot().sources.map((source) =>
+        source.source === "float"
+          ? {
+              ...source,
+              mode: "legacy_import",
+              rows: [
+                {
+                  identity: {
+                    stableSourceRowKey: "float_allocations:10480262",
+                    sourceObjectId: "10480262"
+                  },
+                  raw: {
+                    table: "float_allocations",
+                    projectId: 10480262
+                  }
+                }
+              ]
+            }
+          : source
+      )
+    });
+    const output = execFileSync("node", ["scripts/stakeholder-approval-pack.mjs"], {
+      encoding: "utf8",
+      env: {
+        ...process.env,
+        SOURCE_SNAPSHOT_FILE: snapshotFile
+      }
+    });
+    const pack = JSON.parse(output);
+
+    expect(pack.status).toBe("blocked");
+    expect(pack.sourceEvidence).toEqual({
+      status: "missing",
+      sourcesChecked: [],
+      blocker: "source_snapshot_missing"
+    });
+    expect(pack.blockers).toEqual(expect.arrayContaining(["source_snapshot_missing"]));
+  });
 });
 
 function writeSnapshotFile(snapshot: unknown): string {

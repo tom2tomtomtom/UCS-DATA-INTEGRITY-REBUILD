@@ -26,4 +26,21 @@ describe("P6-B dashboard home rollups", () => {
     expect(html).toContain("Unsupported");
     expect(html).toContain("Confidence");
   });
+
+  test("surfaces approval state, source evidence, and no-cutover status without changing granularity", () => {
+    const contract = getFixtureDashboardContract({
+      office: "LDN",
+      from: "2026-01-01",
+      to: "2026-03-31"
+    });
+    const html = renderToStaticMarkup(React.createElement(DashboardHome, { contract }));
+
+    expect(html).toContain("Approval state:");
+    expect(html).toContain("No cutover approved");
+    expect(html).toContain("Source evidence visible");
+    expect(html).toContain("1 source warning");
+    expect(html).toContain("6 reconciliation warnings");
+    expect(html).toContain("0 unsupported headline metrics");
+    expect(html).toContain("Warnings remain source evidence, not approval.");
+  });
 });

@@ -56,6 +56,16 @@ railway run --service ucs-data-integrity-rebuild --environment staging npm run s
 
 The snapshot output path is ignored by git. The command writes source data locally and prints only a row-count summary.
 
+For the `#88` targeted Float evidence slice, include named scenarios and known Float project IDs:
+
+```bash
+railway run --service ucs-data-integrity-rebuild --environment staging npm run source:snapshot:create -- --out test-results/source-snapshots/phase10-source-snapshot.json --max-rows 100 --float-scenario-codes UCS04787,UCS05186,UCS04154,PCS00250,BT --float-project-ids 10480262
+```
+
+The Float adapter is read-only. It always reads projects first, then resolves target project IDs from matching scenario text or explicit `--float-project-ids`, then reads targeted tasks and the referenced people evidence. Allocated and unallocated hours are derived from Float tasks plus people/project metadata; there is no separate Float allocations endpoint in this contract. It accepts common Float response envelopes: a bare array, `{ "data": [...] }`, or a collection key such as `{ "tasks": [...] }`, `{ "people": [...] }`, and `{ "projects": [...] }`.
+
+Live Float response shape still needs staging confirmation for every endpoint. The snapshot includes a `float:target-manifest` row with `requestedScenarioCodes`, `requestedProjectIds`, `resolvedProjectIds`, and `unresolvedScenarioCodes`; unresolved scenarios remain blockers for the named evidence pack rather than being guessed.
+
 To create the stakeholder/no-cutover pack from that artifact:
 
 ```bash

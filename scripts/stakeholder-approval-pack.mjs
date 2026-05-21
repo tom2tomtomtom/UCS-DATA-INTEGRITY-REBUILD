@@ -66,7 +66,7 @@ function readSourceEvidence() {
     const sourcesChecked = ["fee_sheet", "pipeline", "production_revenue", "float"];
     const hasAllSources = sourcesChecked.every((source) => (plan.report.bySource[source]?.rawRows ?? 0) > 0);
 
-    if (!hasAllSources) {
+    if (!hasAllSources || plan.report.cacheEvidenceRows > 0 || plan.report.status !== "pass") {
       return undefined;
     }
 

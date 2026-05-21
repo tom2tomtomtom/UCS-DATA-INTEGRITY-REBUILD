@@ -11,7 +11,9 @@ export async function buildLiveSourceSnapshot({
   env = process.env,
   fetchImpl = globalThis.fetch,
   now = new Date().toISOString(),
-  maxRows = 100
+  maxRows = 100,
+  floatScenarioCodes = parseList(env.FLOAT_EVIDENCE_SCENARIO_CODES),
+  floatProjectIds = parseList(env.FLOAT_EVIDENCE_PROJECT_IDS)
 } = {}) {
   if (typeof fetchImpl !== "function") {
     throw new Error("buildLiveSourceSnapshot requires fetch.");
@@ -57,7 +59,10 @@ export async function buildLiveSourceSnapshot({
   const floatSource = await readFloatSource({
     env,
     fetchImpl,
-    maxRows
+    now,
+    maxRows,
+    floatScenarioCodes,
+    floatProjectIds
   });
 
   const sources = [...sheetSources, floatSource];
@@ -208,7 +213,7 @@ function valuesToSnapshotRows({ source, spreadsheetId, range, values, maxRows })
   });
 }
 
-async function readFloatSource({ env, fetchImpl, maxRows }) {
+async function readFloatSource({ env, fetchImpl, now, maxRows, floatScenarioCodes = [], floatProjectIds = [] }) {
   const apiKey = requiredEnv(env, "FLOAT_API_KEY");
   const projects = await fetchJson(fetchImpl, `${FLOAT_API_URL}/projects`, {
     headers: {
@@ -216,21 +221,30 @@ async function readFloatSource({ env, fetchImpl, maxRows }) {
       "Content-Type": "application/json"
     }
   });
-  const rows = asArray(projects).slice(0, maxRows).map((project, index) => {
-    const projectRecord = asRecord(project);
-    const sourceObjectId = String(projectRecord.project_id ?? projectRecord.id ?? `float-project-${index + 1}`);
+  const projectRecords = asArray(projects, "projects");
+  const rows = projectRecords.slice(0, maxRows).map((project, index) => floatProjectRow(asRecord(project), index));
 
-    return {
-      identity: {
-        stableSourceRowKey: `float:projects:${sourceObjectId}`,
-        sourceObjectId
-      },
-      raw: {
-        objectType: "project",
-        ...projectRecord
-      }
-    };
+  const targetManifest = await resolveFloatTargets({
+    projectRecords,
+    floatScenarioCodes,
+    floatProjectIds,
+    fetchImpl,
+    apiKey
   });
+  addTargetProjectRows(rows, targetManifest.resolvedProjectRecords, maxRows);
+
+  if (targetManifest.resolvedProjectIds.length > 0) {
+    const targetedRows = await readTargetedFloatRows({
+      fetchImpl,
+      apiKey,
+      projectIds: targetManifest.resolvedProjectIds,
+      taskWindow: resolveFloatTaskWindow(env, now),
+      maxRows
+    });
+
+    rows.push(...targetedRows);
+    rows.push(floatTargetManifestRow(targetManifest));
+  }
 
   if (rows.length === 0) {
     throw new Error("Float source snapshot produced no project rows.");
@@ -239,9 +253,198 @@ async function readFloatSource({ env, fetchImpl, maxRows }) {
   return {
     source: "float",
     mode: "read_only_live",
-    sourceLabel: "Float Projects API",
-    sourceVersion: "GET /v3/projects",
+    sourceLabel: targetManifest.resolvedProjectIds.length > 0 ? "Float API targeted evidence" : "Float Projects API",
+    sourceVersion:
+      targetManifest.resolvedProjectIds.length > 0
+        ? "GET /v3/projects + targeted tasks/people"
+        : "GET /v3/projects",
     rows
+  };
+}
+
+async function readTargetedFloatRows({ fetchImpl, apiKey, projectIds, taskWindow, maxRows }) {
+  const headers = {
+    Authorization: `Bearer ${apiKey}`,
+    "Content-Type": "application/json"
+  };
+  const taskRows = [];
+
+  for (const projectId of projectIds) {
+    const params = new URLSearchParams({
+      project_id: projectId,
+      start_date: taskWindow.startDate,
+      end_date: taskWindow.endDate
+    });
+    const tasks = await fetchJson(fetchImpl, `${FLOAT_API_URL}/tasks?${params.toString()}`, { headers });
+
+    taskRows.push(...floatRowsFor("task", "tasks", asArray(tasks, "tasks"), maxRows));
+  }
+
+  const targetedPersonIds = collectPersonIds(taskRows);
+  const peopleRows = targetedPersonIds.size === 0
+    ? []
+    : floatRowsFor("person", "people", asArray(await fetchJson(fetchImpl, `${FLOAT_API_URL}/people`, { headers }), "people"), maxRows)
+        .filter((row) => targetedPersonIds.has(String(row.identity.sourceObjectId)));
+
+  return [...dedupeRows(taskRows), ...dedupeRows(peopleRows)];
+}
+
+function floatRowsFor(objectType, collectionName, values, maxRows) {
+  return values.slice(0, maxRows).map((value, index) => {
+    const record = asRecord(value);
+    const sourceObjectId = sourceObjectIdFor(objectType, record, index);
+
+    return {
+      identity: {
+        stableSourceRowKey: `float:${collectionName}:${sourceObjectId}`,
+        sourceObjectId
+      },
+      raw: {
+        objectType,
+        ...record
+      }
+    };
+  });
+}
+
+async function resolveFloatTargets({ projectRecords, floatScenarioCodes, floatProjectIds, fetchImpl, apiKey }) {
+  const requestedScenarioCodes = normalizeList(floatScenarioCodes);
+  const requestedProjectIds = normalizeList(floatProjectIds);
+  const matchedScenarioCodes = new Set();
+  const resolvedProjectIds = [];
+  const resolvedProjectRecords = [];
+  const resolutionErrors = [];
+
+  for (const code of requestedScenarioCodes) {
+    let match = projectRecords.find((project) => projectMatchesScenario(asRecord(project), code));
+    if (!match) {
+      const remoteCandidates = await fetchProjectCandidatesByCode({ fetchImpl, apiKey, code, resolutionErrors });
+      match = remoteCandidates.find((project) => projectMatchesScenario(asRecord(project), code));
+    }
+
+    if (match) {
+      const projectRecord = asRecord(match);
+      matchedScenarioCodes.add(code);
+      addUnique(resolvedProjectIds, sourceObjectIdFor("project", projectRecord, 0));
+      addUniqueProjectRecord(resolvedProjectRecords, projectRecord);
+    }
+  }
+
+  for (const projectId of requestedProjectIds) {
+    addUnique(resolvedProjectIds, projectId);
+  }
+
+  return {
+    requestedScenarioCodes,
+    requestedProjectIds,
+    resolvedProjectRecords,
+    resolvedProjectIds,
+    unresolvedScenarioCodes: requestedScenarioCodes.filter((code) => !matchedScenarioCodes.has(code)),
+    resolutionErrors
+  };
+}
+
+async function fetchProjectCandidatesByCode({ fetchImpl, apiKey, code, resolutionErrors }) {
+  const params = new URLSearchParams({
+    project_code: code,
+    "per-page": "10",
+    page: "1"
+  });
+
+  try {
+    const response = await fetchJson(fetchImpl, `${FLOAT_API_URL}/projects?${params.toString()}`, {
+      headers: {
+        Authorization: `Bearer ${apiKey}`,
+        "Content-Type": "application/json"
+      }
+    });
+
+    return asArray(response, "projects");
+  } catch (error) {
+    resolutionErrors.push({
+      scenarioCode: code,
+      message: error instanceof Error ? error.message : String(error)
+    });
+    return [];
+  }
+}
+
+function projectMatchesScenario(project, scenarioCode) {
+  const needle = scenarioCode.toLowerCase();
+  const searchable = [
+    project.project_code,
+    project.code,
+    project.name,
+    project.project_name,
+    project.client,
+    project.client_name
+  ];
+
+  return searchable.some((value) => String(value ?? "").toLowerCase().includes(needle));
+}
+
+function floatTargetManifestRow(targetManifest) {
+  const { resolvedProjectRecords: _resolvedProjectRecords, ...manifest } = targetManifest;
+
+  return {
+    identity: {
+      stableSourceRowKey: "float:target-manifest",
+      sourceObjectId: "target_manifest"
+    },
+    raw: {
+      objectType: "target_manifest",
+      ...manifest
+    }
+  };
+}
+
+function floatProjectRow(projectRecord, index) {
+  const sourceObjectId = sourceObjectIdFor("project", projectRecord, index);
+
+  return {
+    identity: {
+      stableSourceRowKey: `float:projects:${sourceObjectId}`,
+      sourceObjectId
+    },
+    raw: {
+      objectType: "project",
+      ...projectRecord
+    }
+  };
+}
+
+function addTargetProjectRows(rows, projectRecords, maxRows) {
+  const existingKeys = new Set(rows.map((row) => row.identity.stableSourceRowKey));
+  let added = 0;
+
+  for (const projectRecord of projectRecords) {
+    const row = floatProjectRow(projectRecord, added);
+    if (!existingKeys.has(row.identity.stableSourceRowKey)) {
+      rows.push(row);
+      existingKeys.add(row.identity.stableSourceRowKey);
+      added += 1;
+    }
+
+    if (added >= maxRows) return;
+  }
+}
+
+function resolveFloatTaskWindow(env, now) {
+  const startDate = env.FLOAT_EVIDENCE_START_DATE;
+  const endDate = env.FLOAT_EVIDENCE_END_DATE;
+
+  if (typeof startDate === "string" && startDate.trim() !== "" && typeof endDate === "string" && endDate.trim() !== "") {
+    return {
+      startDate: startDate.trim(),
+      endDate: endDate.trim()
+    };
+  }
+
+  const year = new Date(now).getUTCFullYear();
+
+  return {
+    startDate: `${year}-01-01`,
+    endDate: `${year + 1}-12-31`
   };
 }
 
@@ -339,15 +542,98 @@ function requiredEnv(env, key) {
   return value;
 }
 
-function asArray(value) {
+function asArray(value, collectionName) {
   if (Array.isArray(value)) return value;
   if (Array.isArray(value?.data)) return value.data;
-  if (Array.isArray(value?.projects)) return value.projects;
+  if (Array.isArray(value?.[collectionName])) return value[collectionName];
   return [];
 }
 
 function asRecord(value) {
   return value !== null && typeof value === "object" && !Array.isArray(value) ? value : {};
+}
+
+function sourceObjectIdFor(objectType, record, index) {
+  const candidates = {
+    project: [record.project_id, record.projectId, record.id],
+    task: [record.task_id, record.taskId, record.id],
+    allocation: [record.allocation_id, record.allocationId, record.id],
+    person: [record.people_id, record.person_id, record.peopleId, record.personId, record.id]
+  }[objectType] ?? [record.id];
+  const sourceObjectId = candidates.find((value) => value !== undefined && value !== null && String(value).trim() !== "");
+
+  return String(sourceObjectId ?? `float-${objectType}-${index + 1}`);
+}
+
+function collectPersonIds(rows) {
+  const ids = new Set();
+
+  rows.forEach((row) => {
+    [
+      row.raw.person_id,
+      row.raw.people_id,
+      row.raw.personId,
+      row.raw.peopleId,
+      row.raw.person_ids,
+      row.raw.people_ids,
+      row.raw.personIds,
+      row.raw.peopleIds,
+      row.raw.person,
+      row.raw.people
+    ].forEach((value) => addPersonIds(ids, value));
+  });
+
+  return ids;
+}
+
+function addPersonIds(ids, value) {
+  if (value === undefined || value === null || value === "") return;
+
+  if (Array.isArray(value)) {
+    value.forEach((item) => addPersonIds(ids, item));
+    return;
+  }
+
+  if (typeof value === "object") {
+    const record = asRecord(value);
+    addPersonIds(ids, record.people_id ?? record.person_id ?? record.peopleId ?? record.personId ?? record.id);
+    return;
+  }
+
+  ids.add(String(value));
+}
+
+function dedupeRows(rows) {
+  const seen = new Set();
+
+  return rows.filter((row) => {
+    const key = row.identity.stableSourceRowKey;
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
+}
+
+function addUnique(values, value) {
+  if (!values.includes(value)) {
+    values.push(value);
+  }
+}
+
+function addUniqueProjectRecord(values, record) {
+  const id = sourceObjectIdFor("project", record, values.length);
+  if (!values.some((value) => sourceObjectIdFor("project", value, 0) === id)) {
+    values.push(record);
+  }
+}
+
+function parseList(value) {
+  if (typeof value !== "string") return [];
+  return normalizeList(value.split(","));
+}
+
+function normalizeList(values) {
+  return values.map((value) => String(value).trim()).filter((value) => value !== "");
 }
 
 function sourceTabFromRange(range) {

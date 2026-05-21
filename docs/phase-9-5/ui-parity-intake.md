@@ -77,6 +77,8 @@ Old-site UI UX report received from Tom on 2026-05-21 and encoded into `docs/pha
 
 Current review state: UX reviewer PASS after second pass.
 
+First safe UI parity slice: Department Rollup now surfaces an approval/source-evidence status strip above the headline metrics. This is an "Improve Carefully" change because it makes no-cutover, source-warning, reconciliation-warning, and unsupported-headline counts visible from the existing display contract without changing data selectors, row granularity, drilldown links, or metric formatting.
+
 Implementation agents must read `docs/phase-9-5/legacy-ui-ux-spec.md` and `docs/phase-9-5/ui-parity-acceptance-checklist.md` together. Legacy behaviours like `Sync Now`, archive actions, `All sources fresh`, and archived-project explanations are preserved only under the caveats in the checklist and data-law override section.
 
 Allowed in the meantime:

@@ -8,8 +8,19 @@ type LiveSourceSnapshotModule = {
     readonly fetchImpl: (url: string, init?: unknown) => Promise<{ ok: boolean; status: number; json: () => Promise<unknown> }>;
     readonly now: string;
     readonly maxRows: number;
+    readonly floatScenarioCodes?: readonly string[];
+    readonly floatProjectIds?: readonly string[];
   }) => Promise<{
-    readonly snapshot: { readonly readOnly: boolean; readonly sources: readonly { readonly source: string }[] };
+    readonly snapshot: {
+      readonly readOnly: boolean;
+      readonly sources: readonly {
+        readonly source: string;
+        readonly rows?: readonly {
+          readonly identity?: { readonly stableSourceRowKey?: string; readonly sourceObjectId?: string };
+          readonly raw?: Record<string, unknown>;
+        }[];
+      }[];
+    };
     readonly summary: {
       readonly ready: boolean;
       readonly sourceRows: Record<string, number>;
@@ -152,6 +163,210 @@ describe("Phase 10 live source snapshot builder", () => {
     expect(summary.ready).toBe(true);
     expect(decodeJwtClaimFromTokenRequest(tokenBody).sub).toBe("jade.barrett@uncommon.studio");
     expect(JSON.stringify(summary)).not.toContain(serviceAccountKey);
+  });
+
+  test("adds targeted Float task and people evidence for named scenarios", async () => {
+    const { buildLiveSourceSnapshot } = await loadLiveSourceSnapshotModule();
+    const fetchCalls: string[] = [];
+    const fetchImpl = async (url: string) => {
+      fetchCalls.push(url);
+
+      if (url.includes("/values/")) {
+        return ok({ values: [["Project"], ["UCS04787"]] });
+      }
+
+      if (url.endsWith("/projects")) {
+        return ok({
+          projects: [
+            {
+              project_id: 10480262,
+              project_code: "UCS04154",
+              name: "UCS04154 Auto Linked"
+            },
+            {
+              id: 4787,
+              project_code: "UCS04787",
+              name: "UCS04787 Float Scenario"
+            }
+          ]
+        });
+      }
+
+      if (url.includes("/tasks")) {
+        return ok({
+          data: [
+            {
+              task_id: 83,
+              project_id: 4787,
+              person_id: 501,
+              name: "Design allocation"
+            }
+          ]
+        });
+      }
+
+      if (url.includes("/people")) {
+        return ok([
+          {
+            people_id: 501,
+            name: "Yunni Float Person"
+          }
+        ]);
+      }
+
+      return ok({ sheets: [{ properties: { title: "Sheet1" } }] });
+    };
+
+    const { snapshot, summary } = await buildLiveSourceSnapshot({
+      env,
+      fetchImpl,
+      now: "2026-05-21T00:00:00.000Z",
+      maxRows: 10,
+      floatScenarioCodes: ["UCS04787", "UCS05186", "PCS00250", "BT"],
+      floatProjectIds: ["10480262"]
+    });
+
+    const floatRows = snapshot.sources.find((sourceRow) => sourceRow.source === "float")?.rows ?? [];
+
+    expect(summary.sourceRows.float).toBe(5);
+    expect(floatRows.map((row) => row.raw?.objectType)).toEqual([
+      "project",
+      "project",
+      "task",
+      "person",
+      "target_manifest"
+    ]);
+    expect(floatRows.map((row) => row.identity?.stableSourceRowKey)).toContain("float:tasks:83");
+    expect(floatRows.map((row) => row.identity?.stableSourceRowKey)).toContain("float:people:501");
+    expect(floatRows.at(-1)?.raw).toMatchObject({
+      objectType: "target_manifest",
+      requestedScenarioCodes: ["UCS04787", "UCS05186", "PCS00250", "BT"],
+      requestedProjectIds: ["10480262"],
+      resolvedProjectIds: ["4787", "10480262"],
+      unresolvedScenarioCodes: ["UCS05186", "PCS00250", "BT"]
+    });
+    expect(fetchCalls.some((url) => url.includes("/tasks?project_id=4787&start_date=2026-01-01&end_date=2027-12-31"))).toBe(true);
+    expect(fetchCalls.some((url) => url.includes("/allocations"))).toBe(false);
+    expect(fetchCalls.some((url) => url.endsWith("/people"))).toBe(true);
+  });
+
+  test("does not pull broad Float people rows when targeted task evidence has no person reference", async () => {
+    const { buildLiveSourceSnapshot } = await loadLiveSourceSnapshotModule();
+    const fetchCalls: string[] = [];
+    const fetchImpl = async (url: string) => {
+      fetchCalls.push(url);
+
+      if (url.includes("/values/")) {
+        return ok({ values: [["Project"], ["UCS04787"]] });
+      }
+
+      if (url.endsWith("/projects")) {
+        return ok({
+          projects: [
+            {
+              id: 4787,
+              project_code: "UCS04787",
+              name: "UCS04787 Float Scenario"
+            }
+          ]
+        });
+      }
+
+      if (url.includes("/tasks")) {
+        return ok({
+          data: [
+            {
+              task_id: 83,
+              project_id: 4787,
+              name: "Design allocation"
+            }
+          ]
+        });
+      }
+
+      if (url.includes("/allocations")) {
+        return ok({ allocations: [] });
+      }
+
+      if (url.includes("/people")) {
+        return ok([{ people_id: 501, name: "Unrelated Person" }]);
+      }
+
+      return ok({ sheets: [{ properties: { title: "Sheet1" } }] });
+    };
+
+    const { snapshot } = await buildLiveSourceSnapshot({
+      env,
+      fetchImpl,
+      now: "2026-05-21T00:00:00.000Z",
+      maxRows: 10,
+      floatScenarioCodes: ["UCS04787"]
+    });
+
+    const floatRows = snapshot.sources.find((sourceRow) => sourceRow.source === "float")?.rows ?? [];
+
+    expect(floatRows.map((row) => row.raw?.objectType)).toEqual(["project", "task", "target_manifest"]);
+    expect(fetchCalls.some((url) => url.endsWith("/people"))).toBe(false);
+  });
+
+  test("resolves targeted Float scenario codes beyond the first project page", async () => {
+    const { buildLiveSourceSnapshot } = await loadLiveSourceSnapshotModule();
+    const fetchCalls: string[] = [];
+    const fetchImpl = async (url: string) => {
+      fetchCalls.push(url);
+
+      if (url.includes("/values/")) {
+        return ok({ values: [["Project"], ["UCS04787"]] });
+      }
+
+      if (url.endsWith("/projects")) {
+        return ok({
+          projects: [
+            {
+              project_id: 10480262,
+              project_code: "UCS04154",
+              name: "UCS04154 Auto Linked"
+            }
+          ]
+        });
+      }
+
+      if (url.includes("/projects?project_code=UCS04787")) {
+        return ok([
+          {
+            project_id: 4787,
+            project_code: "UCS04787",
+            name: "UCS04787 Float Scenario"
+          }
+        ]);
+      }
+
+      if (url.includes("/tasks")) {
+        return ok({ data: [] });
+      }
+
+      return ok({ sheets: [{ properties: { title: "Sheet1" } }] });
+    };
+
+    const { snapshot } = await buildLiveSourceSnapshot({
+      env,
+      fetchImpl,
+      now: "2026-05-21T00:00:00.000Z",
+      maxRows: 10,
+      floatScenarioCodes: ["UCS04787"]
+    });
+
+    const floatRows = snapshot.sources.find((sourceRow) => sourceRow.source === "float")?.rows ?? [];
+
+    expect(floatRows.map((row) => row.identity?.stableSourceRowKey)).toContain("float:projects:4787");
+    expect(floatRows.at(-1)?.raw).toMatchObject({
+      objectType: "target_manifest",
+      requestedScenarioCodes: ["UCS04787"],
+      resolvedProjectIds: ["4787"],
+      unresolvedScenarioCodes: []
+    });
+    expect(fetchCalls.some((url) => url.includes("/projects?project_code=UCS04787"))).toBe(true);
+    expect(fetchCalls.some((url) => url.includes("/tasks?project_id=4787"))).toBe(true);
   });
 });
 

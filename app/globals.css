@@ -177,6 +177,46 @@ select {
   grid-template-columns: repeat(5, minmax(140px, 1fr));
 }
 
+.approval-state-card {
+  display: grid;
+  gap: 10px;
+  border: 1px solid #ead99a;
+  border-radius: 8px;
+  background: #fff8df;
+  padding: 14px;
+}
+
+.approval-state-card strong {
+  font-size: 18px;
+  letter-spacing: 0;
+}
+
+.approval-state-card p {
+  margin: 0;
+  color: var(--muted);
+}
+
+.approval-label,
+.source-status-chip {
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.source-status-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.source-status-chip {
+  border: 1px solid #d7c173;
+  border-radius: 999px;
+  background: #fffdf3;
+  padding: 5px 8px;
+}
+
 .metric-card,
 .rollup-table,
 .confidence-panel {

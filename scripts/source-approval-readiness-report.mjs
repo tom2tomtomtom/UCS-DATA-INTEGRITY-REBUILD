@@ -60,8 +60,9 @@ function resolveSourceSnapshotStatus() {
       const plan = buildSourceSnapshotImportPlan(snapshot);
       const requiredSources = ["fee_sheet", "pipeline", "production_revenue", "float"];
       const hasAllStreams = requiredSources.every((source) => (plan.report.bySource[source]?.rawRows ?? 0) > 0);
+      const hasOnlyLiveSourceEvidence = plan.report.status === "pass" && plan.report.cacheEvidenceRows === 0;
 
-      return hasAllStreams ? "ready" : "missing";
+      return hasAllStreams && hasOnlyLiveSourceEvidence ? "ready" : "missing";
     } catch {
       return "missing";
     }

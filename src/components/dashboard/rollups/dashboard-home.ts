@@ -22,6 +22,7 @@ export function DashboardHome({ contract }: { contract: DashboardDisplayContract
   return React.createElement(
     "div",
     { className: "dashboard-home" },
+    approvalStateCard(contract),
     React.createElement(
       "section",
       { className: "metric-grid", "aria-label": "Headline metrics" },
@@ -40,6 +41,30 @@ export function DashboardHome({ contract }: { contract: DashboardDisplayContract
       React.createElement("span", null, `${contract.unsupported.length} unsupported metrics`)
     )
   );
+}
+
+function approvalStateCard(contract: DashboardDisplayContract) {
+  const reconciliationWarningCount = contract.reconciliation.filter((check) => check.status !== "PASS").length;
+
+  return React.createElement(
+    "section",
+    { className: "approval-state-card", "aria-label": "Approval and source evidence status" },
+    React.createElement("span", { className: "approval-label" }, "Approval state:"),
+    React.createElement("strong", null, "No cutover approved"),
+    React.createElement(
+      "div",
+      { className: "source-status-chips" },
+      statusChip("Source evidence visible"),
+      statusChip(countLabel(contract.warnings.length, "source warning")),
+      statusChip(countLabel(reconciliationWarningCount, "reconciliation warning")),
+      statusChip(countLabel(contract.unsupported.length, "unsupported headline metric"))
+    ),
+    React.createElement("p", null, "Warnings remain source evidence, not approval.")
+  );
+}
+
+function statusChip(label: string) {
+  return React.createElement("span", { className: "source-status-chip", key: label }, label);
 }
 
 function metricCard(label: string, value: MetricValue, key: string) {
@@ -127,4 +152,8 @@ function formatNumber(value: number): string {
   return new Intl.NumberFormat("en-GB", {
     maximumFractionDigits: 1
   }).format(value);
+}
+
+function countLabel(count: number, singular: string): string {
+  return `${count} ${singular}${count === 1 ? "" : "s"}`;
 }

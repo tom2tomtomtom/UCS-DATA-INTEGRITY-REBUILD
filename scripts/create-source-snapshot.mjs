@@ -8,13 +8,17 @@ import { buildLiveSourceSnapshot } from "./lib/live-source-snapshot.mjs";
 const args = parseArgs(process.argv.slice(2));
 const outPath = args.out ?? `test-results/source-snapshots/phase10-source-snapshot-${Date.now()}.json`;
 const maxRows = args.maxRows === undefined ? 100 : Number(args.maxRows);
+const floatScenarioCodes = parseList(args.floatScenarioCodes);
+const floatProjectIds = parseList(args.floatProjectIds);
 
 if (!Number.isInteger(maxRows) || maxRows < 1) {
   throw new Error("--max-rows must be a positive integer.");
 }
 
 const { snapshot, summary } = await buildLiveSourceSnapshot({
-  maxRows
+  maxRows,
+  floatScenarioCodes,
+  floatProjectIds
 });
 
 fs.mkdirSync(path.dirname(outPath), { recursive: true });
@@ -34,8 +38,19 @@ function parseArgs(rawArgs) {
     } else if (arg === "--max-rows") {
       parsed.maxRows = rawArgs[index + 1];
       index += 1;
+    } else if (arg === "--float-scenario-codes") {
+      parsed.floatScenarioCodes = rawArgs[index + 1];
+      index += 1;
+    } else if (arg === "--float-project-ids") {
+      parsed.floatProjectIds = rawArgs[index + 1];
+      index += 1;
     }
   }
 
   return parsed;
+}
+
+function parseList(value) {
+  if (typeof value !== "string") return [];
+  return value.split(",").map((item) => item.trim()).filter((item) => item !== "");
 }
